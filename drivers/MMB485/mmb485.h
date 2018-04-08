@@ -15,18 +15,16 @@
 
 /* RS485 Mulit-Master Bus driver library for half-duplex configurations. */
 
-/* Time-window in milliseconds to transmit
- * after winning arbitration.  */
-#define MMB485_ACCESS_WINDOW_MS 1000
-
 #define MMB485_RESULT_OK	0
 #define MMB485_RESULT_FAIL	-1
 #define MMB485_RESULT_ERR	-2
 
 #define MMB485_TIMEOUT_INF	0xFFFFFFFF
 
+#define RX_BUFFER_SIZE_BYTES 50
+
 typedef enum {
-	MSG_PRIO_CRITICAL = 0,
+	MSG_PRIO_CRITICAL = 1,
 	MSG_PRIO_HIGH,
 	MSG_PRIO_MEDIUM,
 	MSG_PRIO_LOW
@@ -36,15 +34,15 @@ typedef enum  {
 	BUS_STATE_UNINIT = -2,
 	BUS_STATE_HIGH_Z = -1, /* High impedance state. */
 	BUS_STATE_LISTEN = 0,
+	BUS_STATE_WAIT_IDLE,
 	BUS_STATE_ARBITRATION,
-	BUS_STATE_BUS_CLAIMED,
 	BUS_STATE_TRANSMIT
 }BusState_t;
 
 struct MmbDescriptor;
 typedef struct MmbDescriptor MmbDescriptor_t;
 
-typedef void (*CallbackArbitrationResult_t)(MmbDescriptor_t *desc, int result);
+typedef void (*CallbackTransmitResult_t)(MmbDescriptor_t *desc, int result);
 typedef void (*CallbackDataReceived_t)(MmbDescriptor_t *desc, uint8_t *data, uint32_t size);
 
 
@@ -57,7 +55,7 @@ typedef void (*HalTransmitterEnable_t)(uint8_t val);
 typedef void (*HalTransmit_t)(uint8_t *data, uint32_t size);
 
 
-typedef struct MmbDescriptor_t {
+typedef struct {
 	/* Initializes the USART at the given baud rate (in bps)
 	 * and the necessary GPIO pins.
 	 * Caller: Driver lib. */
@@ -82,7 +80,7 @@ typedef struct MmbDescriptor_t {
 void Mmb485HalCallbackDataReceived(MmbDescriptor_t *desc, uint8_t *data, uint32_t size);
 
 /* MMB Descriptor. */
-typedef struct MmbDescriptor{
+typedef struct MmbDescriptor {
 	/***** Set before Init. *****/
 
 	uint32_t baud_rate;
@@ -90,7 +88,7 @@ typedef struct MmbDescriptor{
 	/* Called when the result of the started arbitration round is known.
 	 * result is equal to MMB485_RESULT_OK when the round is won.
 	 * result is equal to MMB485_RESULT_FAIL when the round is lost. */
-	CallbackArbitrationResult_t on_arbitration_result;
+	CallbackTransmitResult_t on_transmit_result;
 
 	/* Called when data was received. */
 	CallbackDataReceived_t on_data_received;
@@ -99,24 +97,32 @@ typedef struct MmbDescriptor{
 
 	/***** Read-only. *****/
 	BusState_t state;	 	/* Bus state. */
-	uint32_t timeout_ms; 	/* Listen/Transmit/Arbitration Timeout in ms. */
-	uint32_t rem_window_ms; /* Remaining window in ms. */
-	uint32_t bytes_left;	/* Number of bytes left to transmit or listen for. */
+	uint32_t timeout_us; 	/* Listen/Transmit/Arbitration Timeout in us. */
 	bool always_listen; 	/* Automatically return to the 'listen' state. */
-	Id_t arb_tmr;			/* Arbitration timer. */
-	Id_t timeout_tmr;		/* Listen/Transmit/Arbitration timeout timer. */
+
+	uint32_t tx_max_bytes;	/* Maximum amount of bytes allowed to be transmitted. Depends on wait idle delay and baud rate. */
+	uint8_t prio;			/* Current message priority. */
+	uint32_t bytes_left;	/* Number of bytes left to transmit or listen for. */
+	uint8_t *tx_data;			/* Data to transmit. */
+
+	/***** Private. *****/
+	Id_t rx_ringbuf;	/* Receiving ring-buffer. */
+	Id_t arb_tmr;		/* Arbitration timer. */
+	Id_t timeout_tmr;	/* Listen/Transmit/Arbitration timeout timer. */
+	uint8_t h_prio;		/* Message has highest prio. */
 }MmbDescriptor_t;
 
 int Mmb485Init(MmbDescriptor_t *desc);
 
 /* Request bus access to transmit data with given priority.
- * This is done through an arbitration round.
- * The ArbitrationResult callback is called when the arbitration
- * result is known or when the timeout is reached, in which case
- * it failed by default. */
-int Mmb485ArbitrationStart(MmbDescriptor_t *desc, MsgPrio_t prio, uint32_t timeout_ms);
-
-int Mmb485Transmit(MmbDescriptor_t *desc, uint8_t *data, uint32_t size);
+ * Claiming the bus for transmission is done through an arbitration
+ * round.
+ * The TransmitResult callback is called when all data was transmitted
+ * or when the timeout expired.
+ * Returns MMB485_RESULT_OK if the transmit request was accepted.
+ * Returns MMB485_RESULT_ERR if the size is too large to transmit in the
+ * given time window. */
+int Mmb485Transmit(MmbDescriptor_t *desc, MsgPrio_t prio, uint8_t *data, uint32_t size, uint32_t timeout_ms);
 
 int Mmb485Listen(MmbDescriptor_t *desc, uint32_t timeout_ms);
 
