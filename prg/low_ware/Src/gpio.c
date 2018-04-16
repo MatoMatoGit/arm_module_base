@@ -42,8 +42,8 @@
 /* USER CODE BEGIN 0 */
 
 /* RGB LED GPIO. */
-#define LED_RED_PIN 	GPIO_PIN_6
-#define LED_GREEN_PIN 	GPIO_PIN_7
+#define LED_RED_PIN 	GPIO_PIN_7
+#define LED_GREEN_PIN 	GPIO_PIN_6
 #define LED_BLUE_PIN 	GPIO_PIN_8
 #define LED_PORT 		GPIOC
 /* USER CODE END 0 */
@@ -80,7 +80,7 @@ void GpioLedInit(void)
 {
 	GPIO_InitTypeDef gpio_init;
 
-	gpio_init.Pin = LED_GREEN_PIN;
+	gpio_init.Pin = LED_RED_PIN | LED_GREEN_PIN | LED_BLUE_PIN;
 	gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
 	gpio_init.Pull = GPIO_NOPULL;
 	gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
