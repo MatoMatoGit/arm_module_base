@@ -245,7 +245,7 @@ static void ITimerCallbackBlink(Id_t timer_id, void *context)
 		IRgbLedOff();
 		On = 0;
 	} else {
-		RgbLedColorSet(CurrentColor);
+		IRgbLedColorSet(CurrentColor);
 		On = 1;
 	}
 }
