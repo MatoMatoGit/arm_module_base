@@ -32,7 +32,7 @@ typedef enum {
 	RGB_LED_MODE_BLINK
 }RgbLedMode_t;
 
-#define RGB_LED_CONTROL_INVERTED
+//#define RGB_LED_CONTROL_INVERTED
 
 /* Init RGB LED, sets color to RGB_LED_COLOR_OFF. */
 int8_t RgbLedInit(void);
