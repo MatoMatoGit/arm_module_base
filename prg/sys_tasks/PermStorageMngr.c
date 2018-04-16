@@ -9,13 +9,18 @@
 
 #include <PriorRTOS.h>
 
-#include "stm32f1xx_hal_flash.h"
+#include "stm32f1xx_hal.h"
 #include <stdint.h>
 
-__attribute__((__section__(".user_data"))) const uint8_t LogData[DEBUG_LOG_SIZE_BYTES];
+__attribute__((__section__(".user_data"))) const uint8_t LogData[PERM_STORAGE_LOG_SIZE_BYTES];
 
+SysTaskResult_t SysTaskPermStorageMngrInit(void)
+{
 
-void SysTaskDebug(const void *p_args, U32_t v_arg)
+	return SYS_TASK_OK;
+}
+
+void SysTaskPermStorageMngr(const void *p_args, U32_t v_arg)
 {
 
 	TASK_INIT_BEGIN() {
