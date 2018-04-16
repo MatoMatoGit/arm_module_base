@@ -60,10 +60,23 @@ void MX_GPIO_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
+/* LED GPIO. */
+#define GPIO_PIN_LED_RED 	GPIO_PIN_7
+#define GPIO_PIN_LED_GREEN 	GPIO_PIN_6
+#define GPIO_PIN_LED_BLUE 	GPIO_PIN_8
+#define GPIO_PORT_LED 		GPIOC
+
 void GpioLedInit(void);
-void GpioLedStateRed(int state);
-void GpioLedStateGreen(int state);
-void GpioLedStateBlue(int state);
+void GpioLedStateRedSet(int state);
+void GpioLedStateGreenSet(int state);
+void GpioLedStateBlueSet(int state);
+
+#define GPIO_PIN_PUMP	GPIO_PIN_12
+#define GPIO_PORT_PUMP	GPIOC
+
+void GpioPumpInit(void);
+void GpioPumpStateSet(int state);
+
 
 /* USER CODE END Prototypes */
 
