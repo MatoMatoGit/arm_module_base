@@ -18,8 +18,6 @@ static U8_t Enabled;
 
 static CallbackPumpStopped_t OnPumpStopped;
 
-static U32_t PumpConstant = (PUMP_ML_PER_MIN / 60) * 1e4;
-
 #define PUMP_TIME_CONSTANT_ML (U32_t)(PUMP_ML_PER_MIN / 60) * 1e4 /* Time in microseconds to pump 1 mL*/
 
 #define SEC_TO_USEC(sec) (sec * 1e6)
@@ -31,7 +29,7 @@ S8_t PumpInit(CallbackPumpStopped_t on_stopped)
 	S8_t res = PUMP_ERR;
 
 	if(on_stopped != NULL) {
-		PumpConstant++;
+		OnPumpStopped = on_stopped;
 		Running = 0;
 		Enabled = 0;
 		PumpTmr = TimerCreate(1, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_AR), ITimerCallbackPump, NULL);
@@ -116,4 +114,5 @@ U8_t PumpIsRunning(void)
 static void ITimerCallbackPump(Id_t timer_id, void *context)
 {
 	PumpStop();
+	OnPumpStopped();
 }
