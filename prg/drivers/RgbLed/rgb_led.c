@@ -27,7 +27,7 @@ int8_t RgbLedInit(void)
 	int8_t res = RGB_LED_ERR;
 
 	CurrentColor = RGB_LED_COLOR_RED;
-	BlinkTmr = TimerCreate(1, (TIMER_PARAMETER_AR | TIMER_PARAMETER_PERIODIC), ITimerCallbackBlink, NULL);
+	BlinkTmr = TimerCreate(100e3, (TIMER_PARAMETER_AR | TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON), ITimerCallbackBlink, NULL);
 	if(BlinkTmr != OS_RES_ID_INVALID) {
 		GpioLedInit();
 		RgbLedModeSet(RGB_LED_MODE_OFF);
@@ -87,11 +87,9 @@ int8_t RgbLedModeSet(RgbLedMode_t mode)
 
 			U32_t interval = TimerIntervalGet(BlinkTmr);
 			if(interval >= RGB_LED_BLINK_INTERVAL_MS_MIN) {
-				os_res = TimerReset(BlinkTmr);
-				if(os_res == OS_RES_OK) {
-					On = 0;
-					res = RGB_LED_OK;
-				}
+				TimerStart(BlinkTmr);
+				On = 0;
+				res = RGB_LED_OK;
 			}
 			break;
 		}
@@ -131,13 +129,13 @@ U32_t RgbLedBlinkIntervalGet(void)
 static void IRgbLedOff(void)
 {
 #ifdef RGB_LED_CONTROL_INVERTED
-	GpioLedStateRed(1);
-	GpioLedStateGreen(1);
-	GpioLedStateBlue(1);
+	GpioLedStateRedSet(1);
+	GpioLedStateGreenSet(1);
+	GpioLedStateBlueSet(1);
 #else
-	GpioLedStateRed(0);
-	GpioLedStateGreen(0);
-	GpioLedStateBlue(0);
+	GpioLedStateRedSet(0);
+	GpioLedStateGreenSet(0);
+	GpioLedStateBlueSet(0);
 #endif
 }
 
@@ -147,91 +145,91 @@ static void IRgbLedColorSet(RgbLedColor_t color)
 		default:
 		case RGB_LED_COLOR_RED: {
 #ifdef RGB_LED_CONTROL_INVERTED
-			GpioLedStateRed(0);
-			GpioLedStateGreen(1);
-			GpioLedStateBlue(1);
+			GpioLedStateRedSet(0);
+			GpioLedStateGreenSet(1);
+			GpioLedStateBlueSet(1);
 #else
-			GpioLedStateRed(1);
-			GpioLedStateGreen(0);
-			GpioLedStateBlue(0);
+			GpioLedStateRedSet(1);
+			GpioLedStateGreenSet(0);
+			GpioLedStateBlueSet(0);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_GREEN: {
 #ifdef RGB_LED_CONTROL_INVERTED
-			GpioLedStateRed(1);
-			GpioLedStateGreen(0);
-			GpioLedStateBlue(1);
+			GpioLedStateRedSet(1);
+			GpioLedStateGreenSet(0);
+			GpioLedStateBlueSet(1);
 #else
-			GpioLedStateRed(0);
-			GpioLedStateGreen(1);
-			GpioLedStateBlue(0);
+			GpioLedStateRedSet(0);
+			GpioLedStateGreenSet(1);
+			GpioLedStateBlueSet(0);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_BLUE: {
 #ifdef RGB_LED_CONTROL_INVERTED
-			GpioLedStateRed(1);
-			GpioLedStateGreen(1);
-			GpioLedStateBlue(0);
+			GpioLedStateRedSet(1);
+			GpioLedStateGreenSet(1);
+			GpioLedStateBlueSet(0);
 #else
-			GpioLedStateRed(0);
-			GpioLedStateGreen(0);
-			GpioLedStateBlue(1);
+			GpioLedStateRedSet(0);
+			GpioLedStateGreenSet(0);
+			GpioLedStateBlueSet(1);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_VIOLET: {
 #ifdef RGB_LED_CONTROL_INVERTED
-			GpioLedStateRed(0);
-			GpioLedStateGreen(1);
-			GpioLedStateBlue(0);
+			GpioLedStateRedSet(0);
+			GpioLedStateGreenSet(1);
+			GpioLedStateBlueSet(0);
 #else
-			GpioLedStateRed(1);
-			GpioLedStateGreen(0);
-			GpioLedStateBlue(1);
+			GpioLedStateRedSet(1);
+			GpioLedStateGreenSet(0);
+			GpioLedStateBlueSet(1);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_YELLOW: {
 #ifdef RGB_LED_CONTROL_INVERTED
-			GpioLedStateRed(0);
-			GpioLedStateGreen(0);
-			GpioLedStateBlue(1);
+			GpioLedStateRedSet(0);
+			GpioLedStateGreenSet(0);
+			GpioLedStateBlueSet(1);
 #else
-			GpioLedStateRed(1);
-			GpioLedStateGreen(1);
-			GpioLedStateBlue(0);
+			GpioLedStateRedSet(1);
+			GpioLedStateGreenSet(1);
+			GpioLedStateBlueSet(0);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_AQUA: {
 #ifdef RGB_LED_CONTROL_INVERTED
-			GpioLedStateRed(1);
-			GpioLedStateGreen(0);
-			GpioLedStateBlue(0);
+			GpioLedStateRedSet(1);
+			GpioLedStateGreenSet(0);
+			GpioLedStateBlueSet(0);
 #else
-			GpioLedStateRed(0);
-			GpioLedStateGreen(1);
-			GpioLedStateBlue(1);
+			GpioLedStateRedSet(0);
+			GpioLedStateGreenSet(1);
+			GpioLedStateBlueSet(1);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_WHITE: {
 #ifdef RGB_LED_CONTROL_INVERTED
-			GpioLedStateRed(0);
-			GpioLedStateGreen(0);
-			GpioLedStateBlue(0);
+			GpioLedStateRedSet(0);
+			GpioLedStateGreenSet(0);
+			GpioLedStateBlueSet(0);
 #else
-			GpioLedStateRed(1);
-			GpioLedStateGreen(1);
-			GpioLedStateBlue(1);
+			GpioLedStateRedSet(1);
+			GpioLedStateGreenSet(1);
+			GpioLedStateBlueSet(1);
 #endif
 			break;
 		}
