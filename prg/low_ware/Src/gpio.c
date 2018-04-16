@@ -41,11 +41,7 @@
 #include "gpio.h"
 /* USER CODE BEGIN 0 */
 
-/* RGB LED GPIO. */
-#define LED_RED_PIN 	GPIO_PIN_7
-#define LED_GREEN_PIN 	GPIO_PIN_6
-#define LED_BLUE_PIN 	GPIO_PIN_8
-#define LED_PORT 		GPIOC
+
 /* USER CODE END 0 */
 
 /*----------------------------------------------------------------------------*/
@@ -80,40 +76,62 @@ void GpioLedInit(void)
 {
 	GPIO_InitTypeDef gpio_init;
 
-	gpio_init.Pin = LED_RED_PIN | LED_GREEN_PIN | LED_BLUE_PIN;
+	gpio_init.Pin = GPIO_PIN_LED_RED | GPIO_PIN_LED_GREEN | GPIO_PIN_LED_BLUE;
 	gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
 	gpio_init.Pull = GPIO_NOPULL;
 	gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
 
-	HAL_GPIO_Init(LED_PORT, &gpio_init);
+	HAL_GPIO_Init(GPIO_PORT_LED, &gpio_init);
 }
 
-void GpioLedStateRed(int state)
+void GpioLedStateRedSet(int state)
 {
 	if(state) {
-		HAL_GPIO_WritePin(LED_PORT, LED_RED_PIN, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED_RED, GPIO_PIN_SET);
 	} else {
-		HAL_GPIO_WritePin(LED_PORT, LED_RED_PIN, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED_RED, GPIO_PIN_RESET);
 	}
 }
 
-void GpioLedStateGreen(int state)
+void GpioLedStateGreenSet(int state)
 {
 	if(state) {
-		HAL_GPIO_WritePin(LED_PORT, LED_GREEN_PIN, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED_GREEN, GPIO_PIN_SET);
 	} else {
-		HAL_GPIO_WritePin(LED_PORT, LED_GREEN_PIN, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED_GREEN, GPIO_PIN_RESET);
 	}
 }
 
-void GpioLedStateBlue(int state)
+void GpioLedStateBlueSet(int state)
 {
 	if(state) {
-		HAL_GPIO_WritePin(LED_PORT, LED_BLUE_PIN, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED_BLUE, GPIO_PIN_SET);
 	} else {
-		HAL_GPIO_WritePin(LED_PORT, LED_BLUE_PIN, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED_BLUE, GPIO_PIN_RESET);
 	}
 }
+
+void GpioPumpInit(void)
+{
+	GPIO_InitTypeDef gpio_init;
+
+	gpio_init.Pin = GPIO_PIN_PUMP;
+	gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
+	gpio_init.Pull = GPIO_NOPULL;
+	gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
+
+	HAL_GPIO_Init(GPIO_PORT_PUMP, &gpio_init);
+}
+
+void GpioPumpStateSet(int state)
+{
+	if(state) {
+		HAL_GPIO_WritePin(GPIO_PORT_PUMP, GPIO_PIN_PUMP, GPIO_PIN_SET);
+	} else {
+		HAL_GPIO_WritePin(GPIO_PORT_PUMP, GPIO_PIN_PUMP, GPIO_PIN_RESET);
+	}
+}
+
 
 /* USER CODE END 2 */
 
