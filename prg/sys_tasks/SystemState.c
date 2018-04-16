@@ -17,6 +17,10 @@ struct SystemStateTrigger {
 	SystemState_t goto_state;
 };
 
+static SystemState_t PreviousState;
+static SystemState_t CurrentState;
+static SystemState_t NextState;
+
 struct SystemStateTrigger triggers[SYSTEM_STATE_N_TRIGGERS];
 
 static SystemStateTrigger_t ITriggerGet(void);
@@ -24,8 +28,20 @@ static SystemStateTrigger_t ITriggerGet(void);
 void SysTaskSystemState(const void *p_args, U32_t v_arg)
 {
 	TASK_INIT_BEGIN() {
-
+		TaskPollAdd(MboxTriggers, MAILBOX_EVENT_POST_ALL, OS_TIMEOUT_NONE);
 	} TASK_INIT_END();
+
+	U8_t data;
+
+	if(TaskPoll(MboxTriggers, MAILBOX_EVENT_POST_ALL, OS_TIMEOUT_NONE, false) == OS_RES_EVENT) {
+		for(U8_t i = 0; i < SYSTEM_STATE_N_TRIGGERS; i++) {
+			if(MailboxPendCounterGet(MboxTriggers, triggers[i].mbox_address) == OS_RES_OK) {
+				//if()
+			}
+			//MailboxPend(MboxTriggers, triggers[i].mbox_address, &data, OS_TIMEOUT_NONE) == OS_RES
+		}
+	}
+
 }
 
 SysTaskResult_t SysTaskSystemStateInit(void)
@@ -44,6 +60,20 @@ SysTaskResult_t SysTaskSystemStateInit(void)
 
 	if(MboxTriggers != OS_ID_INVALID) {
 		res = SYS_TASK_OK;
+	}
+
+	return res;
+}
+
+SysTaskResult_t SystemStateCallbackOnEnterSet(SystemState_t state, Id_t handle_task_id)
+{
+	SysTaskResult_t res = SYS_TASK_ERR;
+
+	if(state < SYS_STATE_INVALID) {
+		if(SystemStateSpec[(uint)state].handle_task_id == OS_ID_INVALID) {
+			SystemStateSpec[(uint)state].handle_task_id = handle_task_id;
+			res = SYS_TASK_OK;
+		}
 	}
 
 	return res;

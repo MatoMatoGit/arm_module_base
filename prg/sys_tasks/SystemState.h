@@ -11,6 +11,7 @@
 #include "SysTaskCommon.h"
 
 #include <Types.h>
+#include <stdlib.h>
 
 #define SYSTEM_STATE_N_TRIGGERS 5 /* Max. 254. */
 
@@ -28,21 +29,22 @@ typedef enum {
 
 typedef struct {
 	const SystemState_t state;
+	Id_t handle_task_id;
 
 	const SystemState_t allowed_states[SYS_STATE_INVALID];
 	const U8_t n_allowed_states;
 }SystemStateSpec_t;
 
-const SystemStateSpec_t SystemStateSpec[SYS_STATE_INVALID] = {
-		{SYS_STATE_INITIALIZATION,
+SystemStateSpec_t SystemStateSpec[SYS_STATE_INVALID] = {
+		{SYS_STATE_INITIALIZATION, OS_ID_INVALID,
 				{SYS_STATE_IDLE}, 1},
-		{SYS_STATE_IDLE,
+		{SYS_STATE_IDLE, OS_ID_INVALID,
 				{SYS_STATE_IDLE, SYS_STATE_RUNNING, SYS_STATE_CONNECTED, SYS_STATE_PUMPING}, 4},
-		{SYS_STATE_RUNNING,
+		{SYS_STATE_RUNNING, OS_ID_INVALID,
 				{SYS_STATE_RUNNING, SYS_STATE_IDLE, SYS_STATE_CONNECTED, SYS_STATE_PUMPING}, 4},
-		{SYS_STATE_CONNECTED,
+		{SYS_STATE_CONNECTED, OS_ID_INVALID,
 				{SYS_STATE_IDLE, SYS_STATE_RUNNING}, 2},
-		{SYS_STATE_PUMPING,
+		{SYS_STATE_PUMPING, OS_ID_INVALID,
 				{SYS_STATE_PUMPING, SYS_STATE_RUNNING}, 2}
 };
 
@@ -50,6 +52,8 @@ Id_t TidSystemState;
 void SysTaskSystemState(const void *p_args, U32_t v_arg);
 
 SysTaskResult_t SysTaskSystemStateInit(void);
+
+SysTaskResult_t SystemStateCallbackOnEnterSet(SystemState_t state, Id_t handle_task_id);
 
 SysTaskResult_t SystemStateTrigger(SystemStateTrigger_t trig, U8_t data);
 
