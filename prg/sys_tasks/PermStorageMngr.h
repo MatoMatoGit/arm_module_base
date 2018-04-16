@@ -15,6 +15,8 @@
 #define PERM_STORAGE_USER_DATA_SIZE_BYTES	0x00000400
 #define PERM_STORAGE_LOG_SIZE_BYTES			0x00000400
 
+#define PERM_STORAGE_N_STREAMS	1
+
 struct PermStorageDesc;
 typedef struct PermStorageDesc * PermStorageHandle_t;
 
