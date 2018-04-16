@@ -46,7 +46,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
-#include "main.h"
+#include <stdint.h>
 
 /* USER CODE BEGIN Includes */
 
@@ -77,6 +77,11 @@ void GpioLedStateBlueSet(int state);
 void GpioPumpInit(void);
 void GpioPumpStateSet(int state);
 
+#define GPIO_PIN_BUTTON_TEST	GPIO_PIN_0
+#define GPIO_PORT_BUTTON		GPIOA
+
+void GpioButtonInit(void);
+uint8_t GpioButtonStateGet(uint16_t pin);
 
 /* USER CODE END Prototypes */
 

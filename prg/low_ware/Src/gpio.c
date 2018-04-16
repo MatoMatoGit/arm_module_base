@@ -132,6 +132,30 @@ void GpioPumpStateSet(int state)
 	}
 }
 
+void GpioButtonInit(void)
+{
+	GPIO_InitTypeDef gpio_init;
+
+	gpio_init.Pin = GPIO_PIN_BUTTON_TEST;
+	gpio_init.Mode = GPIO_MODE_INPUT;
+	gpio_init.Pull = GPIO_NOPULL;
+	gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
+
+	HAL_GPIO_Init(GPIO_PORT_BUTTON, &gpio_init);
+}
+
+
+uint8_t GpioButtonStateGet(uint16_t pin)
+{
+
+	if(HAL_GPIO_ReadPin(GPIO_PORT_BUTTON, pin) == GPIO_PIN_SET) {
+		return 1;
+	} else {
+		return 0;
+	}
+
+}
+
 
 /* USER CODE END 2 */
 
