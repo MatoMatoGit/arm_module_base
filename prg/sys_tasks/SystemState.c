@@ -79,7 +79,7 @@ SysTaskResult_t SystemStateCallbackOnEnterSet(SystemState_t state, Id_t handle_t
 	return res;
 }
 
-SysTaskResult_t SystemStateTrigger(SystemStateTrigger_t trig, U8_t data)
+SysTaskResult_t SystemStateSet(SystemStateTrigger_t trig, U8_t data)
 {
 	SysTaskResult_t res = SYS_TASK_ERR;
 
@@ -90,6 +90,11 @@ SysTaskResult_t SystemStateTrigger(SystemStateTrigger_t trig, U8_t data)
 	}
 
 	return res;
+}
+
+SystemState_t SystemStateGet(void)
+{
+	return CurrentState;
 }
 
 SystemStateTrigger_t SystemStateTriggerRegister(SystemState_t goto_state)
