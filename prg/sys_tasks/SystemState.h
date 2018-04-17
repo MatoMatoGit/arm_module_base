@@ -10,6 +10,8 @@
 
 #include "SysTaskCommon.h"
 
+#include "rgb_led.h"
+
 #include <Types.h>
 #include <stdlib.h>
 
@@ -30,6 +32,8 @@ typedef enum {
 typedef struct {
 	const SystemState_t state;
 	Id_t handle_task_id;
+	RgbLedColor_t color;
+
 
 	const SystemState_t allowed_states[SYS_STATE_INVALID];
 	const U8_t n_allowed_states;
@@ -55,7 +59,9 @@ SysTaskResult_t SysTaskSystemStateInit(void);
 
 SysTaskResult_t SystemStateCallbackOnEnterSet(SystemState_t state, Id_t handle_task_id);
 
-SysTaskResult_t SystemStateTrigger(SystemStateTrigger_t trig, U8_t data);
+SysTaskResult_t SystemStateSet(SystemStateTrigger_t trig, U8_t data);
+
+SystemState_t SystemStateGet(void);
 
 SystemStateTrigger_t SystemStateTriggerRegister(SystemState_t goto_state);
 
