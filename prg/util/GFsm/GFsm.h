@@ -15,7 +15,10 @@ typedef enum {
 	SYS_STATE_IDLE,
 	SYS_STATE_RUNNING,
 	SYS_STATE_CONNECTED,
+	SYS_STATE_TRANSFER,
 	SYS_STATE_PUMPING,
+	SYS_STATE_ERROR,
+	SYS_STATE_CRIT_ERROR,
 	FSM_STATE_NUM /* Must be the last in the enum. */
 }FsmState_t;
 
@@ -39,7 +42,15 @@ typedef struct {
 }FsmStateSpec_t;
 
 
-struct GFsm;
+struct GFsm {
+	FsmStateSpec_t *SystemStateSpec;
+	uint8_t n_states;
+
+	FsmState_t prev_state;
+	FsmState_t current_state;
+	FsmState_t next_state;
+};
+
 typedef struct GFsm GFsm_t;
 
 /* OK if successful, ERR if fsm = NULL, state_spec = NULL or n_states = 0. */

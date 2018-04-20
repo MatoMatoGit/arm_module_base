@@ -11,15 +11,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-struct GFsm {
-	FsmStateSpec_t *SystemStateSpec;
-	uint8_t n_states;
-
-	FsmState_t prev_state;
-	FsmState_t current_state;
-	FsmState_t next_state;
-};
-
 static int IStateTransitionIsAllowed(GFsm_t *fsm, FsmState_t new_state);
 static void IFsmTransition(GFsm_t *fsm);
 
