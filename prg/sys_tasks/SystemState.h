@@ -8,18 +8,12 @@
 #ifndef SYSTEM_STATE_H_
 #define SYSTEM_STATE_H_
 
-#include "SysTaskCommon.h"
-
-#include "rgb_led.h"
-
-#include <Types.h>
 #include <stdlib.h>
 
-#define SYSTEM_STATE_N_TRIGGERS 5 /* Max. 254. */
+#define SYSTEM_STATUS_BLINK_FAST_INTERVAL_MS 100
+#define SYSTEM_STATUS_BLINK_SLOW_INTERVAL_MS 800
 
-struct SystemStateTrigger;
-typedef struct SystemStateTrigger * SystemStateTrigger_t;
-
+void SysStateInitOnEnter(FsmState_t prev_state, FsmState_t new_state);
 
 
 #endif /* SYSTEM_STATE_H_ */
