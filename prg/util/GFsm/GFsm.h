@@ -4,23 +4,15 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "FsmState.h"
+
 /* Generic Finite State Machine lib. */
 
 #define GFSM_OK 0
 #define GFSM_FAIL -1
 #define GFSM_ERR -2
 
-typedef enum {
-	SYS_STATE_INITIALIZATION = 0, /* Must be 0. */
-	SYS_STATE_IDLE,
-	SYS_STATE_RUNNING,
-	SYS_STATE_CONNECTED,
-	SYS_STATE_TRANSFER,
-	SYS_STATE_PUMPING,
-	SYS_STATE_ERROR,
-	SYS_STATE_CRIT_ERROR,
-	FSM_STATE_NUM /* Must be the last in the enum. */
-}FsmState_t;
+
 
 typedef void (*FsmCallbackOnStateEnter_t)(FsmState_t prev_state, FsmState_t new_state);
 typedef void (*FsmCallbackOnStateExit_t)(FsmState_t curr_state, FsmState_t new_state);
