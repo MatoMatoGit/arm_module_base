@@ -11,9 +11,6 @@
 #include "GFsm.h"
 #include "rgb_led.h"
 
-
-
-
 FsmStateSpec_t SystemStateSpec[FSM_STATE_NUM] = {
 	{
 		.state = SYS_STATE_INITIALIZATION,
@@ -101,13 +98,53 @@ StatusLedMap_t StatusLedMaps[FSM_STATE_NUM] = {
 		}
 };
 
-GFsm_t fsm;
+static GFsm_t Fsm;
+static Id_t TskFsm;
+static Id_t EvgFsm;
+
+#define EVG_FLAG_TRANSITION 0x01
+
+void SysTaskFsm(const void *p_args, U32_t v_arg);
 
 int SystemStateInit(void)
 {
-	GFsmInit(&fsm, SystemStateSpec, FSM_STATE_NUM, SYS_STATE_INITIALIZATION);
+	int res = GFsmInit(&Fsm, SystemStateSpec, FSM_STATE_NUM, SYS_STATE_INITIALIZATION);
+
+	if(res == SYSTEM_STATE_OK) {
+		res = SYSTEM_STATE_ERR;
+
+		TskFsm = TaskCreate(SysTaskFsm, TASK_CAT_HIGH, 5, 0, 0, NULL);
+		EvgFsm = EventgroupCreate();
+		if(TskFsm != OS_ID_INVALID && EvgFsm != OS_ID_INVALID) {
+			res = SYSTEM_STATE_OK;
+		}
+	}
+
+	return res;
 }
 
+void SysTaskFsm(const void *p_args, U32_t v_arg)
+{
+	TASK_INIT_BEGIN() {
+
+	}TASK_INIT_END();
+
+	GFsmRun(&Fsm);
+
+	EventgroupRequireSet(EvgFsm, EVG_FLAG_TRANSITION, OS_TIMEOUT_INFINITE);
+}
+
+int SystemStateTransition(FsmState_t new_state)
+{
+	int res = SYSTEM_STATE_ERR;
+
+	res = GFsmTransition(&Fsm, new_state);
+	if(res == SYSTEM_STATE_ERR) {
+		EventgroupFlagSet(EvgFsm, EVG_FLAG_TRANSITION);
+	}
+
+	return res;
+}
 
 static void IStateInitOnEnter(FsmState_t prev_state, FsmState_t new_state)
 {
