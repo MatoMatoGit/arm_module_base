@@ -20,7 +20,7 @@ FsmStateSpec_t SystemStateSpec[FSM_STATE_NUM] = {
 		.n_allowed_states = 1,
 		.on_validate = StateInitOnValidate,
 		.on_guard = StateInitOnGuard,
-		.on_enter = IStateInitOnEnter,
+		.on_enter = StateInitOnEnter,
 		.on_exit = StateInitOnExit,
 	},
 	{
@@ -38,6 +38,61 @@ FsmStateSpec_t SystemStateSpec[FSM_STATE_NUM] = {
 		.on_guard = StateIdleOnGuard,
 		.on_enter = StateIdleOnEnter,
 		.on_exit = StateIdleOnExit,
+	},
+	{
+		.state = SYS_STATE_RUNNING,
+		.allowed_states = {
+							SYS_STATE_RUNNING,
+							SYS_STATE_IDLE,
+							SYS_STATE_PUMPING,
+							SYS_STATE_ERROR,
+							SYS_STATE_CRIT_ERROR
+						},
+		.n_allowed_states = 5,
+		.on_validate = StateRunningOnValidate,
+		.on_guard = StateRunningOnGuard,
+		.on_enter = StateRunningOnEnter,
+		.on_exit = StateRunningOnExit,
+	},
+	{
+		.state = SYS_STATE_CONNECTED,
+		.allowed_states = {
+							SYS_STATE_IDLE,
+							SYS_STATE_TRANSFER,
+							SYS_STATE_ERROR,
+							SYS_STATE_CRIT_ERROR
+						},
+		.n_allowed_states = 4,
+		.on_validate = StateConnectedOnValidate,
+		.on_guard = StateConnectedOnGuard,
+		.on_enter = StateConnectedOnEnter,
+		.on_exit = StateConnectedOnExit,
+	},
+	{
+		.state = SYS_STATE_TRANSFER,
+		.allowed_states = {
+							SYS_STATE_CONNECTED,
+							SYS_STATE_ERROR,
+							SYS_STATE_CRIT_ERROR
+						},
+		.n_allowed_states = 3,
+		.on_validate = StateTransferOnValidate,
+		.on_guard = StateTransferOnGuard,
+		.on_enter = StateTransferOnEnter,
+		.on_exit = StateTransferOnExit,
+	},
+	{
+		.state = SYS_STATE_PUMPING,
+		.allowed_states = {
+							SYS_STATE_RUNNING,
+							SYS_STATE_ERROR,
+							SYS_STATE_CRIT_ERROR
+						},
+		.n_allowed_states = 3,
+		.on_validate = StatePumpingOnValidate,
+		.on_guard = StatePumpingOnGuard,
+		.on_enter = StatePumpingOnEnter,
+		.on_exit = StatePumpingOnExit,
 	},
 };
 
@@ -146,42 +201,24 @@ int SystemStateTransition(FsmState_t new_state)
 	return res;
 }
 
-static void IStateInitOnEnter(FsmState_t prev_state, FsmState_t new_state)
+
+void __attribute__((weak)) StateInitOnEnter(FsmState_t prev_state, FsmState_t curr_state)
 {
 
 }
 
-void StateInitOnExit(FsmState_t prev_state, FsmState_t new_state)
+void __attribute__((weak)) StateInitOnExit(FsmState_t curr_state, FsmState_t next_state)
 {
 
 }
 
-bool StateInitOnGuard(FsmState_t prev_state, FsmState_t new_state)
-{
-	return true;
-}
-
-bool StateInitOnValidate(FsmState_t prev_state, FsmState_t new_state)
+bool __attribute__((weak)) StateInitOnGuard(FsmState_t curr_state, FsmState_t next_state)
 {
 	return true;
 }
 
-void StateIdleOnEnter(FsmState_t prev_state, FsmState_t new_state)
-{
-
-}
-
-void StateIdleOnExit(FsmState_t prev_state, FsmState_t new_state)
-{
-
-}
-
-bool Idle(FsmState_t prev_state, FsmState_t new_state)
+bool __attribute__((weak)) StateInitOnValidate(FsmState_t curr_state, FsmState_t next_state)
 {
 	return true;
 }
 
-bool StateIdleOnValidate(FsmState_t prev_state, FsmState_t new_state)
-{
-	return true;
-}
