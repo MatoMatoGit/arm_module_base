@@ -14,10 +14,10 @@
 
 
 
-typedef void (*FsmCallbackOnStateEnter_t)(FsmState_t prev_state, FsmState_t new_state);
-typedef void (*FsmCallbackOnStateExit_t)(FsmState_t curr_state, FsmState_t new_state);
-typedef bool (*FsmCallbackOnStateValidate_t)(FsmState_t curr_state, FsmState_t new_state);
-typedef bool (*FsmCallbackOnStateGuard_t)(FsmState_t curr_state, FsmState_t new_state);
+typedef void (*FsmCallbackOnStateEnter_t)(FsmState_t prev_state, FsmState_t curr_state);
+typedef void (*FsmCallbackOnStateExit_t)(FsmState_t curr_state, FsmState_t next_state);
+typedef bool (*FsmCallbackOnStateValidate_t)(FsmState_t curr_state, FsmState_t next_state);
+typedef bool (*FsmCallbackOnStateGuard_t)(FsmState_t curr_state, FsmState_t next_state);
 
 typedef struct {
 	const FsmState_t state;
