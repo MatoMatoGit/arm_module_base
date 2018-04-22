@@ -57,10 +57,11 @@ int GFsmTransition(GFsm_t *fsm, FsmState_t new_state)
 
 int GFsmRun(GFsm_t *fsm)
 {
-	int res = GFSM_FAIL;
+	int res = GFSM_ERR;
 
 	if(fsm->next_state != FSM_STATE_NUM)
 	{
+		res = GFSM_FAIL;
 		/* Only transition to the next state if the guard is evaluated as true or if it is non-existent. */
 		if(fsm->SystemStateSpec[(unsigned int)fsm->current_state].on_guard == NULL) {
 			IFsmTransition(fsm);
@@ -72,6 +73,38 @@ int GFsmRun(GFsm_t *fsm)
 	}
 
 	return res;
+}
+
+FsmState_t GFsmStateCurrentGet(GFsm_t *fsm)
+{
+	FsmState_t state = FSM_STATE_NUM;
+
+	if(fsm != NULL) {
+		state = fsm->current_state;
+	}
+
+	return state;
+}
+FsmState_t GFsmStateNextGet(GFsm_t *fsm)
+{
+	FsmState_t state = FSM_STATE_NUM;
+
+	if(fsm != NULL) {
+		state = fsm->next_state;
+	}
+
+	return state;
+}
+
+FsmState_t GFsmStatePrevGet(GFsm_t *fsm)
+{
+	FsmState_t state = FSM_STATE_NUM;
+
+	if(fsm != NULL) {
+		state = fsm->prev_state;
+	}
+
+	return state;
 }
 
 /***** Internal functions. *****/

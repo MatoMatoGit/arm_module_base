@@ -57,4 +57,11 @@ int GFsmTransition(GFsm_t *fsm, FsmState_t new_state);
  * FAIL if the guard for the next state was not evaluated as true. */
 int GFsmRun(GFsm_t *fsm);
 
+FsmState_t GFsmStateCurrentGet(GFsm_t *fsm);
+
+FsmState_t GFsmStateNextGet(GFsm_t *fsm);
+
+FsmState_t GFsmStatePrevGet(GFsm_t *fsm);
+
+
 #endif /* GFSM_H_ */
