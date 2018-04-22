@@ -102,10 +102,10 @@ FsmStateSpec_t SystemStateSpec[FSM_STATE_NUM] = {
 							SYS_STATE_CRIT_ERROR
 						},
 		.n_allowed_states = 2,
-		.on_validate = StatePumpingOnValidate,
-		.on_guard = StatePumpingOnGuard,
-		.on_enter = StatePumpingOnEnter,
-		.on_exit = StatePumpingOnExit,
+		.on_validate = StateErrorOnValidate,
+		.on_guard = StateErrorOnGuard,
+		.on_enter = StateErrorOnEnter,
+		.on_exit = StateErrorOnExit,
 	},
 	{
 		.state = SYS_STATE_CRIT_ERROR,
@@ -113,10 +113,10 @@ FsmStateSpec_t SystemStateSpec[FSM_STATE_NUM] = {
 							SYS_STATE_CRIT_ERROR
 						},
 		.n_allowed_states = 1,
-		.on_validate = StatePumpingOnValidate,
-		.on_guard = StatePumpingOnGuard,
-		.on_enter = StatePumpingOnEnter,
-		.on_exit = StatePumpingOnExit,
+		.on_validate = StateCritErrorOnValidate,
+		.on_guard = StateCritErrorOnGuard,
+		.on_enter = StateCritErrorOnEnter,
+		.on_exit = StateCritErrorOnExit,
 	},
 };
 
