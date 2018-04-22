@@ -60,4 +60,16 @@ void StatePumpingOnExit(FsmState_t curr_state, FsmState_t next_state);
 bool StatePumpingOnGuard(FsmState_t curr_state, FsmState_t next_state);
 bool StatePumpingOnValidate(FsmState_t curr_state, FsmState_t next_state);
 
+/* Error state. */
+void StateErrorOnEnter(FsmState_t prev_state, FsmState_t curr_state);
+void StateErrorOnExit(FsmState_t curr_state, FsmState_t next_state);
+bool StateErrorOnGuard(FsmState_t curr_state, FsmState_t next_state);
+bool StateErrorOnValidate(FsmState_t curr_state, FsmState_t next_state);
+
+/* Critical Error state. */
+void StateCritErrorOnEnter(FsmState_t prev_state, FsmState_t curr_state);
+void StateCritErrorOnExit(FsmState_t curr_state, FsmState_t next_state);
+bool StateCritErrorOnGuard(FsmState_t curr_state, FsmState_t next_state);
+bool StateCritErrorOnValidate(FsmState_t curr_state, FsmState_t next_state);
+
 #endif /* SYSTEM_STATE_H_ */
