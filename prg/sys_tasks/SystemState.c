@@ -293,3 +293,160 @@ bool __attribute__((weak)) StateInitOnValidate(FsmState_t curr_state, FsmState_t
 {
 	return true;
 }
+
+
+/* Idle state callbacks. */
+
+void __attribute__((weak)) StateIdleOnEnter(FsmState_t prev_state, FsmState_t curr_state)
+{
+
+}
+
+void __attribute__((weak)) StateIdleOnExit(FsmState_t curr_state, FsmState_t next_state)
+{
+
+}
+
+bool __attribute__((weak)) StateIdleOnGuard(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+bool __attribute__((weak)) StateIdleOnValidate(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+
+/* Running state callbacks. */
+
+void __attribute__((weak)) StateRunningOnEnter(FsmState_t prev_state, FsmState_t curr_state)
+{
+
+}
+
+void __attribute__((weak)) StateRunningOnExit(FsmState_t curr_state, FsmState_t next_state)
+{
+
+}
+
+bool __attribute__((weak)) StateRunningOnGuard(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+bool __attribute__((weak)) StateRunningOnValidate(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+
+/* Connected state callbacks. */
+
+void __attribute__((weak)) StateConnectedOnEnter(FsmState_t prev_state, FsmState_t curr_state)
+{
+
+}
+
+void __attribute__((weak)) StateConnectedOnExit(FsmState_t curr_state, FsmState_t next_state)
+{
+
+}
+
+bool __attribute__((weak)) StateConnectedOnGuard(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+bool __attribute__((weak)) StateConnectedOnValidate(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+/* Transfer state callbacks. */
+
+void __attribute__((weak)) StateTransferOnEnter(FsmState_t prev_state, FsmState_t curr_state)
+{
+
+}
+
+void __attribute__((weak)) StateTransferOnExit(FsmState_t curr_state, FsmState_t next_state)
+{
+
+}
+
+bool __attribute__((weak)) StateTransferOnGuard(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+bool __attribute__((weak)) StateTransferOnValidate(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+/* Pumping state callbacks. */
+
+void __attribute__((weak)) StatePumpingOnEnter(FsmState_t prev_state, FsmState_t curr_state)
+{
+
+}
+
+void __attribute__((weak)) StatePumpingOnExit(FsmState_t curr_state, FsmState_t next_state)
+{
+
+}
+
+bool __attribute__((weak)) StatePumpingOnGuard(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+bool __attribute__((weak)) StatePumpingOnValidate(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+/* Error state callbacks. */
+
+void __attribute__((weak)) StateErrorOnEnter(FsmState_t prev_state, FsmState_t curr_state)
+{
+
+}
+
+void __attribute__((weak)) StateErrorOnExit(FsmState_t curr_state, FsmState_t next_state)
+{
+
+}
+
+bool __attribute__((weak)) StateErrorOnGuard(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+bool __attribute__((weak)) StateErrorOnValidate(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+/* Critical Error state callbacks. */
+
+void __attribute__((weak)) StateCritErrorOnEnter(FsmState_t prev_state, FsmState_t curr_state)
+{
+
+}
+
+void __attribute__((weak)) StateCritErrorOnExit(FsmState_t curr_state, FsmState_t next_state)
+{
+
+}
+
+bool __attribute__((weak)) StateCritErrorOnGuard(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
+
+bool __attribute__((weak)) StateCritErrorOnValidate(FsmState_t curr_state, FsmState_t next_state)
+{
+	return true;
+}
