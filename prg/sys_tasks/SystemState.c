@@ -238,6 +238,11 @@ int SystemStateTransition(FsmState_t new_state)
 	return res;
 }
 
+FsmState_t SystemStateGet(void)
+{
+	return GFsmStateCurrentGet(&Fsm);
+}
+
 /***** Internal functions. *****/
 
 static void IStatusLedSet(FsmState_t state)
