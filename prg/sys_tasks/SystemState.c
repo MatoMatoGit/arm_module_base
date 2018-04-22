@@ -94,6 +94,30 @@ FsmStateSpec_t SystemStateSpec[FSM_STATE_NUM] = {
 		.on_enter = StatePumpingOnEnter,
 		.on_exit = StatePumpingOnExit,
 	},
+	{
+		.state = SYS_STATE_ERROR,
+		.allowed_states = {
+							SYS_STATE_IDLE,
+							SYS_STATE_ERROR,
+							SYS_STATE_CRIT_ERROR
+						},
+		.n_allowed_states = 2,
+		.on_validate = StatePumpingOnValidate,
+		.on_guard = StatePumpingOnGuard,
+		.on_enter = StatePumpingOnEnter,
+		.on_exit = StatePumpingOnExit,
+	},
+	{
+		.state = SYS_STATE_CRIT_ERROR,
+		.allowed_states = {
+							SYS_STATE_CRIT_ERROR
+						},
+		.n_allowed_states = 1,
+		.on_validate = StatePumpingOnValidate,
+		.on_guard = StatePumpingOnGuard,
+		.on_enter = StatePumpingOnEnter,
+		.on_exit = StatePumpingOnExit,
+	},
 };
 
 typedef enum {
@@ -160,6 +184,7 @@ static Id_t EvgFsm;
 #define EVG_FLAG_TRANSITION 0x01
 
 void SysTaskFsm(const void *p_args, U32_t v_arg);
+static void IStatusLedSet(FsmState_t state);
 
 int SystemStateInit(void)
 {
@@ -181,10 +206,19 @@ int SystemStateInit(void)
 void SysTaskFsm(const void *p_args, U32_t v_arg)
 {
 	TASK_INIT_BEGIN() {
-
+		RgbLedInit();
 	}TASK_INIT_END();
 
-	GFsmRun(&Fsm);
+	int fsm_res = GFSM_ERR;
+
+	fsm_res = GFsmRun(&Fsm);
+
+	if(fsm_res == GFSM_ERR) {
+		LOG_ERROR_NEWLINE("FSM next state not set.");
+		while(1);
+	}
+
+	IStatusLedSet(GFsmStateCurrentGet(&fsm));
 
 	EventgroupRequireSet(EvgFsm, EVG_FLAG_TRANSITION, OS_TIMEOUT_INFINITE);
 }
@@ -194,13 +228,51 @@ int SystemStateTransition(FsmState_t new_state)
 	int res = SYSTEM_STATE_ERR;
 
 	res = GFsmTransition(&Fsm, new_state);
-	if(res == SYSTEM_STATE_ERR) {
+	if(res == SYSTEM_STATE_OK) {
 		EventgroupFlagSet(EvgFsm, EVG_FLAG_TRANSITION);
+	} else if(res == SYSTEM_STATE_ERR) {
+		LOG_ERROR_NEWLINE("Illegal state.");
+		while(1);
 	}
 
 	return res;
 }
 
+/***** Internal functions. *****/
+
+static void IStatusLedSet(FsmState_t state)
+{
+	StatusLedMap_t map = StatusLedMaps[(unsigned int)state];
+
+	RgbLedColorSet(map.led_color);
+
+	switch(map.led_mode) {
+		default:
+		case STATUS_LED_MODE_OFF: {
+			RgbLedModeSet(RGB_LED_MODE_OFF);
+			break;
+		}
+		case STATUS_LED_MODE_CONSTANT_ON: {
+			RgbLedModeSet(RGB_LED_MODE_ON);
+			break;
+		}
+		case STATUS_LED_MODE_BLINK_SLOW: {
+			RgbLedBlinkIntervalSet(SYSTEM_STATUS_BLINK_SLOW_INTERVAL_MS);
+			RgbLedModeSet(RGB_LED_MODE_BLINK);
+			break;
+		}
+		case STATUS_LED_MODE_BLINK_FAST: {
+			RgbLedBlinkIntervalSet(SYSTEM_STATUS_BLINK_FAST_INTERVAL_MS);
+			RgbLedModeSet(RGB_LED_MODE_BLINK);
+			break;
+		}
+	}
+}
+
+/***** Default state callbacks. *****/
+
+
+/* Init state callbacks. */
 
 void __attribute__((weak)) StateInitOnEnter(FsmState_t prev_state, FsmState_t curr_state)
 {
@@ -221,4 +293,3 @@ bool __attribute__((weak)) StateInitOnValidate(FsmState_t curr_state, FsmState_t
 {
 	return true;
 }
-
