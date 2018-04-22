@@ -19,10 +19,27 @@
 #define SYSTEM_STATE_FAIL	GFSM_FAIL
 #define SYSTEM_STATE_ERR	GFSM_OK
 
+/* Initializes the FSM and System State task.
+ * Returns SYSTEM_STATE_OK if successful.
+ * */
 int SystemStateInit(void);
+
+/* Attempt to transition the FSM to the new state.
+ * The transition will take place when the System State
+ * task is run.
+ * Returns SYSTEM_STATE_OK if successful.
+ * Returns SYSTEM_STATE_FAIL if a new state has
+ * already been set.
+ * Returns SYSTEM_STATE_ERR if the new state is
+ * illegal in the current state.
+ * */
 int SystemStateTransition(FsmState_t new_state);
 
-/* State Callbacks. */
+/* Return the current system state. */
+FsmState_t SystemStateGet(void);
+
+
+/* State Callbacks. Each of these prototypes has a weak implementation. */
 
 /* Initialization state. */
 void StateInitOnEnter(FsmState_t prev_state, FsmState_t curr_state);
