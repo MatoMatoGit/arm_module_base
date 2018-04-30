@@ -7,6 +7,7 @@
 
 #include "SystemState.h"
 
+#include "PriorRTOS.h"
 
 #include "GFsm.h"
 #include "rgb_led.h"
@@ -193,7 +194,7 @@ int SystemStateInit(void)
 	if(res == SYSTEM_STATE_OK) {
 		res = SYSTEM_STATE_ERR;
 
-		TskFsm = TaskCreate(SysTaskFsm, TASK_CAT_HIGH, 5, 0, 0, NULL);
+		TskFsm = TaskCreate(SysTaskFsm, TASK_CAT_HIGH, 5, TASK_PARAM_ESSENTIAL | TASK_PARAM_START, 0, NULL, 0);
 		EvgFsm = EventgroupCreate();
 		if(TskFsm != OS_ID_INVALID && EvgFsm != OS_ID_INVALID) {
 			res = SYSTEM_STATE_OK;
@@ -218,7 +219,7 @@ void SysTaskFsm(const void *p_args, U32_t v_arg)
 		while(1);
 	}
 
-	IStatusLedSet(GFsmStateCurrentGet(&fsm));
+	IStatusLedSet(GFsmStateCurrentGet(&Fsm));
 
 	EventgroupRequireSet(EvgFsm, EVG_FLAG_TRANSITION, OS_TIMEOUT_INFINITE);
 }
