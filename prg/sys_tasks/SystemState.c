@@ -221,7 +221,7 @@ void SysTaskFsm(const void *p_args, U32_t v_arg)
 
 	IStatusLedSet(GFsmStateCurrentGet(&Fsm));
 
-	EventgroupRequireSet(EvgFsm, EVG_FLAG_TRANSITION, OS_TIMEOUT_INFINITE);
+	EventgroupFlagsRequireSet(EvgFsm, EVG_FLAG_TRANSITION, OS_TIMEOUT_INFINITE);
 }
 
 int SystemStateTransition(FsmState_t new_state)
@@ -230,7 +230,7 @@ int SystemStateTransition(FsmState_t new_state)
 
 	res = GFsmTransition(&Fsm, new_state);
 	if(res == SYSTEM_STATE_OK) {
-		EventgroupFlagSet(EvgFsm, EVG_FLAG_TRANSITION);
+		EventgroupFlagsSet(EvgFsm, EVG_FLAG_TRANSITION);
 	} else if(res == SYSTEM_STATE_ERR) {
 		LOG_ERROR_NEWLINE("Illegal state.");
 		while(1);
