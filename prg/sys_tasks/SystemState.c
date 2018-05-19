@@ -187,17 +187,16 @@ static Id_t EvgFsm;
 void SysTaskFsm(const void *p_args, U32_t v_arg);
 static void IStatusLedSet(FsmState_t state);
 
-int SystemStateInit(void)
+SysResult_t SystemStateInit(void)
 {
-	int res = GFsmInit(&Fsm, SystemStateSpec, FSM_STATE_NUM, SYS_STATE_INITIALIZATION);
+	SysResult_t res = SYS_RESULT_ERROR;
 
-	if(res == SYSTEM_STATE_OK) {
-		res = SYSTEM_STATE_ERR;
+	if(GFsmInit(&Fsm, SystemStateSpec, FSM_STATE_NUM, SYS_STATE_INITIALIZATION) == GFSM_OK) {
 
 		TskFsm = TaskCreate(SysTaskFsm, TASK_CAT_HIGH, 5, TASK_PARAM_ESSENTIAL | TASK_PARAM_START, 0, NULL, 0);
 		EvgFsm = EventgroupCreate();
-		if(TskFsm != OS_ID_INVALID && EvgFsm != OS_ID_INVALID) {
-			res = SYSTEM_STATE_OK;
+		if(TskFsm != ID_INVALID && EvgFsm != ID_INVALID) {
+			res = SYS_RESULT_OK;
 		}
 	}
 
@@ -215,7 +214,7 @@ void SysTaskFsm(const void *p_args, U32_t v_arg)
 	fsm_res = GFsmRun(&Fsm);
 
 	if(fsm_res == GFSM_ERR) {
-		LOG_ERROR_NEWLINE("FSM next state not set.");
+		LOG_ERROR_NEWLINE("FSM transition error.");
 		while(1);
 	}
 
@@ -224,16 +223,16 @@ void SysTaskFsm(const void *p_args, U32_t v_arg)
 	EventgroupFlagsRequireSet(EvgFsm, EVG_FLAG_TRANSITION, OS_TIMEOUT_INFINITE);
 }
 
-int SystemStateTransition(FsmState_t new_state)
+SysResult_t SystemStateTransition(FsmState_t new_state)
 {
-	int res = SYSTEM_STATE_ERR;
+	SysResult_t res = SYS_RESULT_ERROR;
 
-	res = GFsmTransition(&Fsm, new_state);
-	if(res == SYSTEM_STATE_OK) {
-		EventgroupFlagsSet(EvgFsm, EVG_FLAG_TRANSITION);
-	} else if(res == SYSTEM_STATE_ERR) {
+	if(GFsmTransition(&Fsm, new_state) == GFSM_ERR) {
 		LOG_ERROR_NEWLINE("Illegal state.");
 		while(1);
+	} else {
+		res = SYS_RESULT_OK;
+		EventgroupFlagsSet(EvgFsm, EVG_FLAG_TRANSITION);
 	}
 
 	return res;

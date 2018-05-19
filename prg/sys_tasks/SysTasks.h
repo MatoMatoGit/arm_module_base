@@ -8,17 +8,16 @@
 #ifndef SYS_TASKS_H_
 #define SYS_TASKS_H_
 
-#include "SysTaskCommon.h"
 #include "PermStorageMngr.h"
 #include "SystemState.h"
 
-SysTaskResult_t SysTasksInit(void)
+SysResult_t SysTasksInit(void)
 {
-	SysTaskResult_t res = SYS_TASK_ERR;
+	SysResult_t res = SYS_RESULT_ERROR;
 
 	res = SysTaskPermStorageMngrInit();
 
-	if(res == SYS_TASK_OK) {
+	if(res == SYS_RESULT_OK) {
 		res = SysTaskSystemStateInit();
 	}
 

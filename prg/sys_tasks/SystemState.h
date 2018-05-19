@@ -9,20 +9,17 @@
 #define SYSTEM_STATE_H_
 
 #include "GFsm.h"
+#include "SystemResult.h"
 
 #include <stdlib.h>
 
 #define SYSTEM_STATUS_BLINK_FAST_INTERVAL_MS 100
 #define SYSTEM_STATUS_BLINK_SLOW_INTERVAL_MS 800
 
-#define SYSTEM_STATE_OK		GFSM_OK
-#define SYSTEM_STATE_FAIL	GFSM_FAIL
-#define SYSTEM_STATE_ERR	GFSM_OK
-
 /* Initializes the FSM and System State task.
  * Returns SYSTEM_STATE_OK if successful.
  * */
-int SystemStateInit(void);
+SysResult_t SystemStateInit(void);
 
 /* Attempt to transition the FSM to the new state.
  * The transition will take place when the System State
@@ -33,7 +30,7 @@ int SystemStateInit(void);
  * Returns SYSTEM_STATE_ERR if the new state is
  * illegal in the current state.
  * */
-int SystemStateTransition(FsmState_t new_state);
+SysResult_t SystemStateTransition(FsmState_t new_state);
 
 /* Return the current system state. */
 FsmState_t SystemStateGet(void);

@@ -14,10 +14,10 @@
 
 __attribute__((__section__(".user_data"))) const uint8_t LogData[PERM_STORAGE_LOG_SIZE_BYTES];
 
-SysTaskResult_t SysTaskPermStorageMngrInit(void)
+SysResult_t SysTaskPermStorageMngrInit(void)
 {
 
-	return SYS_TASK_OK;
+	return SYS_RESULT_OK;
 }
 
 void SysTaskPermStorageMngr(const void *p_args, U32_t v_arg)
