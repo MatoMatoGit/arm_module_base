@@ -65,8 +65,8 @@ void MX_RTC_Init(void)
     /**Initialize RTC and set the Time and Date 
     */
   if(HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) != 0x32F2){
-  sTime.Hours = 0x3;
-  sTime.Minutes = 0x6;
+  sTime.Hours = 0x0;
+  sTime.Minutes = 0x0;
   sTime.Seconds = 0x0;
 
   if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
@@ -106,6 +106,7 @@ void HAL_RTC_MspInit(RTC_HandleTypeDef* rtcHandle)
     /* RTC interrupt Init */
     HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(RTC_IRQn);
+    HAL_RTCEx_SetSecond_IT(&hrtc);
   /* USER CODE BEGIN RTC_MspInit 1 */
 
   /* USER CODE END RTC_MspInit 1 */
