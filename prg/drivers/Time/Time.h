@@ -14,7 +14,7 @@
 
 SysResult_t TimeInit(Id_t mbox_time, U8_t hour_addr);
 
-SysResult_t TimeAlarmSet(U8_t hour);
+void TimeAlarmSet(U8_t hour);
 
 void TimeAlarmEnable(U8_t val);
 
