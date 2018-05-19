@@ -8,7 +8,7 @@
 #ifndef RGB_LED_H_
 #define RGB_LED_H_
 
-#include <Types.h>
+#include <OsTypes.h>
 
 #define RGB_LED_BLINK_INTERVAL_MS_MIN 50
 #define RGB_LED_BLINK_INTERVAL_MS_MAX 5000

@@ -33,7 +33,7 @@ S8_t PumpInit(CallbackPumpStopped_t on_stopped)
 		Running = 0;
 		Enabled = 0;
 		PumpTmr = TimerCreate(1, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_AR), ITimerCallbackPump, NULL);
-		if(PumpTmr != OS_ID_INVALID) {
+		if(PumpTmr != ID_INVALID) {
 			GpioPumpInit();
 
 #ifdef PUMP_CONTROL_INVERTED

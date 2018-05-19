@@ -8,7 +8,7 @@
 #ifndef PUMP_H_
 #define PUMP_H_
 
-#include <Types.h>
+#include <OsTypes.h>
 
 #define PUMP_ML_PER_MIN 600
 
