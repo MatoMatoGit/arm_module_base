@@ -1,12 +1,11 @@
 /*
- * Time.c
+ * time.c
  *
  *  Created on: 11 mei 2018
  *      Author: Dorus
  */
 
-#include "Time.h"
-
+#include "time.h"
 #include "Mailbox.h"
 
 #include "rtc.h"

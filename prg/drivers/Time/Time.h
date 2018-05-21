@@ -1,5 +1,5 @@
 /*
- * Time.h
+ * time.h
  *
  *  Created on: 11 mei 2018
  *      Author: Dorus
