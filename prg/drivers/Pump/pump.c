@@ -24,9 +24,9 @@ static CallbackPumpStopped_t OnPumpStopped;
 
 static void ITimerCallbackPump(Id_t timer_id, void *context);
 
-S8_t PumpInit(CallbackPumpStopped_t on_stopped)
+SysResult_t PumpInit(CallbackPumpStopped_t on_stopped)
 {
-	S8_t res = PUMP_ERR;
+	SysResult_t res = SYS_RESULT_ERROR;
 
 	if(on_stopped != NULL) {
 		OnPumpStopped = on_stopped;
@@ -41,7 +41,7 @@ S8_t PumpInit(CallbackPumpStopped_t on_stopped)
 #else
 		GpioPumpStateSet(0);
 #endif
-			res = PUMP_OK;
+			res = SYS_RESULT_OK;
 		}
 	}
 
@@ -58,9 +58,9 @@ void PumpEnable(U8_t val)
 	Enabled = val;
 }
 
-S8_t PumpRunForDuration(U32_t duration_s)
+SysResult_t PumpRunForDuration(U32_t duration_s)
 {
-	S8_t res = PUMP_ERR;
+	SysResult_t res = SYS_RESULT_ERROR;
 
 	if(!Running && Enabled) {
 		Running = 1;
@@ -71,15 +71,15 @@ S8_t PumpRunForDuration(U32_t duration_s)
 #else
 		GpioPumpStateSet(1);
 #endif
-		res = PUMP_OK;
+		res = SYS_RESULT_OK;
 	}
 
 	return res;
 }
 
-S8_t PumpRunForAmount(U32_t amount_ml)
+SysResult_t PumpRunForAmount(U32_t amount_ml)
 {
-	S8_t res = PUMP_ERR;
+	SysResult_t res = SYS_RESULT_ERROR;
 
 	if(!Running && Enabled) {
 		Running = 1;
@@ -90,7 +90,7 @@ S8_t PumpRunForAmount(U32_t amount_ml)
 #else
 		GpioPumpStateSet(1);
 #endif
-		res = PUMP_OK;
+		res = SYS_RESULT_OK;
 	}
 
 	return res;
