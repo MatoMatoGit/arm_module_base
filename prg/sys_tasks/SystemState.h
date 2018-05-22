@@ -13,8 +13,12 @@
 
 #include <stdlib.h>
 
-#define SYSTEM_STATUS_BLINK_FAST_INTERVAL_MS 100
-#define SYSTEM_STATUS_BLINK_SLOW_INTERVAL_MS 800
+#define SYSTEM_CONFIG_STATUS_BLINK_FAST_INTERVAL_MS 100
+#define SYSTEM_CONFIG_STATUS_BLINK_SLOW_INTERVAL_MS 800
+
+#define SYSTEM_CONFIG_EVENTS_MAX 10
+
+typedef void (*CallbackOnEvent_t)(Id_t object_id, U32_t event);
 
 /* Initializes the FSM and System State task.
  * Returns SYSTEM_STATE_OK if successful.
@@ -31,6 +35,10 @@ SysResult_t SystemStateInit(void);
  * illegal in the current state.
  * */
 SysResult_t SystemStateTransition(FsmState_t new_state);
+
+SysResult_t SystemStateEventRegister(Id_t object_id, U32_t event, CallbackOnEvent_t on_event);
+
+SysResult_t SystemStateEventUnregister(Id_t object_id, U32_t event);
 
 /* Return the current system state. */
 FsmState_t SystemStateGet(void);

@@ -12,7 +12,7 @@
 #include "GFsm.h"
 #include "rgb_led.h"
 
-FsmStateSpec_t SystemStateSpec[FSM_STATE_NUM] = {
+static FsmStateSpec_t SystemStateSpec[FSM_STATE_NUM] = {
 	{
 		.state = SYS_STATE_INITIALIZATION,
 		.allowed_states = {
@@ -135,7 +135,7 @@ typedef struct {
 }StatusLedMap_t;
 
 
-StatusLedMap_t StatusLedMaps[FSM_STATE_NUM] = {
+static StatusLedMap_t StatusLedMaps[FSM_STATE_NUM] = {
 		{
 			.state = SYS_STATE_INITIALIZATION,
 			.led_color = RGB_LED_COLOR_WHITE,
@@ -178,6 +178,21 @@ StatusLedMap_t StatusLedMaps[FSM_STATE_NUM] = {
 		}
 };
 
+typedef struct {
+	Id_t object_id;
+	U32_t event;
+	CallbackOnEvent_t on_event;
+}SysEvent_t;
+
+static SysEvent_t SysEvents[SYSTEM_CONFIG_EVENTS_MAX];
+static U8_t SysEventCount = 0;
+
+static void ISysEventInit(void);
+static void ISysEventCheckAndDispatch(void);
+static SysResult_t ISysEventRegister(Id_t object_id, U32_t event, CallbackOnEvent_t on_event);
+static SysResult_t ISysEventUnregister(Id_t object_id, U32_t event);
+
+
 static GFsm_t Fsm;
 static Id_t TskFsm;
 static Id_t EvgFsm;
@@ -196,6 +211,7 @@ SysResult_t SystemStateInit(void)
 		TskFsm = TaskCreate(SysTaskFsm, TASK_CAT_HIGH, 5, TASK_PARAM_ESSENTIAL | TASK_PARAM_START, 0, NULL, 0);
 		EvgFsm = EventgroupCreate();
 		if(TskFsm != ID_INVALID && EvgFsm != ID_INVALID) {
+			ISysEventInit();
 			res = SYS_RESULT_OK;
 		}
 	}
@@ -205,22 +221,24 @@ SysResult_t SystemStateInit(void)
 
 void SysTaskFsm(const void *p_args, U32_t v_arg)
 {
-	TASK_INIT_BEGIN() {
-		RgbLedInit();
-	}TASK_INIT_END();
-
 	int fsm_res = GFSM_ERR;
 
-	fsm_res = GFsmRun(&Fsm);
+	TASK_INIT_BEGIN() {
+		RgbLedInit();
+		fsm_res = GFsmRun(&Fsm);
+	}TASK_INIT_END();
+
+	if(EventgroupFlagsRequireSet(EvgFsm, EVG_FLAG_TRANSITION, OS_TIMEOUT_INFINITE) == OS_RES_EVENT) {
+		fsm_res = GFsmRun(&Fsm);
+		IStatusLedSet(GFsmStateCurrentGet(&Fsm));
+	}
 
 	if(fsm_res == GFSM_ERR) {
 		LOG_ERROR_NEWLINE("FSM transition error.");
 		while(1);
 	}
 
-	IStatusLedSet(GFsmStateCurrentGet(&Fsm));
-
-	EventgroupFlagsRequireSet(EvgFsm, EVG_FLAG_TRANSITION, OS_TIMEOUT_INFINITE);
+	ISysEventCheckAndDispatch();
 }
 
 SysResult_t SystemStateTransition(FsmState_t new_state)
@@ -234,6 +252,24 @@ SysResult_t SystemStateTransition(FsmState_t new_state)
 		res = SYS_RESULT_OK;
 		EventgroupFlagsSet(EvgFsm, EVG_FLAG_TRANSITION);
 	}
+
+	return res;
+}
+
+SysResult_t SystemStateEventRegister(Id_t object_id, U32_t event, CallbackOnEvent_t on_event)
+{
+	SysResult_t res = SYS_RESULT_ERROR;
+
+	res = ISysEventRegister(object_id, event, on_event);
+
+	return res;
+}
+
+SysResult_t SystemStateEventUnregister(Id_t object_id, U32_t event)
+{
+	SysResult_t res = SYS_RESULT_ERROR;
+
+	res = ISysEventUnregister(object_id, event);
 
 	return res;
 }
@@ -262,16 +298,82 @@ static void IStatusLedSet(FsmState_t state)
 			break;
 		}
 		case STATUS_LED_MODE_BLINK_SLOW: {
-			RgbLedBlinkIntervalSet(SYSTEM_STATUS_BLINK_SLOW_INTERVAL_MS);
+			RgbLedBlinkIntervalSet(SYSTEM_CONFIG_STATUS_BLINK_SLOW_INTERVAL_MS);
 			RgbLedModeSet(RGB_LED_MODE_BLINK);
 			break;
 		}
 		case STATUS_LED_MODE_BLINK_FAST: {
-			RgbLedBlinkIntervalSet(SYSTEM_STATUS_BLINK_FAST_INTERVAL_MS);
+			RgbLedBlinkIntervalSet(SYSTEM_CONFIG_STATUS_BLINK_FAST_INTERVAL_MS);
 			RgbLedModeSet(RGB_LED_MODE_BLINK);
 			break;
 		}
 	}
+}
+
+static void ISysEventInit(void)
+{
+	for(U8_t i = 0; i < SYSTEM_CONFIG_EVENTS_MAX; i++) {
+		SysEvents[i].object_id = ID_INVALID;
+	}
+}
+
+static void ISysEventCheckAndDispatch(void)
+{
+	for(U8_t i = 0; i < SYSTEM_CONFIG_EVENTS_MAX; i++) {
+		if(SysEvents[i].object_id == ID_INVALID) {
+			if(TaskPoll(SysEvents[i].object_id, SysEvents[i].event, OS_TIMEOUT_NONE, false) == OS_RES_EVENT) {
+				SysEvents[i].on_event(SysEvents[i].object_id, SysEvents[i].event);
+			}
+		}
+	}
+}
+
+static SysResult_t ISysEventRegister(Id_t object_id, U32_t event, CallbackOnEvent_t on_event)
+{
+	if(object_id == ID_INVALID || on_event == NULL) {
+		return SYS_RESULT_ERROR;
+	}
+
+	SysResult_t res = SYS_RESULT_FAIL;
+
+	if(SysEventCount < SYSTEM_CONFIG_EVENTS_MAX) {
+		for(U8_t i = 0; i < SYSTEM_CONFIG_EVENTS_MAX; i++) {
+			if(SysEvents[i].object_id == ID_INVALID) {
+				if(TaskPollAdd(object_id, event, OS_TIMEOUT_INFINITE) == OS_RES_OK) {
+					SysEvents[i].object_id = object_id;
+					SysEvents[i].event = event;
+					SysEvents[i].on_event = on_event;
+					SysEventCount++;
+					res = SYS_RESULT_OK;
+				}
+			}
+		}
+	}
+
+	return res;
+}
+
+static SysResult_t ISysEventUnregister(Id_t object_id, U32_t event)
+{
+	if(object_id == ID_INVALID) {
+		return SYS_RESULT_ERROR;
+	}
+
+	SysResult_t res = SYS_RESULT_FAIL;
+
+	if(SysEventCount < SYSTEM_CONFIG_EVENTS_MAX) {
+		for(U8_t i = 0; i < SYSTEM_CONFIG_EVENTS_MAX; i++) {
+			if(SysEvents[i].object_id ==  object_id && SysEvents[i].event == event) {
+				if(TaskPollRemove(object_id, event) == OS_RES_OK) {
+					SysEvents[i].object_id = ID_INVALID;
+					SysEventCount--;
+					res = SYS_RESULT_OK;
+				}
+			}
+		}
+	}
+
+	return res;
 }
 
 /***** Default state callbacks. *****/
