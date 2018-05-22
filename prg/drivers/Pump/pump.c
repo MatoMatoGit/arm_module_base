@@ -18,7 +18,7 @@ static U8_t Enabled;
 
 static CallbackPumpStopped_t OnPumpStopped;
 
-#define PUMP_TIME_CONSTANT_ML (U32_t)(PUMP_ML_PER_MIN / 60) * 1e4 /* Time in microseconds to pump 1 mL*/
+#define PUMP_TIME_CONSTANT_ML (U32_t)(PUMP_CONFIG_ML_PER_MIN / 60) * 1e4 /* Time in microseconds to pump 1 mL*/
 
 #define SEC_TO_USEC(sec) (sec * 1e6)
 
@@ -36,7 +36,7 @@ SysResult_t PumpInit(CallbackPumpStopped_t on_stopped)
 		if(PumpTmr != ID_INVALID) {
 			GpioPumpInit();
 
-#ifdef PUMP_CONTROL_INVERTED
+#ifdef PUMP_CONFIG_CONTROL_INVERTED
 		GpioPumpStateSet(1);
 #else
 		GpioPumpStateSet(0);
@@ -66,7 +66,7 @@ SysResult_t PumpRunForDuration(U32_t duration_s)
 		Running = 1;
 		TimerIntervalSet(PumpTmr, SEC_TO_USEC(duration_s));
 		TimerStart(PumpTmr);
-#ifdef PUMP_CONTROL_INVERTED
+#ifdef PUMP_CONFIG_CONTROL_INVERTED
 		GpioPumpStateSet(0);
 #else
 		GpioPumpStateSet(1);
@@ -85,7 +85,7 @@ SysResult_t PumpRunForAmount(U32_t amount_ml)
 		Running = 1;
 		TimerIntervalSet(PumpTmr, (PUMP_TIME_CONSTANT_ML * amount_ml));
 		TimerStart(PumpTmr);
-#ifdef PUMP_CONTROL_INVERTED
+#ifdef PUMP_CONFIG_CONTROL_INVERTED
 		GpioPumpStateSet(0);
 #else
 		GpioPumpStateSet(1);
@@ -99,7 +99,7 @@ SysResult_t PumpRunForAmount(U32_t amount_ml)
 void PumpStop(void)
 {
 	Running = 0;
-#ifdef PUMP_CONTROL_INVERTED
+#ifdef PUMP_CONFIG_CONTROL_INVERTED
 		GpioPumpStateSet(1);
 #else
 		GpioPumpStateSet(0);

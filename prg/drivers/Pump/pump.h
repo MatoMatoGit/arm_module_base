@@ -11,9 +11,9 @@
 #include <OsTypes.h>
 #include "SystemResult.h"
 
-#define PUMP_ML_PER_MIN 600
+#define PUMP_CONFIG_ML_PER_MIN 600
 
-#define PUMP_CONTROL_INVERTED
+#define PUMP_CONFIG_CONTROL_INVERTED
 
 /* Called when the duration/amount was pumped or stopped manually. */
 typedef void (*CallbackPumpStopped_t)(void);
