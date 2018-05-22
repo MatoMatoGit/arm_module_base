@@ -20,4 +20,4 @@ void TimeAlarmEnable(U8_t val);
 
 U32_t TimeUptimeGet(void);
 
-#endif /* TIME_TIME_H_ */
+#endif /* TIME_H_ */

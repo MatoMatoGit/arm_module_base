@@ -8,7 +8,6 @@
 #ifndef SYS_TASKS_H_
 #define SYS_TASKS_H_
 
-#include "PermStorageMngr.h"
 #include "SystemState.h"
 
 SysResult_t SysTasksInit(void)
