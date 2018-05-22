@@ -5,12 +5,11 @@
  *      Author: Dorus
  */
 
-#include "PermStorageMngr.h"
-
 #include <PriorRTOS.h>
 
 #include "stm32f1xx_hal.h"
 #include <stdint.h>
+#include <sys_tasks/storage.h>
 
 __attribute__((__section__(".user_data"))) const uint8_t LogData[PERM_STORAGE_LOG_SIZE_BYTES];
 
