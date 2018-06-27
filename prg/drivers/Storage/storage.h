@@ -5,8 +5,8 @@
  *      Author: Dorus
  */
 
-#ifndef PERM_STORAGE_MNGR_H_
-#define PERM_STORAGE_MNGR_H_
+#ifndef STORAGE_H_
+#define STORAGER_H_
 
 #include <OsTypes.h>
 #include "SystemResult.h"
@@ -14,19 +14,29 @@
 #define STORAGE_CONFIG_SECTOR_NUM			1
 #define STORAGE_CONFIG_SECOTR_SIZE_BYTES	0x0400
 
-#define STORAGE_CONFIG_STREAMS_NUM			1
+typedef enum {
+	FILE_LOG = 0,
+	FILE_SCHEDULE,
+	FILE_NUM
+}File_t;
 
-struct StorageDesc;
-typedef struct StorageDesc * StorageHandle_t;
+typedef struct {
+	U32_t f_sizes[FILE_NUM];
+}StorageConfig_t;
 
-SysResult_t StorageInit(void);
+SysResult_t StorageInit(StorageConfig_t *config);
 
-StorageHandle_t StorageRequest(U32_t size);
+SysResult_t StorageFormat(void);
 
-SysResult_t StorageStreamRegister(StorageHandle_t handle, Id_t rbf_stream);
+SysResult_t StorageFileFormat(File_t fd);
 
-SysResult_t StorageStore(StorageHandle_t handle, U8_t *data, U32_t offset, U32_t size);
+SysResult_t StorageFilePointerSet(File_t fd, U32_t offset);
 
-SysResult_t StorageLoad(StorageHandle_t handle, U8_t *data, U32_t offset, U32_t size);
+U32_t StorageFilePointerGet(File_t fd);
 
-#endif /* PERM_STORAGE_MNGR_H_ */
+SysResult_t StorageFileWrite(File_t fd);
+
+SysResult_t StorageFileRead(File_t fd);
+
+
+#endif /* STORAGE_H_ */
