@@ -208,7 +208,7 @@ SysResult_t SystemStateInit(void)
 
 	if(GFsmInit(&Fsm, SystemStateSpec, FSM_STATE_NUM, SYS_STATE_INITIALIZATION) == GFSM_OK) {
 
-		TskFsm = TaskCreate(SysTaskFsm, TASK_CAT_HIGH, 5, TASK_PARAM_ESSENTIAL | TASK_PARAM_START, 0, NULL, 0);
+		TskFsm = TaskCreate(SysTaskFsm, TASK_CAT_HIGH, 5, TASK_PARAMETER_ESSENTIAL | TASK_PARAMETER_START, 0, NULL, 0);
 		EvgFsm = EventgroupCreate();
 		if(TskFsm != ID_INVALID && EvgFsm != ID_INVALID) {
 			ISysEventInit();

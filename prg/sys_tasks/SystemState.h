@@ -10,6 +10,7 @@
 
 #include "GFsm.h"
 #include "SystemResult.h"
+#include "OsTypes.h"
 
 #include <stdlib.h>
 
