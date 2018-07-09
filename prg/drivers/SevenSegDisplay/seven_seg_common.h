@@ -1,16 +1,5 @@
-/*
- * seven_seg_display.h
- *
- *  Created on: 1 jul. 2018
- *      Author: Dorus
- */
-
-#ifndef SEVEN_SEG_DISPLAY_H_
-#define SEVEN_SEG_DISPLAY_H_
-
-#include <stdint.h>
-
-/* Seven Segment Display driver. */
+#ifdef SEVEN_SEG_COMMON_H_
+#define SEVEN_SEG_COMMON_H_
 
 #define SEVEN_SEG_CONFIG_DIGITS_MAX 5
 
@@ -44,31 +33,4 @@
 #define DIGIT_E ( DIGIT_SEG_A | DIGIT_SEG_D |DIGIT_SEG_E | DIGIT_SEG_F | DIGIT_SEG_G )
 #define DIGIT_F ( DIGIT_SEG_A | DIGIT_SEG_E | DIGIT_SEG_F | DIGIT_SEG_G )
 
-typedef enum {
-	SEVEN_SEG_MODE_DEC = 0x9,
-	SEVEN_SEG_MODE_HEX = 0xF
-}SevenSegMode_t;
-
-/* Called by the driver to update a digit. The segment
- * bits that are set in the 'segments' argument must be
- * turned on.
- * The 0th digit is the least significant one. */
-typedef int (*SevenSegDigitUpdateFunc_t) (uint8_t digit_num, uint8_t segments);
-
-/* The number of digits of the display is defined by
- * 'num_digits'. */
-struct SevenSegDisplay {
-	uint8_t num_digits;
-	uint32_t max_value;
-	SevenSegMode_t mode;
-	uint16_t refresh_rate_hz;
-	SevenSegDigitUpdateFunc_t update;
-};
-
-int SevenSegInit(struct SevenSegDisplay *config);
-
-int SevenSegDisplayUpdate(uint32_t value);
-
-int SevenSegDigitUpdate(uint8_t digit_num, uint8_t value);
-
-#endif /* SEVEN_SEG_DISPLAY_H_ */
+#endif
