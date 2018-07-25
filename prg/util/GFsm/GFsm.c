@@ -14,6 +14,10 @@
 static int IStateTransitionIsAllowed(GFsm_t *fsm, FsmState_t new_state);
 static void IFsmTransition(GFsm_t *fsm);
 
+/* Run the FSM, transitions it to the next state if possible.
+ * FAIL if the guard for the next state was not evaluated as true. */
+static int IFsmRun(GFsm_t *fsm);
+
 int GFsmInit(GFsm_t *fsm, FsmStateSpec_t *state_spec, uint8_t n_states, FsmState_t start_state)
 {
 	int res = GFSM_OK;
@@ -37,11 +41,11 @@ int GFsmTransition(GFsm_t *fsm, FsmState_t new_state)
 	if(fsm != NULL && new_state != FSM_STATE_NUM) { /* Check inputs. */
 		if(fsm->next_state == FSM_STATE_NUM) { /* Make sure next state has not been set. */
 			if(IStateTransitionIsAllowed(fsm, new_state) == GFSM_OK) { /* Is the state transition allowed? */
-				if(fsm->SystemStateSpec[(unsigned int)fsm->current_state].on_validate == NULL) { /* If there is no validation function -> go. */
+				if(fsm->SystemStateSpec[(unsigned int)fsm->current_state].on_guard == NULL) { /* If there is no guard function -> go. */
 					fsm->next_state = new_state;
 					res = GFSM_OK;
 				} else {
-					if(fsm->SystemStateSpec[(unsigned int)fsm->current_state].on_validate(fsm->current_state, new_state)) { /* Validation passed. */
+					if(fsm->SystemStateSpec[(unsigned int)fsm->current_state].on_guard(fsm->current_state, new_state)) { /* Guard passed. */
 						fsm->next_state = new_state;
 						res = GFSM_OK;
 					}
@@ -49,26 +53,6 @@ int GFsmTransition(GFsm_t *fsm, FsmState_t new_state)
 			}
 		} else {
 			res = GFSM_FAIL;
-		}
-	}
-
-	return res;
-}
-
-int GFsmRun(GFsm_t *fsm)
-{
-	int res = GFSM_ERR;
-
-	if(fsm->next_state != FSM_STATE_NUM)
-	{
-		res = GFSM_FAIL;
-		/* Only transition to the next state if the guard is evaluated as true or if it is non-existent. */
-		if(fsm->SystemStateSpec[(unsigned int)fsm->current_state].on_guard == NULL) {
-			IFsmTransition(fsm);
-			res = GFSM_OK;
-		} else if(fsm->SystemStateSpec[(unsigned int)fsm->current_state].on_guard(fsm->current_state, fsm->next_state)) {
-			IFsmTransition(fsm);
-			res = GFSM_OK;
 		}
 	}
 
@@ -137,6 +121,19 @@ static int IStateTransitionIsAllowed(GFsm_t *fsm, FsmState_t new_state)
 			res = GFSM_OK;
 			break;
 		}
+	}
+
+	return res;
+}
+
+static int IFsmRun(GFsm_t *fsm)
+{
+	int res = GFSM_ERR;
+
+	if(fsm->next_state != FSM_STATE_NUM)
+	{
+		IFsmTransition(fsm);
+		res = GFSM_OK;
 	}
 
 	return res;

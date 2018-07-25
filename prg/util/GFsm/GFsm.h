@@ -16,7 +16,6 @@
 
 typedef void (*FsmCallbackOnStateEnter_t)(FsmState_t prev_state, FsmState_t curr_state);
 typedef void (*FsmCallbackOnStateExit_t)(FsmState_t curr_state, FsmState_t next_state);
-typedef bool (*FsmCallbackOnStateValidate_t)(FsmState_t curr_state, FsmState_t next_state);
 typedef bool (*FsmCallbackOnStateGuard_t)(FsmState_t curr_state, FsmState_t next_state);
 
 typedef struct {
@@ -25,7 +24,6 @@ typedef struct {
 	FsmState_t allowed_states[FSM_STATE_NUM];
 	uint8_t n_allowed_states;
 
-	FsmCallbackOnStateValidate_t on_validate;
 	FsmCallbackOnStateGuard_t on_guard;
 	FsmCallbackOnStateEnter_t on_enter;
 	FsmCallbackOnStateExit_t on_exit;
@@ -52,10 +50,6 @@ int GFsmInit(GFsm_t *fsm, FsmStateSpec_t *state_spec, uint8_t n_states, FsmState
  * FAIL if the next state has already been set. Run must be called.
  * OK if successful. */
 int GFsmTransition(GFsm_t *fsm, FsmState_t new_state);
-
-/* Run the FSM, transitions it to the next state if possible.
- * FAIL if the guard for the next state was not evaluated as true. */
-int GFsmRun(GFsm_t *fsm);
 
 FsmState_t GFsmStateCurrentGet(GFsm_t *fsm);
 
