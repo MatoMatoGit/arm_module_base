@@ -12,12 +12,24 @@
 
 #include "OsTypes.h"
 
-SysResult_t TimeInit(Id_t mbox_time, U8_t hour_addr);
+#define TIME_MBOX_ADDR_HOUR 0x00
 
+typedef struct {
+	U8_t hours;
+	U8_t minutes;
+	U8_t seconds;
+} Time_t;
+
+SysResult_t TimeInit(Id_t mbox_time);
+
+/* When the alarm expires the hour is posted in the mailbox
+ * at the TIME_MBOX_ADDR_HOUR address. */
 void TimeAlarmSet(U8_t hour);
 
 void TimeAlarmEnable(U8_t val);
 
-U32_t TimeUptimeGet(void);
+U32_t TimeUptimeHoursGet(void);
+
+void TimeGet(Time_t *time);
 
 #endif /* TIME_H_ */
