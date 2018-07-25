@@ -26,6 +26,8 @@ SysResult_t PumpRunForDuration(U32_t duration_s);
 
 SysResult_t PumpRunForAmount(U32_t amount_ml);
 
+SysResult_t PumpRun(void);
+
 void PumpStop(void);
 
 U8_t PumpIsRunning(void);

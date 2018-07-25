@@ -96,6 +96,23 @@ SysResult_t PumpRunForAmount(U32_t amount_ml)
 	return res;
 }
 
+SysResult_t PumpRun(void)
+{
+	SysResult_t res = SYS_RESULT_ERROR;
+
+	if(!Running && Enabled) {
+		Running = 1;
+#ifdef PUMP_CONFIG_CONTROL_INVERTED
+		GpioPumpStateSet(0);
+#else
+		GpioPumpStateSet(1);
+#endif
+		res = SYS_RESULT_OK;
+	}
+
+	return res;
+}
+
 void PumpStop(void)
 {
 	Running = 0;
