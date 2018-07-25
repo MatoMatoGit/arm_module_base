@@ -9,15 +9,15 @@
 #define IRRIGATION_CONTROLLER_H_
 
 #include "SystemResult.h"
-#include <OsTypes.h>
-#include <Eventgroup.h>
+#include "OsTypes.h"
 
-#define IRRIGATION_CONTROLLER_TRIGGER_BUTTON	EVENTGROUP_FLAG_MASK_0
-#define IRRIGATION_CONTROLLER_TRIGGER_SCHEDULE	EVENTGROUP_FLAG_MASK_1
+#define IRRIGATION_MBOX_ADDR_AMOUNT		0x00
+#define IRRIGATION_MBOX_ADDR_TRIGGER	0x01
 
-SysResult_t IrrigationControllerInit(Id_t evg_trigger);
+#define IRRIGATION_TRIGGER_SCHEDULE		0x00
+#define IRRIGATION_TRIGGER_MANUAL_ON	0x01
+#define IRRIGATION_TRIGGER_MANUAL_OFF	0x02
 
-SysResult_t IrrigationControllerAmountSet(U16_t amount_ml);
-
+SysResult_t IrrigationControllerInit(Id_t mbox_irrigation);
 
 #endif /* IRRIGATION_CONTROLLER_H_ */
