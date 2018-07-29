@@ -5,7 +5,7 @@
  *      Author: Dorus
  */
 
-#include "seven_seg_display.h"
+#include "seven_seg.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -53,6 +53,11 @@ int SevenSegInit(struct SevenSegDisplay *config)
 	}
 
 	return res;
+}
+
+uint32_t SevenSegDisplayMaxValueGet(void)
+{
+	return DisplayConfig.max_value;
 }
 
 int SevenSegDisplayUpdate(uint32_t value)

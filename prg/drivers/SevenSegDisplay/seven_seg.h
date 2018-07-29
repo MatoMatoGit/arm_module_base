@@ -32,6 +32,8 @@ struct SevenSegDisplay {
 
 int SevenSegInit(struct SevenSegDisplay *config);
 
+uint32_t SevenSegDisplayMaxValueGet(void);
+
 int SevenSegDisplayUpdate(uint32_t value);
 
 int SevenSegDigitUpdate(uint8_t digit_num, uint8_t value);
