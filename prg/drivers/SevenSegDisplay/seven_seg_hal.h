@@ -1,4 +1,4 @@
-#ifdef SEVEN_SEG_HAL_H_
+#ifndef SEVEN_SEG_HAL_H_
 #define SEVEN_SEG_HAL_H_
 
 typedef int (*SevenSegHalTimerInit_t) (uint32_t interval_ms);
