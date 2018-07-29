@@ -5,14 +5,22 @@
  *      Author: Dorus
  */
 
+/* Self include. */
 #include "IrrigationController.h"
 
+/* System tasks includes. */
+
+/* Driver includes. */
 #include "Pump/pump.h"
+
+/* OS includes. */
 #include "PriorRTOS.h"
 
+/* Standard includes. */
 #include <stdlib.h>
+#include <string.h>
 
-LOG_FILE_NAME("IrrigationController.c");
+LOG_FILE_NAME("IrrigationController");
 
 #define PUMP_RUN_DELAY_MS	5000
 #define PUMP_DURATION_HOUR	3600
@@ -61,11 +69,11 @@ static void TaskIrrigationController(void *p_arg, U32_t v_arg)
 
 	res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_TRIGGER, &trigger, OS_TIMEOUT_INFINITE);
 
-	if(res == OS_RES_OK) {
+	if(res == OS_RES_OK || res == OS_RES_EVENT) {
 		res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_AMOUNT, &amount, OS_TIMEOUT_NONE);
 	}
 
-	if(res == OS_RES_OK) {
+	if(res == OS_RES_OK || res == OS_RES_EVENT) {
 		switch(trigger) {
 
 			/* If the trigger is manual on the pump is ran indefinitely until
