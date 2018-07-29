@@ -6,7 +6,7 @@
  */
 
 #include "time.h"
-#include "Mailbox.h"
+#include "Eventgroup.h"
 
 #include "rtc.h"
 #include "stm32f1xx_hal.h"
@@ -18,7 +18,8 @@
 static void ITimeIncrement(void);
 
 typedef struct {
-	Id_t mbox;
+	Id_t evg;
+	U8_t evg_alarm_flag;
 
 	U8_t alarm_en;
 	U8_t alarm_hour;
@@ -29,12 +30,13 @@ typedef struct {
 
 TimeData_t TimeData;
 
-SysResult_t TimeInit(Id_t mbox_time, U8_t hour_addr)
+SysResult_t TimeInit(Id_t evg_alarm, U8_t evg_alarm_flag)
 {
 	SysResult_t res = SYS_RESULT_ERROR;
 
 	MX_RTC_Init();
-	TimeData.mbox = mbox_time;
+	TimeData.evg = evg_alarm;
+	TimeData.evg_alarm_flag = evg_alarm_flag;
 	TimeData.alarm_en = 0;
 	TimeData.alarm_hour = 0;
 	TimeData.cont_hours = TimeData.time.hours = TimeData.time.minutes = TimeData.time.seconds = 0;
@@ -81,7 +83,7 @@ static void ITimeIncrement(void)
 		TimeData.cont_hours++;
 		TimeData.time.minutes = 0;
 		if(!TimeData.alarm_en || TimeData.time.hours == TimeData.alarm_hour) {
-			MailboxPost(TimeData.mbox, TIME_MBOX_ADDR_HOUR, (MailboxBase_t)TimeData.time.hours, OS_TIMEOUT_NONE);
+			EventgroupFlagsSet(TimeData.evg, TimeData.evg_flag_alarm);
 		}
 	}
 
