@@ -11,6 +11,9 @@
 #include "SystemResult.h"
 #include "OsTypes.h"
 
-SysResult_t UiControllerInit(void);
+#define UI_THRESHOLD_VALUE_STABLE_MS	100
+#define UI_THRESHOLD_PUMP_ON_MS			4000
+
+SysResult_t UiControllerInit(Id_t mbox_irrigation, Id_t mbox_schedule, Id_t evg_system);
 
 #endif /* UI_CONTROLLER_H_ */
