@@ -70,10 +70,6 @@ static void TaskIrrigationController(void *p_arg, U32_t v_arg)
 	res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_TRIGGER, &trigger, OS_TIMEOUT_INFINITE);
 
 	if(res == OS_RES_OK || res == OS_RES_EVENT) {
-		res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_AMOUNT, &amount, OS_TIMEOUT_NONE);
-	}
-
-	if(res == OS_RES_OK || res == OS_RES_EVENT) {
 		switch(trigger) {
 
 			/* If the trigger is manual on the pump is ran indefinitely until
@@ -104,28 +100,34 @@ static void TaskIrrigationController(void *p_arg, U32_t v_arg)
 			/* If the trigger is the schedule the pump is ran for the amount received
 			 * in the mailbox. */
 			case IRRIGATION_TRIGGER_SCHEDULE: {
-				LOG_DEBUG_NEWLINE("Received trigger: schedule.");
-				LOG_DEBUG_NEWLINE("Received amount: %u L.", amount);
-				PumpAmountMl = (U32_t)LITER_TO_MILLILITER(amount); /* Convert liters to milliliters and store it. */
+				res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_AMOUNT, &amount, OS_TIMEOUT_NONE);
+				if(res == OS_RES_OK || res == OS_RES_EVENT) {
+					LOG_DEBUG_NEWLINE("Received trigger: schedule.");
+					LOG_DEBUG_NEWLINE("Received amount: %u L.", amount);
+					PumpAmountMl = (U32_t)LITER_TO_MILLILITER(amount); /* Convert liters to milliliters and store it. */
 
-				/*If the pump is already running due to a manual trigger, the
-				 * scheduled run is delayed. This is because the scheduled
-				 * run must still occur. */
-				if(PumpIsRunning()) {
-					LOG_DEBUG_NEWLINE("Pump is already running. Delaying scheduled run.");
-					if(TimerCreate(PUMP_RUN_DELAY_MS, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
-						ICallbackDelayedPumpRun, NULL) == ID_INVALID) {
-						LOG_ERROR_NEWLINE("Delay timer was not created.");
+					/*If the pump is already running due to a manual trigger, the
+					 * scheduled run is delayed. This is because the scheduled
+					 * run must still occur. */
+					if(PumpIsRunning()) {
+						LOG_DEBUG_NEWLINE("Pump is already running. Delaying scheduled run.");
+						if(TimerCreate(PUMP_RUN_DELAY_MS, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
+							ICallbackDelayedPumpRun, NULL) == ID_INVALID) {
+							LOG_ERROR_NEWLINE("Delay timer was not created.");
+						}
+					} else {
+						/* If the pump is not running, run it for the specified amount. */
+						pump_res = PumpRunForAmount(PumpAmountMl);
+						if(pump_res == SYS_RESULT_OK) {
+							LOG_DEBUG_NEWLINE("Pump turned on.");
+						} else {
+							LOG_ERROR_NEWLINE("Pump could not be turned on.");
+						}
 					}
 				} else {
-					/* If the pump is not running, run it for the specified amount. */
-					pump_res = PumpRunForAmount(PumpAmountMl);
-					if(pump_res == SYS_RESULT_OK) {
-						LOG_DEBUG_NEWLINE("Pump turned on.");
-					} else {
-						LOG_ERROR_NEWLINE("Pump could not be turned on.");
-					}
+					LOG_ERROR_NEWLINE("Amount unspecified.");
 				}
+
 				break;
 			}
 
