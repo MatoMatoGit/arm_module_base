@@ -24,6 +24,7 @@
 
 LOG_FILE_NAME("ScheduleManager");
 
+#define MBOX_SCHEDULE_NUM_ADDR 2
 #define HOURS_IN_DAY 24
 
 typedef struct {
@@ -49,7 +50,8 @@ ScheduleManagerInit(ScheduleManagerConfig_t *config)
 	if(res == SYS_RESULT_OK) {
 		tsk_schedule_manager = TaskCreate(TaskScheduleManager, TASK_CAT_MEDIUM, 5,
 			(TASK_PARAMETER_START | TASK_PARAMETER_ESSENTIAL), 0, NULL, 0);
-		if(tsk_schedule_manager == ID_INVALID) {
+		config->mbox_schedule = MailboxCreate(MBOX_SCHEDULE_NUM_ADDR, tsk_schedule_manager, 1);
+		if(tsk_schedule_manager == ID_INVALID || config->mbox_schedule == ID_INVALID) {
 			res = SYS_RESULT_ERROR;
 		}
 	}

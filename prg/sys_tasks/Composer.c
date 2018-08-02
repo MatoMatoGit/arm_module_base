@@ -19,23 +19,26 @@
 
 static void TaskComposer(void *p_arg, U32_t v_arg)
 {
-	Id_t evg_system = EventgroupCreate();
-	Id_t mbox_irrigation = MailboxCreate(2, NULL, 1);
-	Id_t mbox_schedule = MailboxCreate(2, NULL, 1);
+	Id_t evg_system = ID_INVALID;
+	Id_t mbox_irrigation = ID_INVALID;
+	Id_t mbox_schedule = ID_INVALID;
 
 	SysResult_t res = SYS_RESULT_ERROR;
 
+	evg_system = EventgroupCreate();
+	
 	res = TimeInit(evg_system, EVG_SYSTEM_FLAG_ALARM);
 
-	res = IrrigationControllerInit(mbox_irrigation);
+	res = IrrigationControllerInit(*mbox_irrigation);
 
 	ScheduleManagerConfig_t config = {
-		.mbox_schedule = mbox_schedule,
+		.mbox_schedule = ID_INVALID,
 		.mbox_irrigation = mbox_irrigation,
 		.evg_alarm = evg_system,
 		.evg_alarm_flag = EVG_SYSTEM_FLAG_ALARM,
 	};
 	res = ScheduleManagerInit(&config);
+	mbox_schedule = config.mbox_schedule;
 
 	res = UiControllerInit(mbox_irrigation, mbox_schedule, evg_system);
 

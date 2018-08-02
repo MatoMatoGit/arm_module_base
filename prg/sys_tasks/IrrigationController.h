@@ -18,6 +18,6 @@
 #define IRRIGATION_TRIGGER_MANUAL_ON	0x01
 #define IRRIGATION_TRIGGER_MANUAL_OFF	0x02
 
-SysResult_t IrrigationControllerInit(Id_t mbox_irrigation);
+SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation);
 
 #endif /* IRRIGATION_CONTROLLER_H_ */
