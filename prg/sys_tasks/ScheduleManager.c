@@ -38,7 +38,7 @@ static void TaskScheduleManager(void *p_arg, U32_t v_arg);
 
 static void IScheduleNextIrrigation(void);
 
-ScheduleManagerInit(ScheduleManagerConfig_t *config)
+SysResult_t ScheduleManagerInit(ScheduleManagerConfig_t *config)
 {
 	SysResult_t res = SYS_RESULT_OK;
 	Id_t tsk_schedule_manager = ID_INVALID;

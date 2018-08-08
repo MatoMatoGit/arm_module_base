@@ -17,6 +17,8 @@
 #define EVG_SYSTEM_FLAG_ERROR			0x02
 #define EVG_SYSTEM_FLAG_ERROR_CRIT		0x03
 
+static void TaskComposer(void *p_arg, U32_t v_arg);
+
 SysResult_t ComposerInit(void)
 {
 	SysResult_t res = SYS_RESULT_INV_ARG;
@@ -48,7 +50,7 @@ static void TaskComposer(void *p_arg, U32_t v_arg)
 	}
 
 	if(res == SYS_RESULT_OK) {
-		res = IrrigationControllerInit(*mbox_irrigation);
+		res = IrrigationControllerInit(&mbox_irrigation);
 	}
 
 	if(res == SYS_RESULT_OK) {

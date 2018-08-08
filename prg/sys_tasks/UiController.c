@@ -164,4 +164,6 @@ static U8_t IMapIndexToAddress(U8_t index)
 		break;
 	}
 	}
+
+	return addr;
 }

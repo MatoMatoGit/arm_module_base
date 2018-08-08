@@ -93,12 +93,8 @@ static void TaskIrrigationController(void *p_arg, U32_t v_arg)
 			/* If the trigger is manual off the pump is stopped. */
 			case IRRIGATION_TRIGGER_MANUAL_OFF: {
 				LOG_DEBUG_NEWLINE("Received trigger: manual, off.");
-				pump_res = PumpStop();
-				if(pump_res == SYS_RESULT_OK) {
-					LOG_DEBUG_NEWLINE("Pump turned off.");
-				} else {
-					LOG_ERROR_NEWLINE("Pump could not be turned off.");
-				}
+				PumpStop();
+				LOG_DEBUG_NEWLINE("Pump turned off.");
 				break;
 			}
 

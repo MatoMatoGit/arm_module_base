@@ -83,7 +83,7 @@ static void ITimeIncrement(void)
 		TimeData.cont_hours++;
 		TimeData.time.minutes = 0;
 		if(!TimeData.alarm_en || TimeData.time.hours == TimeData.alarm_hour) {
-			EventgroupFlagsSet(TimeData.evg, TimeData.evg_flag_alarm);
+			EventgroupFlagsSet(TimeData.evg, TimeData.evg_alarm_flag);
 		}
 	}
 

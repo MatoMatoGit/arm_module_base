@@ -43,7 +43,7 @@ int SevenSegInit(struct SevenSegDisplay *config)
 	int res = SEVEN_SEG_RES_INV_ARG;
 
 	memset(&DisplayConfig, 0, sizeof(struct SevenSegDisplay));
-	if(config->update != NULL) {
+	if(config->hal.digit_write != NULL) {
 		if(config->num_digits <= SEVEN_SEG_CONFIG_DIGITS_MAX) {
 			DisplayConfig = *config;
 			for(uint8_t i = 0; i < SEVEN_SEG_CONFIG_DIGITS_MAX; i++) {
