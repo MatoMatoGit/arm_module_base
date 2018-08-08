@@ -8,11 +8,12 @@
 #ifndef STORAGE_H_
 #define STORAGER_H_
 
-#include <OsTypes.h>
+#include "include/StdTypes.h"
 #include "SystemResult.h"
 
-#define STORAGE_CONFIG_SECTOR_NUM			1
-#define STORAGE_CONFIG_SECOTR_SIZE_BYTES	0x0400
+#define STORAGE_CONFIG_SECTOR				1
+#define STORAGE_CONFIG_SECTOR_ADDR			0x08010000
+#define STORAGE_CONFIG_SECTOR_SIZE_BYTES	0x0400
 
 typedef enum {
 	FILE_LOG = 0,
@@ -20,15 +21,9 @@ typedef enum {
 	FILE_NUM
 }File_t;
 
-typedef struct {
-	U32_t f_sizes[FILE_NUM];
-}StorageConfig_t;
+SysResult_t StorageInit(void);
 
-SysResult_t StorageInit(StorageConfig_t *config);
-
-SysResult_t StorageFormat(void);
-
-SysResult_t StorageFileFormat(File_t fd);
+SysResult_t StorageFormat(U32_t f_sizes[FILE_NUM]);
 
 SysResult_t StorageFilePointerSet(File_t fd, U32_t offset);
 
