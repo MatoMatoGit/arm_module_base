@@ -1,5 +1,5 @@
 /*
- * PermStorageMngr.c
+ * storage.c
  *
  *  Created on: 16 apr. 2018
  *      Author: Dorus
@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define STORAGE_DATA_SECTOR_ADDR_END STORAGE_CONFIG_DATA_SECTOR_ADDR + STORAGE_CONFIG_DATA_SECTOR_SIZE_BYTES
-#define STORAGE_METADATA_SECTOR_ADDR_END STORAGE_CONFIG_METADATA_SECTOR_ADDR + STORAGE_CONFIG_METADATA_SECTOR_SIZE_BYTES
+#define STORAGE_DATA_SECTOR_ADDR_END (STORAGE_CONFIG_DATA_SECTOR_ADDR + STORAGE_CONFIG_DATA_SECTOR_SIZE_BYTES)
+#define STORAGE_METADATA_SECTOR_ADDR_END (STORAGE_CONFIG_METADATA_SECTOR_ADDR + STORAGE_CONFIG_METADATA_SECTOR_SIZE_BYTES)
 
 #define METADATA_ADDR_IS_VALID(addr) ( \
 (addr <= STORAGE_METADATA_SECTOR_ADDR_END) && \
@@ -44,23 +44,21 @@ uintptr_t MetadataAddressStore = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
 uintptr_t MetadataAddressLoad = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
 
 #define METADATA_TOTAL_SIZE_BYTES sizeof(FileMetadata_t) * FILE_NUM
+#define METADATA_INC_CRC_SIZE_BYTES METADATA_TOTAL_SIZE_BYTES + sizeof(U32_t)
 
 static SysResult_t IMetadataStore(FileMetadata_t *metadata);
 static SysResult_t IMetadataLoad(U32_t idx);
+static uintptr_t IMetadataFind(void);
 static U32_t IMetadataHashCalculate(void);
+
 static SysResult_t IDataStore(uintptr_t addr, void *data, U32_t size);
 static SysResult_t IDataLoad(U32_t idx, void *data, U32_t size);
 
-SysResult_t StorageInit(void)
+SysResult_t StorageMount(void)
 {
 	SysResult_t res = SYS_RESULT_OK;
 
-	for(U32_t i = 0; i < (U32_t)FILE_NUM; i++) {
-		res = IMetadataLoad(i);
-		if(res != SYS_RESULT_OK) {
-			break;
-		}
-	}
+	res = IMetadataLoad();
 
 	return res;
 }
@@ -69,6 +67,7 @@ SysResult_t StorageFormat(U32_t f_sizes[FILE_NUM])
 {
 	SysResult_t res = SYS_RESULT_OK;
 
+	/* Erase the data and metadata sectors. */
 	if(flash_erase(STORAGE_CONFIG_DATA_SECTOR) != FLASH_RESULT_OK) {
 		res = SYS_RESULT_ERROR;
 	}
@@ -78,11 +77,17 @@ SysResult_t StorageFormat(U32_t f_sizes[FILE_NUM])
 		}
 	}
 
+	/* Initialize all file metadata. */
 	for(U32_t i = 0; i < (U32_t)FILE_NUM; i++) {
 		res = IMetadataInit(i, f_sizes[i]);
 		if(res != SYS_RESULT_OK) {
 			break;
 		}
+	}
+	
+	/* Store the initial condition metadata. */
+	if(res == SYS_RESULT_OK) {
+		res = IMetadataStore();
 	}
 
 	return res;
@@ -123,6 +128,9 @@ SysResult_t StorageFileRead(File_t fd, void *data, U32_t size)
 
 	if(data != NULL && size > 0) {
 		res = IDataLoad((U32_t)fd, data, size, true);
+	}
+	if(res == SYS_RESULT_OK) {
+		res = IMetadataStore();
 	}
 
 	return res;
@@ -207,36 +215,21 @@ static SysResult_t IMetadataStore(void)
 
 static SysResult_t IMetadataLoad(void)
 {
-	SysResult_t res = SYS_RESULT_OK;
+	SysResult_t res = SYS_RESULT_ERROR;
 	U32_t metadata_crc = 0;
 	U32_t crc = 0;
 	U32_t i = 0;
-	uintptr_t addr = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
-
-	do {
-		
-	} while(METADATA_ADDR_IS_VALID(addr) && res == SYS_RESULT_OK)
-	while(i < FILE_NUM) {
-		if(METADATA_ADDR_IS_VALID(addr)) {
+	uintptr_t addr = IMetadataFind();
+	
+	/* Sanity check the metadata address. */
+	if(METADATA_ADDR_IS_VALID(addr)) {
+		/* Save the metadata address and load the metadata. */
+		res = SYS_RESULT_OK;
+		MetadataAddressLoad = addr;
+		while(i < FILE_NUM) {
 			Metadata[i] = *((FileMetadata_t *)addr);
 			addr += sizeof(FileMetadata_t);
-		} else {
-			res = SYS_RESULT_ERROR;
-			break;
-		}
-	};
-	
-	if(res == SYS_RESULT_OK) {
-		addr += sizeof(FileMetadata_t);
-		metadata_crc = *((U32_t *)addr);
-		crc = IMetadataHashCalculate();
-		if(crc != 0) {
-			if(metadata_crc != crc) {
-				res = SYS_RESULT_ERROR;
-			}
-		} else {
-			res = SYS_RESULT_ERROR;
-		}
+		};		
 	}
 
 	return res;
@@ -244,19 +237,42 @@ static SysResult_t IMetadataLoad(void)
 
 static uintptr_t IMetadataFind(void)
 {
-	bool valid = false;
-	uintptr_t addr = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
+	bool valid = true;
+	uintptr_t addr = (STORAGE_CONFIG_METADATA_SECTOR_ADDR + METADATA_TOTAL_SIZE_BYTES);
+	uintptr_t valid_addr = 0; /* Previous metadata address. */
 	
-	do {
+	while( METADATA_ADDR_IS_VALID(addr) && (valid == true) ) {
+		/* Calculate the CRC and check its validity against the stored
+		 * CRC. */
+		metadata_crc = *((U32_t *)addr);
+		crc = IMetadataHashCalculate();
+		if(crc != 0 && metadata_crc == crc) {
+			valid = true;
+		} else {
+			valid = false;
+		}
 		
-	} 
+		/* Only copy the addr if it is valid. */
+		if(valid == true) {
+			valid_addr = addr;
+		}
+		
+		/* Move to where the next metadata would be. */
+		addr += METADATA_INC_CRC_SIZE_BYTES;
+	};
 	
+	return valid_addr;
+}
+
+static U32_t IMetadataHashCalculate(void)
+{
+	U32_t crc = Crc32(0, (void *)Metadata, METADATA_TOTAL_SIZE_BYTES);
 	
-	if(valid == false) {
-		addr = 0;
+	if(metadata_crc == 0 || metadata_crc == UINT32_MAX) {
+		crc = 0;
 	}
 	
-	return addr;
+	return crc;
 }
 
 static SysResult_t IDataStore(U32_t idx, void *data, U32_t size)
@@ -317,13 +333,4 @@ static SysResult_t IDataLoad(U32_t idx, void *data, U32_t size, bool inc_offset)
 	return res;	
 }
 
-static U32_t IMetadataHashCalculate(void)
-{
-	U32_t crc = Crc32(0, (void *)Metadata, METADATA_TOTAL_SIZE_BYTES);
-	
-	if(metadata_crc == 0 || metadata_crc == UINT32_MAX) {
-		crc = 0;
-	}
-	
-	return crc;
-}
+
