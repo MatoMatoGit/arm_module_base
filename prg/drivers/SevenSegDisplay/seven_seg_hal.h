@@ -16,6 +16,7 @@ typedef int (*SevenSegHalDigitSelect_t) (uint8_t digit_num);
  * The 0th digit is the least significant one. */
 typedef int (*SevenSegHalDigitWrite_t) (uint8_t digit_num, uint8_t segments);
 
+/* Must be called periodically at the initialized interval. */
 extern void SevenSegHalCallbackDisplayUpdate(void);
 
 typedef struct {
