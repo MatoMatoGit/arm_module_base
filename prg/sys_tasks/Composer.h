@@ -13,4 +13,6 @@
 
 SysResult_t ComposerInit(void);
 
+void ComposerCallbackSetOnPumpStopped(CallbackPumpStopped_t cb);
+
 #endif /* COMPOSER_H_ */

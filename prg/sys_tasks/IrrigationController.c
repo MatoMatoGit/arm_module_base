@@ -9,6 +9,7 @@
 #include "IrrigationController.h"
 
 /* System tasks includes. */
+#include "Composer.h"
 
 /* Driver includes. */
 #include "Pump/pump.h"
@@ -33,14 +34,14 @@ U32_t PumpAmountMl = 0;
 static void ICallbackPumpStopped(void);
 static void ICallbackDelayedPumpRun(Id_t timer_id, void *context);
 
-static void TaskIrrigationController(void *p_arg, U32_t v_arg);
+static void IrrigationControllerTask(void *p_arg, U32_t v_arg);
 
 SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation)
 {
 	SysResult_t res = SYS_RESULT_OK;
 	Id_t tsk_irrigation_controller = ID_INVALID;
 
-	tsk_irrigation_controller = TaskCreate(TaskIrrigationController, TASK_CAT_HIGH, 5,
+	tsk_irrigation_controller = TaskCreate(IrrigationControllerTask, TASK_CAT_HIGH, 5,
 		(TASK_PARAMETER_ESSENTIAL), 0, NULL, 0);
 	*mbox_irrigation = MailboxCreate(MBOX_IRRIGATION_NUM_ADDR, tsk_irrigation_controller, 1);
 	if(tsk_irrigation_controller == ID_INVALID || *mbox_irrigation == ID_INVALID) {
@@ -48,10 +49,7 @@ SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation)
 	}
 
 	if(res == SYS_RESULT_OK) {
-		res = PumpInit(ICallbackPumpStopped);
-	}
-
-	if(res == SYS_RESULT_OK) {
+		ComposerCallbackSetOnPumpStopped(ICallbackPumpStopped);
 		PumpEnable(1);
 		TaskResumeWithVArg((U32_t)*mbox_irrigation);
 	}
@@ -60,7 +58,7 @@ SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation)
 }
 
 
-static void TaskIrrigationController(void *p_arg, U32_t v_arg)
+static void IrrigationControllerTask(void *p_arg, U32_t v_arg)
 {
 	static Id_t mbox_irrigation;
 	OsResult_t res = OS_RES_ERROR;

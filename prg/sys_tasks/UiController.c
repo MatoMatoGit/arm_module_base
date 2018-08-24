@@ -9,7 +9,7 @@
 #include "UiController.h"
 #include "UiConfig.h"
 
-/* System tasks includes. */
+/* System task includes. */
 #include "ScheduleManager.h"
 #include "IrrigationController.h"
 
@@ -32,11 +32,12 @@ static Id_t MboxIrrigation = ID_INVALID;
 static Id_t MboxSchedule = ID_INVALID;
 static Id_t EvgSystem = ID_INVALID;
 
-static void TaskUiController(void *p_arg, U32_t v_arg);
+static void UiControllerTask(void *p_arg, U32_t v_arg);
 
 static SysResult_t IValueDecrement(U8_t index, S32_t val);
 static SysResult_t IValueIncrement(U8_t index, S32_t val);
 static U8_t IMapIndexToAddress(U8_t index);
+static void IDisplayUpdate(void);
 
 static void ITimerCallbackValueStable(Id_t timer_id, void *context);
 static void IButtonCallbackIncrement(void);
@@ -50,7 +51,7 @@ SysResult_t UiControllerInit(Id_t mbox_irrigation, Id_t mbox_schedule, Id_t evg_
 	SysResult_t res = SYS_RESULT_OK;
 	Id_t tsk_irrigation_controller = ID_INVALID;
 
-	tsk_irrigation_controller = TaskCreate(TaskUiController, TASK_CAT_REALTIME, 1,
+	tsk_irrigation_controller = TaskCreate(UiControllerTask, TASK_CAT_REALTIME, 1,
 		(TASK_PARAMETER_START | TASK_PARAMETER_ESSENTIAL), 0, NULL, 0);
 	TmrValueStable = TimerCreate(UI_THRESHOLD_VALUE_STABLE_MS, TIMER_PARAMETER_PERIODIC, ITimerCallbackValueStable, NULL);
 	if(tsk_irrigation_controller == ID_INVALID || TmrValueStable == ID_INVALID) {
@@ -64,23 +65,14 @@ SysResult_t UiControllerInit(Id_t mbox_irrigation, Id_t mbox_schedule, Id_t evg_
 }
 
 
-static void TaskUiController(void *p_arg, U32_t v_arg)
+static void UiControllerTask(void *p_arg, U32_t v_arg)
 {
-	static Id_t mbox_irrigation;
 	OsResult_t res = OS_RES_ERROR;
-	SysResult_t pump_res = SYS_RESULT_OK;
-	U16_t amount = 0;
-	U16_t trigger = 0;
 
 	TASK_INIT_BEGIN() {
-		mbox_irrigation = (Id_t)v_arg;
 	} TASK_INIT_END();
 
-	res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_TRIGGER, &trigger, OS_TIMEOUT_INFINITE);
 
-	if(res == OS_RES_OK || res == OS_RES_EVENT) {
-		res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_AMOUNT, &amount, OS_TIMEOUT_NONE);
-	}
 
 
 }
@@ -91,6 +83,7 @@ static SysResult_t IValueIncrement(U8_t index, S32_t val)
 
 	if(UiValues[index].current_val + val <= UiValues[index].max_val) {
 		UiValues[index].current_val += val;
+		IDisplayUpdate();
 		res = SYS_RESULT_OK;
 	}
 
@@ -103,6 +96,7 @@ static SysResult_t IValueDecrement(U8_t index, S32_t val)
 
 	if(UiValues[index].current_val - val >= UiValues[index].min_val) {
 		UiValues[index].current_val -= val;
+		IDisplayUpdate();
 		res = SYS_RESULT_OK;
 	}
 
@@ -138,6 +132,8 @@ static void IButtonCallbackSelect(void)
 	} else {
 		SelectedValue = 0;
 	}
+	
+	IDisplayUpdate();
 }
 
 static void IButtonCallbackPumpOn(void)
@@ -166,4 +162,9 @@ static U8_t IMapIndexToAddress(U8_t index)
 	}
 
 	return addr;
+}
+
+static void IDisplayUpdate(void)
+{
+	SevenSegDisplayUpdate(UiValues[SelectedValue]);
 }
