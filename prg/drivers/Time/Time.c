@@ -34,7 +34,7 @@ SysResult_t TimeInit(Id_t evg_alarm, U8_t evg_alarm_flag)
 {
 	SysResult_t res = SYS_RESULT_ERROR;
 
-	MX_RTC_Init();
+	RtcInit();
 	TimeData.evg = evg_alarm;
 	TimeData.evg_alarm_flag = evg_alarm_flag;
 	TimeData.alarm_en = 0;
@@ -64,7 +64,7 @@ void TimeGet(Time_t *time)
 	*time = TimeData.time;
 }
 
-void HAL_RTCEx_RTCEventCallback(RTC_HandleTypeDef *hrtc)
+void HAL_RTCEx_RTCIRQHandler(RTC_HandleTypeDef *hrtc)
 {
 	ITimeIncrement();
 }

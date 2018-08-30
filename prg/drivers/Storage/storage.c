@@ -196,7 +196,7 @@ static SysResult_t IMetadataStore(void)
 	/* Write the CRC hash to flash. */
 	if(res == SYS_RESULT_OK) {
 		if(flash_write((MetadataAddressStore + METADATA_TOTAL_SIZE_BYTES), 
-				(void *)metadata_crc, sizeof(metdata_crc)) != FLASH_RESULT_OK) {
+				(void *)metadata_crc, sizeof(metadata_crc)) != FLASH_RESULT_OK) {
 			res = SYS_RESULT_ERROR;
 		}
 	}	
@@ -205,8 +205,8 @@ static SysResult_t IMetadataStore(void)
 		MetadataAddressLoad = MetadataAddressStore;
 	}
 	/* Calculate next store address and check its validity. */
-	MetadataAddressStore += (METADATA_TOTAL_SIZE_BYTES + sizeof(metadata_crc);
-	if(!METADATA_ADDR_IS_VALID(MetadataAddress)) {
+	MetadataAddressStore += (METADATA_TOTAL_SIZE_BYTES + sizeof(metadata_crc));
+	if(!METADATA_ADDR_IS_VALID(MetadataAddressStore)) {
 		res = SYS_RESULT_FAIL;
 	}
 
@@ -240,6 +240,8 @@ static uintptr_t IMetadataFind(void)
 	bool valid = true;
 	uintptr_t addr = (STORAGE_CONFIG_METADATA_SECTOR_ADDR + METADATA_TOTAL_SIZE_BYTES);
 	uintptr_t valid_addr = 0; /* Previous metadata address. */
+	U32_t metadata_crc = 0;
+	U32_t crc = 0;
 	
 	while( METADATA_ADDR_IS_VALID(addr) && (valid == true) ) {
 		/* Calculate the CRC and check its validity against the stored
@@ -268,7 +270,7 @@ static U32_t IMetadataHashCalculate(void)
 {
 	U32_t crc = Crc32(0, (void *)Metadata, METADATA_TOTAL_SIZE_BYTES);
 	
-	if(metadata_crc == 0 || metadata_crc == UINT32_MAX) {
+	if(crc == 0 || crc == UINT32_MAX) {
 		crc = 0;
 	}
 	

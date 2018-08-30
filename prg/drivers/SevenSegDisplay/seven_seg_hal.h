@@ -3,27 +3,36 @@
 
 #include <stdint.h>
 
-typedef int (*SevenSegHalTimerInit_t) (uint32_t interval_ms);
+typedef void (*SevenSegHalGeneric_t) (void);
 
-typedef int (*SevenSegHalGpioInit_t) (void);
+typedef int (*SevenSegHalInit_t) (uint32_t interval_ms);
 
-/* Called by the driver to select a digit. */
-typedef int (*SevenSegHalDigitSelect_t) (uint8_t digit_num);
+typedef void (*SevenSegHalDigitSelect_t) (uint8_t digit_num);
 
-/* Called by the driver to write to a digit. The segment
- * bits that are set in the 'segments' argument must be
- * turned on.
- * The 0th digit is the least significant one. */
-typedef int (*SevenSegHalDigitWrite_t) (uint8_t digit_num, uint8_t segments);
+typedef void (*SevenSegHalDigitSet_t) (uint8_t digit_num, uint8_t segments);
 
 /* Must be called periodically at the initialized interval. */
 extern void SevenSegHalCallbackDisplayUpdate(void);
 
 typedef struct {
-	SevenSegHalTimerInit_t timer_init;
-	SevenSegHalGpioInit_t gpio_init;
+	/* Initialize the driver HAL. */
+	SevenSegHalInit_t init;
+
+	/* Start the digit multiplexing timer. */
+	SevenSegHalGeneric_t timer_start;
+
+	/* Select a digit. */
 	SevenSegHalDigitSelect_t digit_select;
-	SevenSegHalDigitWrite_t digit_write;
+
+	/* De-select a digit. */
+	SevenSegHalDigitSelect_t digit_deselect;
+
+	/* Set a digit to a specified value. The segment
+	 * bits that are set in the 'segments' argument must be
+	 * turned on.
+	 * The 0th digit is the least significant one. */
+	SevenSegHalDigitSet_t digit_set;
+
 }SevenSegHal_t;
 
 

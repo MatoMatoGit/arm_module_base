@@ -4,34 +4,39 @@
  *  Created on: 1 aug. 2018
  *      Author: Dorus
  */
+#include <config/sys_config.h>
 #include "Composer.h"
 
 #include "PriorRTOS.h"
 
+/* System configuration. */
+#include "sys_config.h"
+
 /* Drivers. */
-#include "Storage/storage.h"
-#include "Pump/pump.h"
-#include "Time/time.h"
-#include "RgbLed/rgb_led.h"
+#include "storage.h"
+#include "pump.h"
+#include "time.h"
+#include "rgb_led.h"
+#include "seven_seg.h"
+#include "seven_seg_port.h"
 
 /* Tasks. */
 #include "IrrigationController.h"
 #include "ScheduleManager.h"
 #include "UiController.h"
 
-#define EVG_SYSTEM_FLAG_ALARM			0x00
-#define EVG_SYSTEM_FLAG_PUMP_RUNNING	0x01
-#define EVG_SYSTEM_FLAG_ERROR			0x02
-#define EVG_SYSTEM_FLAG_ERROR_CRIT		0x03
-
-#define FILE_SIZE_LOG		0x200
-#define FILE_SIZE_SCHEDULE 	0x200
-
 struct SevenSegDisplay SevenSegConfig = {
-	.num_digits = UI_NUM_DIGITS,
-	.max_value = UI_MAX_VALUE,
+	.num_digits = DISPLAY_NUM_DIGITS,
+	.max_value = DISPLAY_MAX_VALUE,
 	.mode = SEVEN_SEG_MODE_DEC,
-	.refresh_rate_hz = UI_REFRESH_RATE
+	.refresh_rate_hz = DISPLAY_REFRESH_RATE
+};
+
+ScheduleManagerConfig_t ScheduleManagerConfig = {
+	.mbox_schedule = ID_INVALID,
+	.mbox_irrigation = ID_INVALID,
+	.evg_alarm = ID_INVALID,
+	.evg_alarm_flag = EVG_SYSTEM_FLAG_ALARM,
 };
 
 const U32_t FileSizes[FILE_NUM] = {
@@ -82,6 +87,7 @@ static void ComposerTask(void *p_arg, U32_t v_arg)
 	
 	/* Initialize Seven Segment display driver. */
 	if(res == SYS_RESULT_OK) {
+		SevenSegPortBind(&SevenSegConfig.hal);
 		if(SevenSegInit(&SevenSegConfig) != SEVEN_SEG_RES_OK) {
 			res = SYS_RESULT_ERROR;
 		}
@@ -115,14 +121,10 @@ static void ComposerTask(void *p_arg, U32_t v_arg)
 	
 	/* Initialize Schedule Manager. */
 	if(res == SYS_RESULT_OK) {
-		ScheduleManagerConfig_t config = {
-			.mbox_schedule = ID_INVALID,
-			.mbox_irrigation = mbox_irrigation,
-			.evg_alarm = evg_system,
-			.evg_alarm_flag = EVG_SYSTEM_FLAG_ALARM,
-		};
-		res = ScheduleManagerInit(&config);
-		mbox_schedule = config.mbox_schedule;
+		ScheduleManagerConfig.mbox_irrigation = mbox_irrigation;
+		ScheduleManagerConfig.evg_alarm = evg_system;
+		res = ScheduleManagerInit(&ScheduleManagerConfig);
+		mbox_schedule = ScheduleManagerConfig.mbox_schedule;
 	}
 	
 	/* Initialize UI Controller. */

@@ -8,17 +8,15 @@
 #ifndef PUMP_H_
 #define PUMP_H_
 
+#include "pump_config.h"
+
 #include <OsTypes.h>
 #include "SystemResult.h"
 
-#define PUMP_CONFIG_ML_PER_MIN 600
-
-#define PUMP_CONFIG_CONTROL_INVERTED
-
 /* Called when the duration/amount was pumped or stopped manually. */
-typedef void (*CallbackPumpStopped_t)(void);
+typedef void (*PumpCallback_t)(void);
 
-SysResult_t PumpInit(CallbackPumpStopped_t on_stopped);
+SysResult_t PumpInit(PumpCallback_t on_stopped);
 
 void PumpEnable(U8_t val);
 

@@ -16,7 +16,7 @@ static Id_t PumpTmr;
 static U8_t Running;
 static U8_t Enabled;
 
-static CallbackPumpStopped_t OnPumpStopped;
+static PumpCallback_t OnPumpStopped;
 
 #define PUMP_TIME_CONSTANT_ML (U32_t)(PUMP_CONFIG_ML_PER_MIN / 60) * 1e4 /* Time in microseconds to pump 1 mL*/
 
@@ -24,7 +24,7 @@ static CallbackPumpStopped_t OnPumpStopped;
 
 static void ITimerCallbackPump(Id_t timer_id, void *context);
 
-SysResult_t PumpInit(CallbackPumpStopped_t on_stopped)
+SysResult_t PumpInit(PumpCallback_t on_stopped)
 {
 	SysResult_t res = SYS_RESULT_ERROR;
 

@@ -36,19 +36,26 @@ static uint8_t DisplayDigits[SEVEN_SEG_CONFIG_DIGITS_MAX];
 
 static struct SevenSegDisplay DisplayConfig;
 
-static uint8_t ConvertBcdToSevenSegment(uint8_t bcd);
+static uint8_t IConvertBcdToSevenSegment(uint8_t bcd);
+static void IDigitDeselectAll(void);
 
 int SevenSegInit(struct SevenSegDisplay *config)
 {
 	int res = SEVEN_SEG_RES_INV_ARG;
 
 	memset(&DisplayConfig, 0, sizeof(struct SevenSegDisplay));
-	if(config->hal.digit_write != NULL) {
+	if(config->hal.digit_set != NULL) {
 		if(config->num_digits <= SEVEN_SEG_CONFIG_DIGITS_MAX) {
+			res = SEVEN_SEG_RES_OK;
+
 			DisplayConfig = *config;
 			for(uint8_t i = 0; i < SEVEN_SEG_CONFIG_DIGITS_MAX; i++) {
 				DisplayDigits[i] = 0;
 			}
+			if(config->hal.init != NULL) {
+				config->hal.init();
+			}
+			IDigitDeselectAll();
 		}
 	}
 
@@ -89,7 +96,7 @@ int SevenSegDigitUpdate(uint8_t digit_num, uint8_t value)
 
 	if(value <= DisplayConfig.mode) {
 		res = SEVEN_SEG_RES_ERR;
-		seg = ConvertBcdToSevenSegment(value);
+		seg = IConvertBcdToSevenSegment(value);
 		if(seg != DIGIT_SEG_INVALID) {
 			DisplayDigits[digit_num] = seg;
 			res = SEVEN_SEG_RES_OK;
@@ -101,7 +108,7 @@ int SevenSegDigitUpdate(uint8_t digit_num, uint8_t value)
 
 
 
-static uint8_t ConvertBcdToSevenSegment(uint8_t bcd)
+static uint8_t IConvertBcdToSevenSegment(uint8_t bcd)
 {
 	uint8_t sev_seg = DIGIT_SEG_INVALID;
 
@@ -110,4 +117,13 @@ static uint8_t ConvertBcdToSevenSegment(uint8_t bcd)
 	}
 
 	return sev_seg;
+}
+
+static void IDigitDeselectAll(void)
+{
+	if(DisplayConfig.hal.digit_deselect != NULL) {
+		for(uint8_t i = 0; i < DisplayConfig.num_digits; i++) {
+			DisplayConfig.hal.digit_deselect(i);
+		}
+	}
 }

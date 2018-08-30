@@ -1,0 +1,15 @@
+/*
+ * pump_config.h
+ *
+ *  Created on: 24 aug. 2018
+ *      Author: Dorus
+ */
+
+#ifndef PUMP_CONFIG_H_
+#define PUMP_CONFIG_H_
+
+#define PUMP_CONFIG_ML_PER_MIN 600
+
+#define PUMP_CONFIG_CONTROL_INVERTED
+
+#endif /* PUMP_CONFIG_H_ */

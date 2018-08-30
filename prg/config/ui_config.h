@@ -1,5 +1,5 @@
 /*
- * UiConfig.h
+ * ui_config.h
  *
  *  Created on: 1 aug. 2018
  *      Author: Dorus
