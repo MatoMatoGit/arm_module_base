@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : gpio.h
-  * Description        : This file contains all the functions prototypes for 
-  *                      the gpio  
+  * File Name          : SPI.c
+  * Description        : This file provides code for the configuration
+  *                      of the SPI instances.
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -37,61 +37,80 @@
   ******************************************************************************
   */
 
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __gpio_H
-#define __gpio_H
-
-#ifdef __cplusplus
- extern "C" {
-#endif
-
 /* Includes ------------------------------------------------------------------*/
+#include "spi.h"
 
-/* USER CODE BEGIN Includes */
-#include <stdint.h>
+#include "err.h"
+#include "gpio.h"
 
-/* USER CODE END Includes */
+/* USER CODE BEGIN 0 */
 
-/* USER CODE BEGIN Private defines */
+#define SPI_INST_7SD SPI1
 
-#define GPIO_CONFIG_7SD_SELECT_ACTIVE_LOW 0
+/* USER CODE END 0 */
 
-/* USER CODE END Private defines */
+SPI_HandleTypeDef hspi_7sd;
 
-/***** 7 Segment Display SPI & Select GPIO. *****/
-void Gpio7SdSpiInit(void);
-void Gpio7SdSpiDeinit(void);
-void Gpio7SdSelInit(void);
-void Gpio7SdSelDeinit(void);
-void Gpio7SdSelStateSet(uint8_t n, uint8_t state);
+/* SPI1 init function */
+void Spi7SdInit(void)
+{
 
-/***** User Interface Button GPIO. *****/
-void GpioUiButtonInit(void);
-void GpioUiButtonDeinit(void);
+  hspi_7sd.Instance = SPI_INST_7SD;
+  hspi_7sd.Init.Mode = SPI_MODE_MASTER;
+  hspi_7sd.Init.Direction = SPI_DIRECTION_1LINE;
+  hspi_7sd.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi_7sd.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi_7sd.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi_7sd.Init.NSS = SPI_NSS_HARD_OUTPUT;
+  hspi_7sd.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi_7sd.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi_7sd.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi_7sd.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi_7sd.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi_7sd) != HAL_OK)
+  {
+    ErrorHandler(__FILE__, __LINE__);
+  }
 
-/***** RGB LED GPIO. *****/
-void GpioRgbLedInit(void);
-void GpioRgbLedDeinit(void);
-void GpioRgbLedRedStateSet(uint8_t state);
-void GpioRgbLedGreenStateSet(uint8_t state);
-void GpioRgbLedBlueStateSet(uint8_t state);
-
-/***** Pump GPIO. *****/
-void GpioPumpInit(void);
-void GpioPumpStateSet(uint8_t state);
-
-/***** Debug UART GPIO. *****/
-void GpioDebugUartInit(void);
-void GpioDebugUartDeinit(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
-
-#ifdef __cplusplus
 }
-#endif
-#endif /*__ pinoutConfig_H */
+
+void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
+{
+  if(spiHandle->Instance==SPI1)
+  {
+  /* USER CODE BEGIN SPI1_MspInit 0 */
+
+  /* USER CODE END SPI1_MspInit 0 */
+    /* SPI1 clock enable */
+    __HAL_RCC_SPI1_CLK_ENABLE();
+    Gpio7SdSpiInit();
+  /* USER CODE BEGIN SPI1_MspInit 1 */
+
+  /* USER CODE END SPI1_MspInit 1 */
+  }
+}
+
+void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
+{
+
+  if(spiHandle->Instance==SPI1)
+  {
+  /* USER CODE BEGIN SPI1_MspDeInit 0 */
+
+  /* USER CODE END SPI1_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_SPI1_CLK_DISABLE();
+    Gpio7SdSpiDeinit();
+
+  /* USER CODE BEGIN SPI1_MspDeInit 1 */
+
+  /* USER CODE END SPI1_MspDeInit 1 */
+  }
+} 
+
+/* USER CODE BEGIN 1 */
+
+/* USER CODE END 1 */
 
 /**
   * @}

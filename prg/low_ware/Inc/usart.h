@@ -39,29 +39,26 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __usart_H
 #define __usart_H
+
 #ifdef __cplusplus
  extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
-#include "main.h"
 
 /* USER CODE BEGIN Includes */
+#include <stdint.h>
 
 /* USER CODE END Includes */
 
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart_debug;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-extern void _Error_Handler(char *, int);
-
-void MX_USART1_UART_Init(uint32_t baud_rate);
-void MX_USART2_UART_Init(void);
+void UartDebugInit(uint32_t baud_rate);
 
 /* USER CODE BEGIN Prototypes */
 

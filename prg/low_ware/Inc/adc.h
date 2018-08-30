@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : gpio.h
-  * Description        : This file contains all the functions prototypes for 
-  *                      the gpio  
+  * File Name          : ADC.h
+  * Description        : This file provides code for the configuration
+  *                      of the ADC instances.
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -36,53 +36,28 @@
   *
   ******************************************************************************
   */
-
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __gpio_H
-#define __gpio_H
+#ifndef __adc_H
+#define __adc_H
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "stm32f1xx_hal.h"
 
-/* USER CODE BEGIN Includes */
-#include <stdint.h>
+ /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
-/* USER CODE BEGIN Private defines */
+extern ADC_HandleTypeDef hadc1;
 
-#define GPIO_CONFIG_7SD_SELECT_ACTIVE_LOW 0
+/* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-/***** 7 Segment Display SPI & Select GPIO. *****/
-void Gpio7SdSpiInit(void);
-void Gpio7SdSpiDeinit(void);
-void Gpio7SdSelInit(void);
-void Gpio7SdSelDeinit(void);
-void Gpio7SdSelStateSet(uint8_t n, uint8_t state);
-
-/***** User Interface Button GPIO. *****/
-void GpioUiButtonInit(void);
-void GpioUiButtonDeinit(void);
-
-/***** RGB LED GPIO. *****/
-void GpioRgbLedInit(void);
-void GpioRgbLedDeinit(void);
-void GpioRgbLedRedStateSet(uint8_t state);
-void GpioRgbLedGreenStateSet(uint8_t state);
-void GpioRgbLedBlueStateSet(uint8_t state);
-
-/***** Pump GPIO. *****/
-void GpioPumpInit(void);
-void GpioPumpStateSet(uint8_t state);
-
-/***** Debug UART GPIO. *****/
-void GpioDebugUartInit(void);
-void GpioDebugUartDeinit(void);
+void MX_ADC1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -91,7 +66,7 @@ void GpioDebugUartDeinit(void);
 #ifdef __cplusplus
 }
 #endif
-#endif /*__ pinoutConfig_H */
+#endif /*__ adc_H */
 
 /**
   * @}

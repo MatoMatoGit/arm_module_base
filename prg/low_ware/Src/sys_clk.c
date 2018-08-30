@@ -1,21 +1,16 @@
 /*
  * sys_clk.c
  *
- *  Created on: 1 apr. 2018
+ *  Created on: 26 aug. 2018
  *      Author: Dorus
  */
 
 #include "sys_clk.h"
 
 #include "stm32f1xx_hal.h"
+#include "err.h"
 
-/** System Clock Configuration.
- * Frequencies
- * HCLK: 72		[MHz]
- * APB1: 36		[MHz]
- * APB2: 72		[MHz]
- * RTC: 32.768	[kHz]
- * IWDG: 40		[kHz]
+/** System Clock Configuration
 */
 void SysClockConfig(void)
 {
@@ -38,7 +33,7 @@ void SysClockConfig(void)
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    ErrorHandler(__FILE__, __LINE__);
   }
 
     /**Initializes the CPU, AHB and APB busses clocks
@@ -50,17 +45,27 @@ void SysClockConfig(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    ErrorHandler(__FILE__, __LINE__);
   }
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_ADC;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    ErrorHandler(__FILE__, __LINE__);
   }
 
+    /**Configure the Systick interrupt time
+    */
+  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
 
+    /**Configure the Systick
+    */
+  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+
+  /* SysTick_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }

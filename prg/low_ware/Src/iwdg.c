@@ -40,6 +40,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "iwdg.h"
 
+#include "err.h"
+
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -55,7 +57,7 @@ void MX_IWDG_Init(void)
   hiwdg.Init.Reload = 4095;
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    ErrorHandler(__FILE__, __LINE__);
   }
 
 }

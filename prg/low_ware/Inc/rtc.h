@@ -39,6 +39,7 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __rtc_H
 #define __rtc_H
+
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -56,9 +57,7 @@ extern RTC_HandleTypeDef hrtc;
 
 /* USER CODE END Private defines */
 
-extern void _Error_Handler(char *, int);
-
-void MX_RTC_Init(void);
+void RtcInit(void);
 
 /* USER CODE BEGIN Prototypes */
 

@@ -40,124 +40,178 @@
 /* Includes ------------------------------------------------------------------*/
 #include "tim.h"
 
+#include "err.h"
+#include "stm32f1xx_hal.h"
+
 /* USER CODE BEGIN 0 */
+
+#define TIMER_INST_OS TIM2
+#define TIMER_INST_APP TIM3
+
+static TIM_HandleTypeDef *ITimHandleFromTimer(TimerInst_t timer);
 
 /* USER CODE END 0 */
 
-TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef tim_os;
+TIM_HandleTypeDef tim_app;
 
-/* TIM1 init function */
-void MX_TIM1_Init(void)
+static TimerCallback_t tim_os_period_elapsed = NULL;
+static TimerCallback_t tim_app_period_elapsed = NULL;
+
+/* TIM init function */
+void TimerInit(TimerInst_t timer, uint32_t prescaler, uint32_t period)
 {
-  TIM_ClockConfigTypeDef sClockSourceConfig;
-  TIM_SlaveConfigTypeDef sSlaveConfig;
-  TIM_MasterConfigTypeDef sMasterConfig;
-  TIM_OC_InitTypeDef sConfigOC;
-  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
+	TIM_ClockConfigTypeDef sClockSourceConfig;
+	TIM_HandleTypeDef *tim = ITimHandleFromTimer(timer);
 
-  htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 0;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+	if(tim != NULL) {
+		if(tim == &tim_os) {
+			tim->Instance = TIMER_INST_OS;
+		} else {
+			tim->Instance = TIMER_INST_APP;
+		}
+		tim->Init.Prescaler = prescaler;
+		tim->Init.CounterMode = TIM_COUNTERMODE_UP;
+		tim->Init.Period = period;
+		tim->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+		tim->Init.RepetitionCounter = 0;
+		tim->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+		if (HAL_TIM_Base_Init(tim) != HAL_OK)
+		{
+			ErrorHandler(__FILE__, __LINE__);
+		}
 
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+		sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+		if (HAL_TIM_ConfigClockSource(tim, &sClockSourceConfig) != HAL_OK)
+		{
+			ErrorHandler(__FILE__, __LINE__);
+		}
+	} else {
+		ErrorHandler(__FILE__, __LINE__);
+	}
 
-  if (HAL_TIM_OC_Init(&htim1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+}
 
-  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_GATED;
-  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
-  if (HAL_TIM_SlaveConfigSynchronization(&htim1, &sSlaveConfig) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+void TimerStart(TimerInst_t timer)
+{
+	TIM_HandleTypeDef *tim = ITimHandleFromTimer(timer);
+	if(tim != NULL) {
+		HAL_TIM_Base_Start_IT(tim);
+	}
+}
 
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+void TimerStop(TimerInst_t timer)
+{
+	TIM_HandleTypeDef *tim = ITimHandleFromTimer(timer);
+	if(tim != NULL) {
+		HAL_TIM_Base_Stop_IT(tim);
+	}
+}
 
-  sConfigOC.OCMode = TIM_OCMODE_TIMING;
-  sConfigOC.Pulse = 0;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
-  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_OC_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
+void TimerCallbackRegisterPeriodElapsed(TimerInst_t timer, TimerCallback_t on_elapsed)
+{
+	if(timer == TIMER_OSTICK) {
+		tim_os_period_elapsed = on_elapsed;
+	} else if (timer == TIMER_APP_0) {
+		tim_app_period_elapsed = on_elapsed;
+	}
+}
 
-  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
-  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
-  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 0;
-  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
-  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
-  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
-  if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim == &tim_os) {
+		if(tim_os_period_elapsed != NULL) {
+			tim_os_period_elapsed();
+		}
+	} else if (htim == &tim_app) {
+		if(tim_app_period_elapsed != NULL) {
+			tim_app_period_elapsed();
+		}
+	}
 }
 
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
-  if(tim_baseHandle->Instance==TIM1)
+  if(tim_baseHandle->Instance==TIMER_INST_OS)
   {
   /* USER CODE BEGIN TIM1_MspInit 0 */
 
   /* USER CODE END TIM1_MspInit 0 */
     /* TIM1 clock enable */
-    __HAL_RCC_TIM1_CLK_ENABLE();
-
-    /* TIM1 interrupt Init */
-    HAL_NVIC_SetPriority(TIM1_CC_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
+    __HAL_RCC_TIM2_CLK_ENABLE();
   /* USER CODE BEGIN TIM1_MspInit 1 */
 
   /* USER CODE END TIM1_MspInit 1 */
+  }
+  else if(tim_baseHandle->Instance==TIMER_INST_APP)
+  {
+  /* USER CODE BEGIN TIM3_MspInit 0 */
+
+  /* USER CODE END TIM3_MspInit 0 */
+    /* TIM3 clock enable */
+    __HAL_RCC_TIM3_CLK_ENABLE();
+  /* USER CODE BEGIN TIM3_MspInit 1 */
+
+  /* USER CODE END TIM3_MspInit 1 */
   }
 }
 
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
-  if(tim_baseHandle->Instance==TIM1)
+  if(tim_baseHandle->Instance==TIMER_INST_OS)
   {
   /* USER CODE BEGIN TIM1_MspDeInit 0 */
 
   /* USER CODE END TIM1_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_TIM1_CLK_DISABLE();
+    __HAL_RCC_TIM2_CLK_DISABLE();
 
     /* TIM1 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(TIM1_CC_IRQn);
+    HAL_NVIC_DisableIRQ(TIM2_IRQn);
   /* USER CODE BEGIN TIM1_MspDeInit 1 */
 
   /* USER CODE END TIM1_MspDeInit 1 */
   }
+  else if(tim_baseHandle->Instance==TIMER_INST_APP)
+  {
+  /* USER CODE BEGIN TIM3_MspDeInit 0 */
+
+  /* USER CODE END TIM3_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_TIM3_CLK_DISABLE();
+
+    /* TIM3 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM3_IRQn);
+  /* USER CODE BEGIN TIM3_MspDeInit 1 */
+
+  /* USER CODE END TIM3_MspDeInit 1 */
+  }
 } 
 
 /* USER CODE BEGIN 1 */
+
+static TIM_HandleTypeDef *ITimHandleFromTimer(TimerInst_t timer)
+{
+	TIM_HandleTypeDef *tim = NULL;
+
+	switch(timer) {
+	case TIMER_OSTICK: {
+		tim = &tim_os;
+		break;
+	}
+	case TIMER_APP_0: {
+		tim = &tim_app;
+		break;
+	}
+	default: {
+		break;
+	}
+	}
+
+	return tim;
+}
 
 /* USER CODE END 1 */
 

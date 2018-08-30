@@ -39,26 +39,34 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __tim_H
 #define __tim_H
+
 #ifdef __cplusplus
  extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal.h"
+#include <stdint.h>
 
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
-extern TIM_HandleTypeDef htim1;
+typedef enum {
+	TIMER_OSTICK = 0,
+	TIMER_APP_0,
+	TIMER_NUM /* Must be the last in the enum. */
+}TimerInst_t;
+
+typedef void (* TimerCallback_t) (void);
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-extern void _Error_Handler(char *, int);
-
-void MX_TIM1_Init(void);
+void TimerInit(TimerInst_t timer, uint32_t prescaler, uint32_t period);
+void TimerStart(TimerInst_t timer);
+void TimerStop(TimerInst_t timer);
+void TimerCallbackRegisterPeriodElapsed(TimerInst_t timer, TimerCallback_t on_elapsed);
 
 /* USER CODE BEGIN Prototypes */
 

@@ -39,6 +39,7 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __iwdg_H
 #define __iwdg_H
+
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -55,8 +56,6 @@ extern IWDG_HandleTypeDef hiwdg;
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
-
-extern void _Error_Handler(char *, int);
 
 void MX_IWDG_Init(void);
 

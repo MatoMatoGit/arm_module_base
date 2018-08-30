@@ -44,13 +44,33 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 
+ /**
+   * @brief  HAL Status structures definition
+   */
+ typedef enum
+ {
+   HAL_OK       = 0x00U,
+   HAL_ERROR    = 0x01U,
+   HAL_BUSY     = 0x02U,
+   HAL_TIMEOUT  = 0x03U
+ } HAL_StatusTypeDef;
+
+ /**
+   * @brief  HAL Lock structures definition
+   */
+ typedef enum
+ {
+   HAL_UNLOCKED = 0x00U,
+   HAL_LOCKED   = 0x01U
+ } HAL_LockTypeDef;
+
 /* ########################## Module Selection ############################## */
 /**
-  * @brief This is the list of modules to be used in the HAL driver 
+  * @brief This is the list of modules to be used in the HAL driver
   */
-  
+
 #define HAL_MODULE_ENABLED  
-/*#define HAL_ADC_MODULE_ENABLED   */
+#define HAL_ADC_MODULE_ENABLED
 /*#define HAL_CRYP_MODULE_ENABLED   */
 /*#define HAL_CAN_MODULE_ENABLED   */
 /*#define HAL_CEC_MODULE_ENABLED   */
@@ -59,7 +79,7 @@
 /*#define HAL_DAC_MODULE_ENABLED   */
 /*#define HAL_DMA_MODULE_ENABLED   */
 /*#define HAL_ETH_MODULE_ENABLED   */
-#define HAL_FLASH_MODULE_ENABLED
+/*#define HAL_FLASH_MODULE_ENABLED   */
 #define HAL_GPIO_MODULE_ENABLED
 /*#define HAL_I2C_MODULE_ENABLED   */
 /*#define HAL_I2S_MODULE_ENABLED   */
@@ -77,7 +97,7 @@
 /*#define HAL_MMC_MODULE_ENABLED   */
 /*#define HAL_SDRAM_MODULE_ENABLED   */
 /*#define HAL_SMARTCARD_MODULE_ENABLED   */
-/*#define HAL_SPI_MODULE_ENABLED   */
+#define HAL_SPI_MODULE_ENABLED
 /*#define HAL_SRAM_MODULE_ENABLED   */
 #define HAL_TIM_MODULE_ENABLED
 #define HAL_UART_MODULE_ENABLED
