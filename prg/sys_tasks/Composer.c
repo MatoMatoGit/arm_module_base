@@ -88,7 +88,7 @@ static void ComposerTask(void *p_arg, U32_t v_arg)
 	/* Initialize Seven Segment display driver. */
 	if(res == SYS_RESULT_OK) {
 		SevenSegPortBind(&SevenSegConfig.hal);
-		if(SevenSegInit(&SevenSegConfig) != SEVEN_SEG_RES_OK) {
+		if(SevenSegDisplayInit(&SevenSegConfig) != SEVEN_SEG_RES_OK) {
 			res = SYS_RESULT_ERROR;
 		}
 	}

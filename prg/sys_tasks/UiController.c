@@ -166,5 +166,5 @@ static U8_t IMapIndexToAddress(U8_t index)
 
 static void IDisplayUpdate(void)
 {
-	SevenSegDisplayUpdate(UiValues[SelectedValue]);
+	SevenSegDisplaySet(UiValues[SelectedValue]);
 }
