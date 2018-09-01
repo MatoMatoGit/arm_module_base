@@ -56,9 +56,12 @@ extern UART_HandleTypeDef huart_debug;
 
 /* USER CODE BEGIN Private defines */
 
+typedef void (*UartCallbackRx_t)(uint8_t byte);
+
 /* USER CODE END Private defines */
 
 void UartDebugInit(uint32_t baud_rate);
+void UartDebugCallbackSetOnRx(UartCallbackRx_t cb);
 
 /* USER CODE BEGIN Prototypes */
 

@@ -50,6 +50,8 @@
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart_debug;
+uint8_t DebugRxChar = 0;
+UartCallbackRx_t OnRx = NULL;
 
 /* USART1 init function */
 
@@ -68,7 +70,12 @@ void UartDebugInit(uint32_t baud_rate)
   {
     ErrorHandler(__FILE__, __LINE__);
   }
+  HAL_UART_Receive_IT(&huart_debug, &DebugRxChar, 1);
+}
 
+void UartDebugCallbackSetOnRx(UartCallbackRx_t cb)
+{
+	OnRx = cb;
 }
 
 void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
@@ -109,6 +116,16 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 } 
 
 /* USER CODE BEGIN 1 */
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart == &huart_debug) {
+		if(OnRx != NULL) {
+			OnRx(DebugRxChar);
+		}
+	}
+	HAL_UART_Receive_IT(&huart_debug, &DebugRxChar, 1);
+}
 
 /* USER CODE END 1 */
 
