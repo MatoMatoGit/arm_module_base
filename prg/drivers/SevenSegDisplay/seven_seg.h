@@ -16,7 +16,7 @@
 /* Seven Segment Display driver. */
 
 typedef enum {
-	SEVEN_SEG_MODE_DEC = 0x9,
+	SEVEN_SEG_MODE_DEC = 0xA,
 	SEVEN_SEG_MODE_HEX = 0xF
 }SevenSegMode_t;
 
@@ -27,15 +27,21 @@ struct SevenSegDisplay {
 	uint32_t max_value;
 	SevenSegMode_t mode;
 	uint16_t refresh_rate_hz;
+
+	volatile uint8_t enabled;
 	SevenSegHal_t hal;
 };
 
-int SevenSegInit(struct SevenSegDisplay *config);
+int SevenSegDisplayInit(struct SevenSegDisplay *config);
+
+void SevenSegDisplayEnable(uint8_t val);
 
 uint32_t SevenSegDisplayMaxValueGet(void);
 
-int SevenSegDisplayUpdate(uint32_t value);
+int SevenSegDisplaySet(uint32_t val);
 
-int SevenSegDigitUpdate(uint8_t digit_num, uint8_t value);
+int SevenSegDigitSet(uint8_t digit_num, uint8_t val);
+
+
 
 #endif /* SEVEN_SEG_H_ */

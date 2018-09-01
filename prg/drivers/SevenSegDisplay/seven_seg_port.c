@@ -47,27 +47,22 @@ int SevenSegPortInit(uint32_t interval_ms)
 void SevenSegPortTimerStart(void)
 {
 	TimerStart(TIMER_APP_0);
-
-	return SEVEN_SEG_RES_OK;
 }
 
 void SevenSegPortDigitSelect(uint8_t digit_num)
 {
 	Gpio7SdSelStateSet(digit_num, 1);
 
-	return SEVEN_SEG_RES_OK;
 }
 
 void SevenSegPortDigitDeselect(uint8_t digit_num)
 {
 	Gpio7SdSelStateSet(digit_num, 0);
-
-	return SEVEN_SEG_RES_OK;
 }
 
 void SevenSegPortDigitSet(uint8_t digit_num, uint8_t segments)
 {
-	return (HAL_SPI_Transmit(hspi_7sd, &segments, sizeof(segments), SpiWriteTimeoutMs) == HAL_OK ? SEVEN_SEG_RES_OK: SEVEN_SEG_RES_ERR);
+	HAL_SPI_Transmit(hspi_7sd, &segments, sizeof(segments), SpiWriteTimeoutMs);
 }
 
 static void SevenSegCallbackTimer(void)
