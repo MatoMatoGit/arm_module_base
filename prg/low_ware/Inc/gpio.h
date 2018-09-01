@@ -56,6 +56,12 @@
 
 #define GPIO_CONFIG_7SD_SELECT_ACTIVE_LOW 0
 
+ typedef void (*GpioIntCallback_t)(uint8_t state);
+
+#define UI_BUTTON_INC 0
+#define UI_BUTTON_DEC 1
+#define UI_BUTTON_SEL 2
+
 /* USER CODE END Private defines */
 
 /***** 7 Segment Display SPI & Select GPIO. *****/
@@ -68,6 +74,8 @@ void Gpio7SdSelStateSet(uint8_t n, uint8_t state);
 /***** User Interface Button GPIO. *****/
 void GpioUiButtonInit(void);
 void GpioUiButtonDeinit(void);
+uint8_t GpioUiButtonStateGet(uint8_t btn);
+void GpioUiButtonIntCallbackSet(uint8_t btn, GpioIntCallback_t cb);
 
 /***** RGB LED GPIO. *****/
 void GpioRgbLedInit(void);

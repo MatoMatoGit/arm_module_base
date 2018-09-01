@@ -69,11 +69,15 @@
 
 /***** User Interface Button GPIO. *****/
 #define CLOCK_ENABLE_UI_BUTTON	__HAL_RCC_GPIOB_CLK_ENABLE
-#define MODE_UI_BUTTON		GPIO_MODE_INPUT
+#define MODE_UI_BUTTON		GPIO_MODE_IT_FALLING
 #define PORT_UI_BUTTON		GPIOB
 #define PIN_UI_BUTTON_INC	GPIO_PIN_5
 #define PIN_UI_BUTTON_DEC	GPIO_PIN_6
 #define PIN_UI_BUTTON_SEL	GPIO_PIN_7
+
+static GpioIntCallback_t UiButtonIncCb = NULL;
+static GpioIntCallback_t UiButtonDecCb = NULL;
+static GpioIntCallback_t UiButtonSelCb = NULL;
 
 /***** Pump GPIO. *****/
 #define CLOCK_ENABLE_PUMP		__HAL_RCC_GPIOB_CLK_ENABLE
@@ -205,6 +209,79 @@ void GpioUiButtonInit(void)
 void GpioUiButtonDeinit(void)
 {
 	HAL_GPIO_DeInit(PORT_UI_BUTTON, PIN_UI_BUTTON_INC|PIN_UI_BUTTON_DEC|PIN_UI_BUTTON_SEL);
+}
+
+uint8_t GpioUiButtonStateGet(uint8_t btn)
+{
+	uint8_t state = 0;
+	uint16_t pin = 0;
+
+	switch(btn) {
+	default:
+	case UI_BUTTON_INC: {
+		pin = PIN_UI_BUTTON_INC;
+		break;
+	}
+	case UI_BUTTON_DEC: {
+		pin = PIN_UI_BUTTON_DEC;
+		break;
+	}
+	case UI_BUTTON_SEL: {
+		pin = PIN_UI_BUTTON_SEL;
+		break;
+	}
+	}
+
+	state = HAL_GPIO_ReadPin(PORT_UI_BUTTON, pin);
+
+	return state;
+}
+
+void GpioUiButtonIntCallbackSet(uint8_t btn, GpioIntCallback_t cb)
+{
+	switch(btn) {
+	default:
+	case UI_BUTTON_INC: {
+		UiButtonIncCb = cb;
+		break;
+	}
+	case UI_BUTTON_DEC: {
+		UiButtonDecCb = cb;
+		break;
+	}
+	case UI_BUTTON_SEL: {
+		UiButtonSelCb = cb;
+		break;
+	}
+	}
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	GpioIntCallback_t cb = NULL;
+
+	switch(GPIO_Pin) {
+	default:{
+		cb = NULL;
+		break;
+	}
+	case PIN_UI_BUTTON_INC: {
+		cb = UiButtonIncCb;
+		break;
+	}
+	case PIN_UI_BUTTON_DEC: {
+		cb = UiButtonDecCb;
+		break;
+	}
+	case PIN_UI_BUTTON_SEL: {
+		cb= UiButtonSelCb;
+		break;
+	}
+	}
+
+	if(cb != NULL) {
+		cb(HAL_GPIO_ReadPin(PORT_UI_BUTTON, GPIO_Pin));
+	}
 }
 
 /***** Pump GPIO. *****/
