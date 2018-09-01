@@ -34,6 +34,7 @@
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx.h"
 #include "stm32f1xx_it.h"
+#include "gpio.h"
 
 /* USER CODE BEGIN 0 */
 
@@ -256,6 +257,15 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
+}
+
+void EXTI9_5_IRQHandler(void)
+{
+	uint16_t pin = 0;
+	if(GpioUiButtonStateGet(UI_BUTTON_INC) == 0) {
+		pin = GPIO_PIN_5;
+	}
+	HAL_GPIO_EXTI_IRQHandler(pin);
 }
 
 /* USER CODE BEGIN 1 */
