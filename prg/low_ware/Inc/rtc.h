@@ -55,9 +55,12 @@ extern RTC_HandleTypeDef hrtc;
 
 /* USER CODE BEGIN Private defines */
 
+typedef void (*RtcCallbackSecond_t)(uint8_t sec);
+
 /* USER CODE END Private defines */
 
 void RtcInit(void);
+void RtcCallbackSetOnSecond(RtcCallbackSecond_t cb);
 
 /* USER CODE BEGIN Prototypes */
 

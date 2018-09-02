@@ -48,6 +48,8 @@
 
 RTC_HandleTypeDef hrtc;
 
+static RtcCallbackSecond_t OnSecond = NULL;
+
 /* RTC init function */
 void RtcInit(void)
 {
@@ -65,30 +67,34 @@ void RtcInit(void)
   }
 	/**Initialize RTC and set the Time and Date
 	*/
-	if(HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) != 0x32F2){
-		sTime.Hours = 0x0;
-		sTime.Minutes = 0x0;
-		sTime.Seconds = 0x0;
+	sTime.Hours = 0x0;
+	sTime.Minutes = 0x0;
+	sTime.Seconds = 0x0;
 
-		if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
-		{
-			ErrorHandler(__FILE__, __LINE__);
-		}
-
-		DateToUpdate.WeekDay = RTC_WEEKDAY_SATURDAY;
-		DateToUpdate.Month = RTC_MONTH_MARCH;
-		DateToUpdate.Date = 0x31;
-		DateToUpdate.Year = 0x18;
-
-		if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
-		{
-			ErrorHandler(__FILE__, __LINE__);
-		}
-
-		HAL_RTCEx_BKUPWrite(&hrtc,RTC_BKP_DR1,0x32F2);
-		/* RTC interrupt Init */
-		HAL_RTCEx_SetSecond_IT(&hrtc);
+	if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
+	{
+		ErrorHandler(__FILE__, __LINE__);
 	}
+
+	DateToUpdate.WeekDay = RTC_WEEKDAY_SUNDAY;
+	DateToUpdate.Month = RTC_MONTH_SEPTEMBER;
+	DateToUpdate.Date = 0x21;
+	DateToUpdate.Year = 0x18;
+
+	if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BIN) != HAL_OK)
+	{
+		ErrorHandler(__FILE__, __LINE__);
+	}
+
+	HAL_RTCEx_BKUPWrite(&hrtc,RTC_BKP_DR1,0x32F2);
+	/* RTC interrupt Init */
+	HAL_RTCEx_SetSecond_IT(&hrtc);
+
+}
+
+void RtcCallbackSetOnSecond(RtcCallbackSecond_t cb)
+{
+	OnSecond = cb;
 }
 
 void HAL_RTC_MspInit(RTC_HandleTypeDef* rtcHandle)
@@ -127,7 +133,15 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* rtcHandle)
 
   /* USER CODE END RTC_MspDeInit 1 */
   }
-} 
+}
+void HAL_RTCEx_RTCEventCallback(RTC_HandleTypeDef *hrtc)
+{
+	RTC_TimeTypeDef sTime;
+	HAL_RTC_GetTime(hrtc, &sTime, RTC_FORMAT_BIN);
+	if(OnSecond != NULL) {
+		OnSecond(sTime.Seconds);
+	}
+}
 
 /* USER CODE BEGIN 1 */
 
