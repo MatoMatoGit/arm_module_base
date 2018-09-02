@@ -67,6 +67,7 @@
 /***** 7 Segment Display SPI & Select GPIO. *****/
 void Gpio7SdSpiInit(void);
 void Gpio7SdSpiDeinit(void);
+void Gpio7SdSpiNssStateSet(uint8_t state);
 void Gpio7SdSelInit(void);
 void Gpio7SdSelDeinit(void);
 void Gpio7SdSelStateSet(uint8_t n, uint8_t state);

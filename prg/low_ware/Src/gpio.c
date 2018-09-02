@@ -47,6 +47,7 @@
 /***** 7 Segment Display SPI & Select GPIO. *****/
 #define CLOCK_ENABLE_7SD_SPI	__HAL_RCC_GPIOA_CLK_ENABLE
 #define MODE_7SD_SPI		GPIO_MODE_AF_PP
+#define MODE_7SD_SPI_NSS	GPIO_MODE_OUTPUT_PP
 #define PORT_7SD_SPI		GPIOA
 #define PIN_7SD_SPI_NSS		GPIO_PIN_4
 #define PIN_7SD_SPI_SCK		GPIO_PIN_5
@@ -125,8 +126,13 @@ void Gpio7SdSpiInit(void)
 	PA5     ------> SPI1_SCK
 	PA7     ------> SPI1_MOSI
 	*/
-	GPIO_InitStruct.Pin = PIN_7SD_SPI_NSS|PIN_7SD_SPI_SCK|PIN_7SD_SPI_MOSI;
+	GPIO_InitStruct.Pin = PIN_7SD_SPI_SCK|PIN_7SD_SPI_MOSI;
 	GPIO_InitStruct.Mode = MODE_7SD_SPI;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	HAL_GPIO_Init(PORT_7SD_SPI, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = PIN_7SD_SPI_NSS;
+	GPIO_InitStruct.Mode = MODE_7SD_SPI_NSS;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(PORT_7SD_SPI, &GPIO_InitStruct);
 }
@@ -139,6 +145,16 @@ void Gpio7SdSpiDeinit(void)
 	PA7     ------> SPI1_MOSI
 	*/
 	HAL_GPIO_DeInit(PORT_7SD_SPI, PIN_7SD_SPI_NSS|PIN_7SD_SPI_SCK|PIN_7SD_SPI_MOSI);
+}
+
+void Gpio7SdSpiNssStateSet(uint8_t state)
+{
+	if(state) {
+		HAL_GPIO_WritePin(PORT_7SD_SPI, PIN_7SD_SPI_NSS, GPIO_PIN_SET);
+	} else {
+		HAL_GPIO_WritePin(PORT_7SD_SPI, PIN_7SD_SPI_NSS, GPIO_PIN_RESET);
+	}
+
 }
 
 void Gpio7SdSelInit(void)
