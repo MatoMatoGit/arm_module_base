@@ -262,8 +262,13 @@ void USART1_IRQHandler(void)
 void EXTI9_5_IRQHandler(void)
 {
 	uint16_t pin = 0;
+
 	if(GpioUiButtonStateGet(UI_BUTTON_INC) == 0) {
 		pin = GPIO_PIN_5;
+	} else if(GpioUiButtonStateGet(UI_BUTTON_DEC) == 0) {
+		pin = GPIO_PIN_6;
+	} else if(GpioUiButtonStateGet(UI_BUTTON_SEL) == 0) {
+		pin = GPIO_PIN_7;
 	}
 	HAL_GPIO_EXTI_IRQHandler(pin);
 }
