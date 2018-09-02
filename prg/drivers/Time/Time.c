@@ -15,7 +15,7 @@
 #define MINUTES_IN_HOUR		60
 #define HOURS_IN_DAY		24
 
-static void ITimeIncrement(void);
+static void ITimeIncrement(uint8_t sec);
 
 typedef struct {
 	Id_t evg;
@@ -34,12 +34,13 @@ SysResult_t TimeInit(Id_t evg_alarm, U8_t evg_alarm_flag)
 {
 	SysResult_t res = SYS_RESULT_ERROR;
 
-	RtcInit();
 	TimeData.evg = evg_alarm;
 	TimeData.evg_alarm_flag = evg_alarm_flag;
 	TimeData.alarm_en = 0;
 	TimeData.alarm_hour = 0;
 	TimeData.cont_hours = TimeData.time.hours = TimeData.time.minutes = TimeData.time.seconds = 0;
+	RtcCallbackSetOnSecond(ITimeIncrement);
+	RtcInit();
 
 	return res;
 }
@@ -64,12 +65,7 @@ void TimeGet(Time_t *time)
 	*time = TimeData.time;
 }
 
-void HAL_RTCEx_RTCIRQHandler(RTC_HandleTypeDef *hrtc)
-{
-	ITimeIncrement();
-}
-
-static void ITimeIncrement(void)
+static void ITimeIncrement(uint8_t sec)
 {
 	TimeData.time.seconds++;
 
