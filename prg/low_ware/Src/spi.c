@@ -60,9 +60,9 @@ void Spi7SdInit(void)
   hspi_7sd.Init.Direction = SPI_DIRECTION_1LINE;
   hspi_7sd.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi_7sd.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi_7sd.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi_7sd.Init.NSS = SPI_NSS_HARD_OUTPUT;
-  hspi_7sd.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi_7sd.Init.CLKPhase = SPI_PHASE_2EDGE;
+  hspi_7sd.Init.NSS = SPI_NSS_SOFT;
+  hspi_7sd.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256; /* 281.25 kBit/s */
   hspi_7sd.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi_7sd.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi_7sd.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
