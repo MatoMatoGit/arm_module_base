@@ -229,7 +229,7 @@ static SysResult_t IMetadataLoad(void)
 		while(i < FILE_NUM) {
 			Metadata[i] = *((FileMetadata_t *)addr);
 			addr += sizeof(FileMetadata_t);
-		};		
+		};
 	}
 
 	return res;
