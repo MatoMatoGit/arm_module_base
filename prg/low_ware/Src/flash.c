@@ -28,14 +28,15 @@ int flash_write(uint32_t addr, void *data, uint32_t size)
 	return res;
 }
 
-int flash_erase(uint32_t sector_num)
+int flash_erase(uint32_t addr, uint32_t n_pages)
 {
 	int res = FLASH_RESULT_ERR;
 	uint32_t erase_err = 0;
 	FLASH_EraseInitTypeDef erase_init = {
 		.TypeErase = FLASH_TYPEERASE_PAGES,
 		.Banks = 0,
-		.PageAddress = 0,
+		.PageAddress = addr,
+		.NbPages = n_pages
 	};
 
 	HAL_FLASH_Unlock();
