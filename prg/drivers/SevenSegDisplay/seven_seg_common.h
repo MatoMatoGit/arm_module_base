@@ -7,14 +7,13 @@
 #define SEVEN_SEG_RES_INV_ARG	-1
 #define SEVEN_SEG_RES_ERR		-2
 
-#define DIGIT_SEG_A	0x01
-#define DIGIT_SEG_B	0x02
-#define DIGIT_SEG_C	0x04
-#define DIGIT_SEG_D	0x08
-#define DIGIT_SEG_E	0x10
-#define DIGIT_SEG_F	0x20
-#define DIGIT_SEG_G	0x40
-#define DIGIT_SEG_DOT	0x80
+#define DIGIT_SEG_A	0x02
+#define DIGIT_SEG_B	0x04
+#define DIGIT_SEG_C	0x08
+#define DIGIT_SEG_D	0x10
+#define DIGIT_SEG_E	0x20
+#define DIGIT_SEG_F	0x40
+#define DIGIT_SEG_G	0x80
 
 #define DIGIT_0 ( DIGIT_SEG_A | DIGIT_SEG_B | DIGIT_SEG_C | DIGIT_SEG_D |DIGIT_SEG_E | DIGIT_SEG_F )
 #define DIGIT_1 ( DIGIT_SEG_B | DIGIT_SEG_C )

@@ -5,13 +5,13 @@
 
 typedef void (*SevenSegHalGeneric_t) (void);
 
-typedef int (*SevenSegHalInit_t) (uint32_t interval_ms);
+typedef int (*SevenSegHalInit_t) (uint32_t update_freq_hz);
 
 typedef void (*SevenSegHalDigitSelect_t) (uint8_t digit_num);
 
 typedef void (*SevenSegHalDigitSet_t) (uint8_t digit_num, uint8_t segments);
 
-/* Must be called periodically at the initialized interval. */
+/* Must be called periodically at the specified frequency. */
 extern void SevenSegHalCallbackDisplayUpdate(void);
 
 typedef struct {

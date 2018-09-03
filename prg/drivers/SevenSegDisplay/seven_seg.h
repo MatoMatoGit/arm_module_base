@@ -36,8 +36,6 @@ int SevenSegDisplayInit(struct SevenSegDisplay *config);
 
 void SevenSegDisplayEnable(uint8_t val);
 
-uint32_t SevenSegDisplayMaxValueGet(void);
-
 int SevenSegDisplaySet(uint32_t val);
 
 int SevenSegDigitSet(uint8_t digit_num, uint8_t val);

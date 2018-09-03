@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define DIGIT_NUM_CHARS 0xF
+#define DIGIT_NUM_CHARS 16
 #define DIGIT_SEG_INVALID 0xFF
 
 const uint8_t DigitSegLut[DIGIT_NUM_CHARS] = {
@@ -29,7 +29,7 @@ const uint8_t DigitSegLut[DIGIT_NUM_CHARS] = {
 	DIGIT_C,
 	DIGIT_D,
 	DIGIT_E,
-	DIGIT_F
+	DIGIT_F,
 };
 
 static uint8_t DisplayDigits[SEVEN_SEG_CONFIG_DIGITS_MAX];
@@ -58,7 +58,7 @@ int SevenSegDisplayInit(struct SevenSegDisplay *config)
 				}
 				/* Call the HAL init function if it exists. */
 				if(DisplayConfig.hal.init != NULL) {
-					DisplayConfig.hal.init();
+					DisplayConfig.hal.init(DisplayConfig.refresh_rate_hz);
 				}
 
 				/* Disable the display. */
@@ -82,11 +82,6 @@ void SevenSegDisplayEnable(uint8_t val)
 	}
 }
 
-uint32_t SevenSegDisplayMaxValueGet(void)
-{
-	return DisplayConfig.max_value;
-}
-
 int SevenSegDisplaySet(uint32_t val)
 {
 	int res = SEVEN_SEG_RES_INV_ARG;
@@ -95,6 +90,7 @@ int SevenSegDisplaySet(uint32_t val)
 
 	if(val <= DisplayConfig.max_value) {
 		res = SEVEN_SEG_RES_OK;
+
 		while(val > 0 && i < DisplayConfig.num_digits && res == SEVEN_SEG_RES_OK) {
 			digit = val % (uint8_t)DisplayConfig.mode; /* Isolate a single digit of the value, e.g. 21 % 10 = 1*/
 			res = SevenSegDigitSet(i, digit); /* Set the digit. */
@@ -129,6 +125,7 @@ int SevenSegDigitSet(uint8_t digit_num, uint8_t val)
 
 	if(val <= DisplayConfig.mode) {
 		res = SEVEN_SEG_RES_ERR;
+
 		seg = IConvertBcdToSevenSegment(val);
 		if(seg != DIGIT_SEG_INVALID) {
 			DisplayDigits[digit_num] = seg;
@@ -152,7 +149,7 @@ void SevenSegHalCallbackDisplayUpdate(void)
 		/* Move to next digit, check if last digit has been reached if this
 		 * is the case go back to the first digit. */
 		current_digit++;
-		if(current_digit > DisplayConfig.num_digits) {
+		if(current_digit > (DisplayConfig.num_digits - 1)) {
 			current_digit = 0;
 		}
 
