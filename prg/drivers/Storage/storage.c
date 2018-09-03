@@ -8,10 +8,12 @@
 #include "storage.h"
 
 #include "flash.h"
+#include "Crc32.h"
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h> /* For memcpy. */
 
 #define STORAGE_DATA_SECTOR_ADDR_END (STORAGE_CONFIG_DATA_SECTOR_ADDR + STORAGE_CONFIG_DATA_SECTOR_SIZE_BYTES)
 #define STORAGE_METADATA_SECTOR_ADDR_END (STORAGE_CONFIG_METADATA_SECTOR_ADDR + STORAGE_CONFIG_METADATA_SECTOR_SIZE_BYTES)
@@ -34,9 +36,9 @@
 typedef struct {
 	File_t fd;
 	uintptr_t addr;
-	U32_t size;
-	U32_t write_offset;
-	U32_t read_offset;
+	uint32_t size;
+	uint32_t write_offset;
+	uint32_t read_offset;
 }FileMetadata_t;
 
 FileMetadata_t Metadata[FILE_NUM];
@@ -44,15 +46,16 @@ uintptr_t MetadataAddressStore = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
 uintptr_t MetadataAddressLoad = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
 
 #define METADATA_TOTAL_SIZE_BYTES sizeof(FileMetadata_t) * FILE_NUM
-#define METADATA_INC_CRC_SIZE_BYTES METADATA_TOTAL_SIZE_BYTES + sizeof(U32_t)
+#define METADATA_INC_CRC_SIZE_BYTES METADATA_TOTAL_SIZE_BYTES + sizeof(uint32_t)
 
-static SysResult_t IMetadataStore(FileMetadata_t *metadata);
-static SysResult_t IMetadataLoad(U32_t idx);
+static SysResult_t IMetadataInit(uint32_t idx, uint32_t size);
+static SysResult_t IMetadataStore(void);
+static SysResult_t IMetadataLoad();
 static uintptr_t IMetadataFind(void);
-static U32_t IMetadataHashCalculate(void);
+static uint32_t IMetadataHashCalculate(void);
 
-static SysResult_t IDataStore(uintptr_t addr, void *data, U32_t size);
-static SysResult_t IDataLoad(U32_t idx, void *data, U32_t size);
+static SysResult_t IDataStore(uint32_t idx, void *data, uint32_t size);
+static SysResult_t IDataLoad(uint32_t idx, void *data, uint32_t size, bool inc_offset);
 
 SysResult_t StorageMount(void)
 {
@@ -63,22 +66,22 @@ SysResult_t StorageMount(void)
 	return res;
 }
 
-SysResult_t StorageFormat(U32_t f_sizes[FILE_NUM])
+SysResult_t StorageFormat(uint32_t f_sizes[FILE_NUM])
 {
 	SysResult_t res = SYS_RESULT_OK;
 
 	/* Erase the data and metadata sectors. */
-	if(flash_erase(STORAGE_CONFIG_DATA_SECTOR) != FLASH_RESULT_OK) {
+	if(flash_erase(STORAGE_CONFIG_DATA_SECTOR_ADDR, 1) != FLASH_RESULT_OK) {
 		res = SYS_RESULT_ERROR;
 	}
 	if(res == SYS_RESULT_OK) {
-		if(flash_erase(STORAGE_CONFIG_METADATA_SECTOR) != FLASH_RESULT_OK) {
+		if(flash_erase(STORAGE_CONFIG_METADATA_SECTOR_ADDR, 1) != FLASH_RESULT_OK) {
 			res = SYS_RESULT_ERROR;
 		}
 	}
 
 	/* Initialize all file metadata. */
-	for(U32_t i = 0; i < (U32_t)FILE_NUM; i++) {
+	for(uint32_t i = 0; i < (uint32_t)FILE_NUM; i++) {
 		res = IMetadataInit(i, f_sizes[i]);
 		if(res != SYS_RESULT_OK) {
 			break;
@@ -93,27 +96,27 @@ SysResult_t StorageFormat(U32_t f_sizes[FILE_NUM])
 	return res;
 }
 
-void StorageFileReadOffsetSet(File_t fd, U32_t read_offset)
+void StorageFileReadOffsetSet(File_t fd, uint32_t read_offset)
 {
 	Metadata[fd].read_offset = read_offset;
 }
 
-U32_t StorageFileReadOffsetGet(File_t fd)
+uint32_t StorageFileReadOffsetGet(File_t fd)
 {
 	return Metadata[fd].read_offset;
 }
 
-U32_t StorageFileWriteOffsetGet(File_t fd)
+uint32_t StorageFileWriteOffsetGet(File_t fd)
 {
 	return Metadata[fd].write_offset;
 }
 
-SysResult_t StorageFileWrite(File_t fd, void *data, U32_t size)
+SysResult_t StorageFileWrite(File_t fd, void *data, uint32_t size)
 {
 	SysResult_t res = SYS_RESULT_INV_ARG;
 	
 	if(data != NULL && size > 0) {
-		res = IDataStore((U32_t)fd, data, size);
+		res = IDataStore((uint32_t)fd, data, size);
 	}
 	if(res == SYS_RESULT_OK) {
 		res = IMetadataStore();
@@ -122,12 +125,12 @@ SysResult_t StorageFileWrite(File_t fd, void *data, U32_t size)
 	return res;
 }
 
-SysResult_t StorageFileRead(File_t fd, void *data, U32_t size)
+SysResult_t StorageFileRead(File_t fd, void *data, uint32_t size)
 {
 	SysResult_t res = SYS_RESULT_INV_ARG;
 
 	if(data != NULL && size > 0) {
-		res = IDataLoad((U32_t)fd, data, size, true);
+		res = IDataLoad((uint32_t)fd, data, size, true);
 	}
 	if(res == SYS_RESULT_OK) {
 		res = IMetadataStore();
@@ -136,18 +139,18 @@ SysResult_t StorageFileRead(File_t fd, void *data, U32_t size)
 	return res;
 }
 
-SysResult_t StorageFileReadConsistent(File_t fd, void *data, U32_t size)
+SysResult_t StorageFileReadConsistent(File_t fd, void *data, uint32_t size)
 {
 	SysResult_t res = SYS_RESULT_INV_ARG;
 
 	if(data != NULL && size > 0) {
-		res = IDataLoad((U32_t)fd, data, size, false);
+		res = IDataLoad((uint32_t)fd, data, size, false);
 	}
 
 	return res;
 }
 
-static SysResult_t IMetadataInit(U32_t idx, U32_t size)
+static SysResult_t IMetadataInit(uint32_t idx, uint32_t size)
 {
 	SysResult_t res = SYS_RESULT_OK;
 
@@ -159,7 +162,7 @@ static SysResult_t IMetadataInit(U32_t idx, U32_t size)
 		Metadata[idx].addr = Metadata[idx -1].addr + size;
 	}
 	/* Check if the calculated address is within bounds. */
-	if(DATA_ADDR_IS_VALID(Metadata[idx].addr)) {
+	if(!DATA_ADDR_IS_VALID(Metadata[idx].addr)) {
 		Metadata[idx].addr = 0;
 		res = SYS_RESULT_ERROR;
 	}
@@ -177,7 +180,7 @@ static SysResult_t IMetadataInit(U32_t idx, U32_t size)
 static SysResult_t IMetadataStore(void)
 {
 	SysResult_t res = SYS_RESULT_OK;
-	U32_t metadata_crc = 0;
+	uint32_t metadata_crc = 0;
 	
 	/* Calculate the CRC hash over all metadata. */
 	if(res == SYS_RESULT_OK) {
@@ -215,10 +218,8 @@ static SysResult_t IMetadataStore(void)
 
 static SysResult_t IMetadataLoad(void)
 {
-	SysResult_t res = SYS_RESULT_ERROR;
-	U32_t metadata_crc = 0;
-	U32_t crc = 0;
-	U32_t i = 0;
+	SysResult_t res = SYS_RESULT_FAIL;
+	uint32_t i = 0;
 	uintptr_t addr = IMetadataFind();
 	
 	/* Sanity check the metadata address. */
@@ -240,13 +241,13 @@ static uintptr_t IMetadataFind(void)
 	bool valid = true;
 	uintptr_t addr = (STORAGE_CONFIG_METADATA_SECTOR_ADDR + METADATA_TOTAL_SIZE_BYTES);
 	uintptr_t valid_addr = 0; /* Previous metadata address. */
-	U32_t metadata_crc = 0;
-	U32_t crc = 0;
+	uint32_t metadata_crc = 0;
+	uint32_t crc = 0;
 	
 	while( METADATA_ADDR_IS_VALID(addr) && (valid == true) ) {
 		/* Calculate the CRC and check its validity against the stored
 		 * CRC. */
-		metadata_crc = *((U32_t *)addr);
+		metadata_crc = *((uint32_t *)addr);
 		crc = IMetadataHashCalculate();
 		if(crc != 0 && metadata_crc == crc) {
 			valid = true;
@@ -266,9 +267,9 @@ static uintptr_t IMetadataFind(void)
 	return valid_addr;
 }
 
-static U32_t IMetadataHashCalculate(void)
+static uint32_t IMetadataHashCalculate(void)
 {
-	U32_t crc = Crc32(0, (void *)Metadata, METADATA_TOTAL_SIZE_BYTES);
+	uint32_t crc = Crc32(0, (void *)Metadata, METADATA_TOTAL_SIZE_BYTES);
 	
 	if(crc == 0 || crc == UINT32_MAX) {
 		crc = 0;
@@ -277,13 +278,13 @@ static U32_t IMetadataHashCalculate(void)
 	return crc;
 }
 
-static SysResult_t IDataStore(U32_t idx, void *data, U32_t size)
+static SysResult_t IDataStore(uint32_t idx, void *data, uint32_t size)
 {
 	SysResult_t res = SYS_RESULT_OK;
 	uintptr_t addr = Metadata[idx].addr;
 	
 	/* Check if the address is within the storage address space. */
-	if(!STORAGE_ADDR_IS_VALID(addr)) {
+	if(!DATA_ADDR_IS_VALID(addr)) {
 		res = SYS_RESULT_ERROR;
 	}
 	/* Check if the address is within the file address space. */
@@ -307,7 +308,7 @@ static SysResult_t IDataStore(U32_t idx, void *data, U32_t size)
 	return res;
 }
 
-static SysResult_t IDataLoad(U32_t idx, void *data, U32_t size, bool inc_offset)
+static SysResult_t IDataLoad(uint32_t idx, void *data, uint32_t size, bool inc_offset)
 {
 	SysResult_t res = SYS_RESULT_OK;
 	uintptr_t addr = Metadata[idx].addr;
