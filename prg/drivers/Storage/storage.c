@@ -192,14 +192,14 @@ static SysResult_t IMetadataStore(void)
 	/* Write all metadata to flash. */
 	if(res == SYS_RESULT_OK) {
 		if(flash_write(MetadataAddressStore, (void *)Metadata, 
-				METADATA_TOTAL_SIZE_BYTES) != FLASH_RESULT_OK) {
+				METADATA_TOTAL_SIZE_BYTES, &MetadataAddressStore) != FLASH_RESULT_OK) {
 			res = SYS_RESULT_ERROR;
 		}
 	}
 	/* Write the CRC hash to flash. */
 	if(res == SYS_RESULT_OK) {
 		if(flash_write((MetadataAddressStore + METADATA_TOTAL_SIZE_BYTES), 
-				(void *)metadata_crc, sizeof(metadata_crc)) != FLASH_RESULT_OK) {
+				(void *)&metadata_crc, sizeof(metadata_crc), &MetadataAddressStore) != FLASH_RESULT_OK) {
 			res = SYS_RESULT_ERROR;
 		}
 	}	
@@ -296,7 +296,7 @@ static SysResult_t IDataStore(uint32_t idx, void *data, uint32_t size)
 	}
 	/* Write the data to flash. */
 	if(res == SYS_RESULT_OK) {
-		if(flash_write(addr, data, size) != FLASH_RESULT_OK) {
+		if(flash_write(addr, data, size, &addr) != FLASH_RESULT_OK) {
 			res = SYS_RESULT_ERROR;
 		}
 	}

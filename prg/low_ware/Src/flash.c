@@ -10,20 +10,47 @@
 #include "stm32f1xx_hal_flash.h"
 #include "stm32f1xx_hal_flash_ex.h"
 
-int flash_write(uint32_t addr, void *data, uint32_t size)
+#define FLASH_WORD_SIZE sizeof(uint32_t)
+
+int flash_write(uint32_t addr_in, void *data, uint32_t size, uint32_t *addr_out)
 {
 	int res = FLASH_RESULT_OK;
-	uint8_t *src = (uint8_t *)data;
-	uint32_t dst = addr;
+	uint32_t *src = (uint32_t *)data;
+	uint32_t dst = addr_in;
 
 	HAL_FLASH_Unlock();
-	for(uint32_t i = 0; i < size; i++) {
-		if(HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, dst+i, src[i]) != HAL_OK) {
-			res = FLASH_RESULT_ERR;
-			break;
+	for(uint32_t i = 0; i < size; i+=FLASH_WORD_SIZE) {
+		dst+=i;
+
+		/* Check if the size to write is smaller than a single word.
+		 * If this is the case the to-write data is padded with 0xFF. */
+		if((size - i) < FLASH_WORD_SIZE) {
+			uint32_t word[FLASH_WORD_SIZE] = {};
+			uint32_t j = 0;
+			/* Copy available bytes. */
+			for(j = 0; j < size; j++) {
+				word[j] = src[i + j];
+			}
+			/* Pad remaining bytes. */
+			for(; j < FLASH_WORD_SIZE; j++) {
+				word[j] = 0xFF;
+			}
+			if(HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, dst, word[0]) != HAL_OK) {
+				res = FLASH_RESULT_ERR;
+				break;
+			}
+		} else {
+			if(HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, dst, src[i]) != HAL_OK) {
+				res = FLASH_RESULT_ERR;
+				break;
+			}
 		}
 	}
 	HAL_FLASH_Lock();
+
+	if(res == FLASH_RESULT_OK && addr_out != NULL) {
+		*addr_out = dst;
+	}
 
 	return res;
 }
