@@ -45,7 +45,7 @@
 
 /* USER CODE BEGIN 0 */
 
-#define UART_INST_DEBUG USART1
+#define UART_INST_DEBUG USART2
 
 /* USER CODE END 0 */
 
@@ -80,13 +80,13 @@ void UartDebugCallbackSetOnRx(UartCallbackRx_t cb)
 
 void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 {
-  if(uartHandle->Instance==USART1)
+  if(uartHandle->Instance==UART_INST_DEBUG)
   {
   /* USER CODE BEGIN USART1_MspInit 0 */
 
   /* USER CODE END USART1_MspInit 0 */
     /* USART1 clock enable */
-    __HAL_RCC_USART1_CLK_ENABLE();
+    __HAL_RCC_USART2_CLK_ENABLE();
     GpioDebugUartInit();
 
   /* USER CODE BEGIN USART1_MspInit 1 */
@@ -98,17 +98,17 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 {
 
-  if(uartHandle->Instance==USART1)
+  if(uartHandle->Instance==UART_INST_DEBUG)
   {
   /* USER CODE BEGIN USART1_MspDeInit 0 */
 
   /* USER CODE END USART1_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_USART1_CLK_DISABLE();
+    __HAL_RCC_USART2_CLK_DISABLE();
     GpioDebugUartDeinit();
 
     /* USART1 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(USART1_IRQn);
+    HAL_NVIC_DisableIRQ(USART2_IRQn);
   /* USER CODE BEGIN USART1_MspDeInit 1 */
 
   /* USER CODE END USART1_MspDeInit 1 */
