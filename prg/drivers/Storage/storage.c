@@ -223,6 +223,11 @@ static SysResult_t IMetadataStore(void)
 	uint32_t metadata_crc = 0;
 	uintptr_t metadata_addr = MetadataAddressStore;
 	
+	/* Check current address validity. */
+	if(!METADATA_ADDR_IS_VALID(MetadataAddressStore)) {
+		res = SYS_RESULT_FAIL;
+	}
+
 	/* Calculate the CRC hash over all metadata. */
 	if(res == SYS_RESULT_OK) {
 		metadata_crc = IMetadataCachedHashCalculate();
@@ -245,7 +250,7 @@ static SysResult_t IMetadataStore(void)
 		}
 	}
 
-	/* Check address validity. */
+	/* Check new address validity. */
 	if(!METADATA_ADDR_IS_VALID(MetadataAddressStore)) {
 		res = SYS_RESULT_FAIL;
 	}
