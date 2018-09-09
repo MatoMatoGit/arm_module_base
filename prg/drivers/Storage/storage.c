@@ -98,9 +98,47 @@ SysResult_t StorageFormat(uint32_t f_sizes[FILE_NUM])
 	return res;
 }
 
-void StorageFileReadOffsetSet(File_t fd, uint32_t read_offset)
+SysResult_t StorageFileReadOffsetSet(File_t fd, uint32_t offset, offset_opt_t opt)
 {
-	Metadata[fd].read_offset = read_offset;
+	SysResult_t res = SYS_RESULT_FAIL;
+	uint32_t curr_offset = Metadata[fd].read_offset; /* Store the current offset. */
+
+	switch(opt) {
+	case OFFSET_OPT_RELATIVE_SUB: {
+		if(Metadata[fd].read_offset >= offset) { /* Make sure the subtraction does not cause underflow. */
+			res = SYS_RESULT_OK;
+			Metadata[fd].read_offset -= offset;
+		}
+		break;
+	}
+	case OFFSET_OPT_RELATIVE_ADD: {
+		if( ((Metadata[fd].read_offset + offset) < UINT32_MAX) &&
+				((Metadata[fd].read_offset + offset) <= Metadata[fd].write_offset) ) {
+			res = SYS_RESULT_OK;
+			Metadata[fd].read_offset += offset;
+		}
+		break;
+	}
+	default:
+	case OFFSET_OPT_ABSOLUTE: {
+		if(offset <= Metadata[fd].write_offset) {
+			res = SYS_RESULT_OK;
+			Metadata[fd].read_offset = offset;
+		}
+		break;
+	}
+	}
+
+	if(res == SYS_RESULT_OK) {
+		/* Check if the new offset results in a valid data address, if this
+		 * is not the case, revert the operation. */
+		if(!DATA_ADDR_IS_VALID(Metadata[fd].addr + Metadata[fd].read_offset)) {
+			res = SYS_RESULT_FAIL;
+			Metadata[fd].read_offset = curr_offset;
+		}
+	}
+
+	return res;
 }
 
 uint32_t StorageFileReadOffsetGet(File_t fd)

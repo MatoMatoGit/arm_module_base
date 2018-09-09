@@ -13,6 +13,12 @@
 #include "SystemResult.h"
 #include <stdint.h>
 
+typedef enum {
+	OFFSET_OPT_RELATIVE_SUB = 0,	/* New offset = current offset - offset. */
+	OFFSET_OPT_RELATIVE_ADD,		/* New offset = current offset + offset. */
+	OFFSET_OPT_ABSOLUTE,			/* New offset = offset. */
+}offset_opt_t;
+
 /* Mount the filesystem. A mount can only succeed if the
  * filesystem has been formatted (once). */
 SysResult_t StorageMount(void);
@@ -33,7 +39,7 @@ SysResult_t StorageFileReadConsistent(File_t fd, void *data, uint32_t size);
 
 
 /* Set the read offset of a file. */
-void StorageFileReadOffsetSet(File_t fd, uint32_t read_offset);
+SysResult_t StorageFileReadOffsetSet(File_t fd, uint32_t offset, offset_opt_t opt);
 
 /* Get the read offset of a file. */
 uint32_t StorageFileReadOffsetGet(File_t fd);
