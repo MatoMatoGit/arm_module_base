@@ -46,13 +46,15 @@ uintptr_t MetadataAddressStore = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
 uintptr_t MetadataAddressLoad = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
 
 #define METADATA_TOTAL_SIZE_BYTES sizeof(FileMetadata_t) * FILE_NUM
-#define METADATA_INC_CRC_SIZE_BYTES METADATA_TOTAL_SIZE_BYTES + sizeof(uint32_t)
+#define METADATA_CRC_SIZE_BYTES sizeof(uint32_t)
+#define METADATA_INC_CRC_SIZE_BYTES METADATA_TOTAL_SIZE_BYTES + METADATA_CRC_SIZE_BYTES
 
 static SysResult_t IMetadataInit(uint32_t idx, uint32_t size);
 static SysResult_t IMetadataStore(void);
 static SysResult_t IMetadataLoad();
 static uintptr_t IMetadataFind(void);
-static uint32_t IMetadataHashCalculate(void);
+static uint32_t IMetadataCachedHashCalculate(void);
+static uint32_t IMetadataStoredHashCalculate(uintptr_t metadata_addr);
 
 static SysResult_t IDataStore(uint32_t idx, void *data, uint32_t size);
 static SysResult_t IDataLoad(uint32_t idx, void *data, uint32_t size, bool inc_offset);
@@ -181,10 +183,11 @@ static SysResult_t IMetadataStore(void)
 {
 	SysResult_t res = SYS_RESULT_OK;
 	uint32_t metadata_crc = 0;
+	uintptr_t metadata_addr = MetadataAddressStore;
 	
 	/* Calculate the CRC hash over all metadata. */
 	if(res == SYS_RESULT_OK) {
-		metadata_crc = IMetadataHashCalculate();
+		metadata_crc = IMetadataCachedHashCalculate();
 		if(metadata_crc == 0) {
 			res = SYS_RESULT_ERROR;
 		}
@@ -198,19 +201,20 @@ static SysResult_t IMetadataStore(void)
 	}
 	/* Write the CRC hash to flash. */
 	if(res == SYS_RESULT_OK) {
-		if(flash_write((MetadataAddressStore + METADATA_TOTAL_SIZE_BYTES), 
+		if(flash_write((MetadataAddressStore),
 				(void *)&metadata_crc, sizeof(metadata_crc), &MetadataAddressStore) != FLASH_RESULT_OK) {
 			res = SYS_RESULT_ERROR;
 		}
-	}	
-	/* If all was ok, update the load address. */
-	if(res == SYS_RESULT_OK) {
-		MetadataAddressLoad = MetadataAddressStore;
 	}
-	/* Calculate next store address and check its validity. */
-	MetadataAddressStore += (METADATA_TOTAL_SIZE_BYTES + sizeof(metadata_crc));
+
+	/* Check address validity. */
 	if(!METADATA_ADDR_IS_VALID(MetadataAddressStore)) {
 		res = SYS_RESULT_FAIL;
+	}
+
+	/* If all was ok, update the load address. */
+	if(res == SYS_RESULT_OK) {
+		MetadataAddressLoad = metadata_addr;
 	}
 
 	return res;
@@ -227,9 +231,11 @@ static SysResult_t IMetadataLoad(void)
 		/* Save the metadata address and load the metadata. */
 		res = SYS_RESULT_OK;
 		MetadataAddressLoad = addr;
+		MetadataAddressStore = MetadataAddressLoad + METADATA_INC_CRC_SIZE_BYTES;
 		while(i < FILE_NUM) {
 			Metadata[i] = *((FileMetadata_t *)addr);
 			addr += sizeof(FileMetadata_t);
+			i++;
 		};
 	}
 
@@ -239,16 +245,22 @@ static SysResult_t IMetadataLoad(void)
 static uintptr_t IMetadataFind(void)
 {
 	bool valid = true;
-	uintptr_t addr = (STORAGE_CONFIG_METADATA_SECTOR_ADDR + METADATA_TOTAL_SIZE_BYTES);
+	uintptr_t addr = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
 	uintptr_t valid_addr = 0; /* Previous metadata address. */
 	uint32_t metadata_crc = 0;
 	uint32_t crc = 0;
 	
 	while( METADATA_ADDR_IS_VALID(addr) && (valid == true) ) {
-		/* Calculate the CRC and check its validity against the stored
+		/* Calculate the CRC for the metadata. */
+		crc = IMetadataStoredHashCalculate(addr);
+
+		/* Move to where the metadata CRC would be. */
+		addr += METADATA_TOTAL_SIZE_BYTES;
+
+		/* Check the newly calculated CRC against the stored
 		 * CRC. */
 		metadata_crc = *((uint32_t *)addr);
-		crc = IMetadataHashCalculate();
+
 		if(crc != 0 && metadata_crc == crc) {
 			valid = true;
 		} else {
@@ -257,17 +269,15 @@ static uintptr_t IMetadataFind(void)
 		
 		/* Only copy the addr if it is valid. */
 		if(valid == true) {
-			valid_addr = addr;
+			valid_addr = addr - METADATA_TOTAL_SIZE_BYTES;
 		}
-		
-		/* Move to where the next metadata would be. */
-		addr += METADATA_INC_CRC_SIZE_BYTES;
+		addr+= METADATA_CRC_SIZE_BYTES;
 	};
 	
 	return valid_addr;
 }
 
-static uint32_t IMetadataHashCalculate(void)
+static uint32_t IMetadataCachedHashCalculate(void)
 {
 	uint32_t crc = Crc32(0, (void *)Metadata, METADATA_TOTAL_SIZE_BYTES);
 	
@@ -275,6 +285,17 @@ static uint32_t IMetadataHashCalculate(void)
 		crc = 0;
 	}
 	
+	return crc;
+}
+
+static uint32_t IMetadataStoredHashCalculate(uintptr_t metadata_addr)
+{
+	uint32_t crc = Crc32(0, (void *)metadata_addr, METADATA_TOTAL_SIZE_BYTES);
+
+	if(crc == 0 || crc == UINT32_MAX) {
+		crc = 0;
+	}
+
 	return crc;
 }
 
@@ -315,6 +336,10 @@ static SysResult_t IDataLoad(uint32_t idx, void *data, uint32_t size, bool inc_o
 	
 	/* Check if the address is within the storage address space. */
 	if(!DATA_ADDR_IS_VALID(addr)) {
+		res = SYS_RESULT_ERROR;
+	}
+	/* Check if the requested amount of data is available. */
+	if((Metadata[idx].read_offset + size) > Metadata[idx].write_offset) {
 		res = SYS_RESULT_ERROR;
 	}
 	/* Check if the address is within the file address space. */
