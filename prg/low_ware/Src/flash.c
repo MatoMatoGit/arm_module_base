@@ -12,12 +12,12 @@
 
 #define FLASH_WORD_SIZE sizeof(uint32_t)
 
-int flash_write(uint32_t addr_in, void *data, uint32_t size, uint32_t *addr_out)
+int flash_write(uintptr_t addr_in, void *data, uint32_t size, uintptr_t *addr_out)
 {
 	int res = FLASH_RESULT_OK;
 	uint64_t prg_data = 0;
 	uint8_t byte = 0;
-	uint32_t dst = addr_in;
+	uint32_t dst = (uint32_t)addr_in;
 	uint32_t i = 0;
 	uint32_t j = 0;
 
@@ -41,20 +41,20 @@ int flash_write(uint32_t addr_in, void *data, uint32_t size, uint32_t *addr_out)
 	HAL_FLASH_Lock();
 
 	if(res == FLASH_RESULT_OK && addr_out != NULL) {
-		*addr_out = dst;
+		*addr_out = (uintptr_t)dst;
 	}
 
 	return res;
 }
 
-int flash_erase(uint32_t addr, uint32_t n_pages)
+int flash_erase(uintptr_t addr, uint32_t n_pages)
 {
 	int res = FLASH_RESULT_ERR;
 	uint32_t erase_err = 0;
 	FLASH_EraseInitTypeDef erase_init = {
 		.TypeErase = FLASH_TYPEERASE_PAGES,
 		.Banks = 0,
-		.PageAddress = addr,
+		.PageAddress = (uint32_t)addr,
 		.NbPages = n_pages
 	};
 

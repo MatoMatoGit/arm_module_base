@@ -13,8 +13,8 @@
 #define FLASH_RESULT_OK		0
 #define FLASH_RESULT_ERR	-1
 
-int flash_write(uint32_t addr_in, void *data, uint32_t size, uint32_t *addr_out);
+int flash_write(uintptr_t addr_in, void *data, uint32_t size, uintptr_t *addr_out);
 
-int flash_erase(uint32_t addr, uint32_t n_pages);
+int flash_erase(uintptr_t addr, uint32_t n_pages);
 
 #endif /* FLASH_H_ */
