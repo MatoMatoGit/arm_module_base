@@ -13,6 +13,7 @@
 #include "sys_config.h"
 
 /* Drivers. */
+#include "button.h"
 #include "storage.h"
 #include "pump.h"
 #include "time.h"
@@ -101,7 +102,7 @@ static void ComposerTask(void *p_arg, U32_t v_arg)
 	/* Initialize Pump driver. */
 	if(res == SYS_RESULT_OK) {
 		res = PumpInit(IComposerCallbackOnPumpStopped);
-	}	
+	}
 	
 	/* Initialize Storage driver. */
 	if(res == SYS_RESULT_OK) {
@@ -111,6 +112,13 @@ static void ComposerTask(void *p_arg, U32_t v_arg)
 		}
 	}
 	
+	/* Initialize Button driver. */
+	if(res == SYS_RESULT_OK) {
+		if(ButtonInit() != BUTTON_RESULT_OK) {
+			res = SYS_RESULT_ERROR;
+		}
+	}
+
 
 	/***** System tasks. *****/
 	
