@@ -30,7 +30,7 @@
 
 #define FILE_ADDR_IS_VALID(addr, idx) ( \
 (addr >= Metadata[idx].addr) && \
-(addr <= Metadata[idx].addr + Metadata[idx].size) \
+(addr < Metadata[idx].addr + Metadata[idx].size) \
 )
 
 typedef struct {
@@ -53,6 +53,7 @@ static SysResult_t IMetadataInit(uint32_t idx, uint32_t size);
 static SysResult_t IMetadataStore(void);
 static SysResult_t IMetadataLoad();
 static uintptr_t IMetadataFind(void);
+static SysResult_t IMetadataClean(void);
 static uint32_t IMetadataCachedHashCalculate(void);
 static uint32_t IMetadataStoredHashCalculate(uintptr_t metadata_addr);
 
@@ -159,7 +160,10 @@ SysResult_t StorageFileWrite(File_t fd, void *data, uint32_t size)
 		res = IDataStore((uint32_t)fd, data, size);
 	}
 	if(res == SYS_RESULT_OK) {
-		res = IMetadataStore();
+		res = IMetadataStore(); /* If _FAIL is returned the metadata memory is full. */
+		if(res == SYS_RESULT_FAIL) {
+			res = IMetadataClean(); /* Attempt to clean the metadata memory. */
+		}
 	}
 	
 	return res;
@@ -173,7 +177,10 @@ SysResult_t StorageFileRead(File_t fd, void *data, uint32_t size)
 		res = IDataLoad((uint32_t)fd, data, size, true);
 	}
 	if(res == SYS_RESULT_OK) {
-		res = IMetadataStore();
+		res = IMetadataStore(); /* If _FAIL is returned the metadata memory is full. */
+		if(res == SYS_RESULT_FAIL) {
+			res = IMetadataClean(); /* Attempt to clean the metadata memory. */
+		}
 	}
 
 	return res;
@@ -318,6 +325,24 @@ static uintptr_t IMetadataFind(void)
 	};
 	
 	return valid_addr;
+}
+
+/* Erases the metadata memory and restores the most
+ * recent copy. */
+static SysResult_t IMetadataClean(void)
+{
+	SysResult_t res = SYS_RESULT_OK;
+
+	if(flash_erase(STORAGE_CONFIG_METADATA_SECTOR_ADDR, 1) != FLASH_RESULT_OK) {
+		res = SYS_RESULT_ERROR;
+	}
+
+	if(res == SYS_RESULT_OK) {
+		MetadataAddressStore = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
+		res = IMetadataStore();
+	}
+
+	return res;
 }
 
 static uint32_t IMetadataCachedHashCalculate(void)
