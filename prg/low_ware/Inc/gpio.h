@@ -56,7 +56,7 @@
 
 #define GPIO_CONFIG_7SD_SELECT_ACTIVE_LOW 0
 
- typedef void (*GpioIntCallback_t)(uint8_t state);
+ typedef void (*GpioIntCallback_t)(uint8_t pin, uint8_t state);
 
 #define UI_BUTTON_INC 0
 #define UI_BUTTON_DEC 1

@@ -296,7 +296,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 
 	if(cb != NULL) {
-		cb(HAL_GPIO_ReadPin(PORT_UI_BUTTON, GPIO_Pin));
+		cb(GPIO_Pin, HAL_GPIO_ReadPin(PORT_UI_BUTTON, GPIO_Pin));
 	}
 }
 
