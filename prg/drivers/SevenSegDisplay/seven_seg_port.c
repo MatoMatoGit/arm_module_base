@@ -4,6 +4,7 @@
 
 #include "spi.h"
 #include "tim.h"
+#include "tim_config.h"
 #include "gpio.h"
 #include "stm32f1xx_hal.h"
 
@@ -37,17 +38,28 @@ int SevenSegPortInit(uint32_t update_freq_hz)
 	
 	Spi7SdInit();
 	Gpio7SdSelInit();
-	TimerInit(TIMER_APP_0, 0x2000, 0x2000);
-	TimerCallbackRegisterPeriodElapsed(TIMER_APP_0, SevenSegCallbackTimer);
+	TimerConfig_t tmr_sevenseg_cfg = {
+		.timer = TIMER_DRIVER_SEVENSEG,
+		.instance = TIM2,
+		.irqn_elapsed = TIM2_IRQn,
+		.cb_elapsed = NULL,
+		.irq_prio_elapsed = 2,
+		.irq_subprio_elapsed = 0,
+	};
+	TimerHwConfigSet(&tmr_sevenseg_cfg);
+	TimerHwInit(TIMER_DRIVER_SEVENSEG, 0x2000, 0x2000);
+	TimerHwCallbackRegisterPeriodElapsed(TIMER_DRIVER_SEVENSEG, SevenSegCallbackTimer);
 
 	SpiWriteTimeoutMs = (1000 / update_freq_hz) / 2;
+
+	TimerHwIntEnablePeriodElapsed(TIMER_DRIVER_SEVENSEG, 1);
 
 	return SEVEN_SEG_RES_OK;
 }
 
 void SevenSegPortTimerStart(void)
 {
-	TimerStart(TIMER_APP_0);
+	TimerHwStart(TIMER_DRIVER_SEVENSEG);
 }
 
 void SevenSegPortDigitSelect(uint8_t digit_num)

@@ -19,18 +19,18 @@
 #define STORAGE_METADATA_SECTOR_ADDR_END (STORAGE_CONFIG_METADATA_SECTOR_ADDR + STORAGE_CONFIG_METADATA_SECTOR_SIZE_BYTES)
 
 #define METADATA_ADDR_IS_VALID(addr) ( \
-(addr <= STORAGE_METADATA_SECTOR_ADDR_END) && \
+(addr < STORAGE_METADATA_SECTOR_ADDR_END) && \
 (addr >= STORAGE_CONFIG_METADATA_SECTOR_ADDR) \
 )
 
 #define DATA_ADDR_IS_VALID(addr) ( \
-(addr <= STORAGE_DATA_SECTOR_ADDR_END) && \
+(addr < STORAGE_DATA_SECTOR_ADDR_END) && \
 (addr >= STORAGE_CONFIG_DATA_SECTOR_ADDR) \
 )
 
 #define FILE_ADDR_IS_VALID(addr, idx) ( \
 (addr >= Metadata[idx].addr) && \
-(addr < Metadata[idx].addr + Metadata[idx].size) \
+(addr < (Metadata[idx].addr + Metadata[idx].size)) \
 )
 
 typedef struct {
@@ -45,9 +45,9 @@ FileMetadata_t Metadata[FILE_NUM];
 uintptr_t MetadataAddressStore = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
 uintptr_t MetadataAddressLoad = STORAGE_CONFIG_METADATA_SECTOR_ADDR;
 
-#define METADATA_TOTAL_SIZE_BYTES sizeof(FileMetadata_t) * FILE_NUM
+#define METADATA_TOTAL_SIZE_BYTES (sizeof(FileMetadata_t) * FILE_NUM)
 #define METADATA_CRC_SIZE_BYTES sizeof(uint32_t)
-#define METADATA_INC_CRC_SIZE_BYTES METADATA_TOTAL_SIZE_BYTES + METADATA_CRC_SIZE_BYTES
+#define METADATA_INC_CRC_SIZE_BYTES (METADATA_TOTAL_SIZE_BYTES + METADATA_CRC_SIZE_BYTES)
 
 static SysResult_t IMetadataInit(uint32_t idx, uint32_t size);
 static SysResult_t IMetadataStore(void);
@@ -231,7 +231,7 @@ static SysResult_t IMetadataStore(void)
 	uintptr_t metadata_addr = MetadataAddressStore;
 	
 	/* Check current address validity. */
-	if(!METADATA_ADDR_IS_VALID(MetadataAddressStore)) {
+	if(!METADATA_ADDR_IS_VALID(MetadataAddressStore + METADATA_INC_CRC_SIZE_BYTES)) {
 		res = SYS_RESULT_FAIL;
 	}
 

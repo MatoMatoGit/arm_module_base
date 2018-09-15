@@ -39,37 +39,65 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "tim.h"
+#include "tim_config.h"
 
+#include "nvic.h"
 #include "err.h"
 #include "stm32f1xx_hal.h"
 
 /* USER CODE BEGIN 0 */
 
-#define TIMER_INST_OS TIM2
-#define TIMER_INST_APP TIM3
+typedef struct {
+	Timer_t timer;
+	TIM_HandleTypeDef handle;
+	IRQn_Type irqn_elapsed;
+	TimerCallback_t on_elapsed;
+}TimerDesc_t;
 
-static TIM_HandleTypeDef *ITimHandleFromTimer(TimerInst_t timer);
+
+static TimerDesc_t *ITimDescFromTimer(Timer_t timer);
+static TimerDesc_t *ITimDescFromHandle(TIM_HandleTypeDef *handle);
+static TIM_HandleTypeDef *ITimHandleFromTimer(Timer_t timer);
+static IRQn_Type ITimIrqnElapsedFromTimer(Timer_t timer);
 
 /* USER CODE END 0 */
 
-TIM_HandleTypeDef tim_os;
-TIM_HandleTypeDef tim_app;
 
-static TimerCallback_t tim_os_period_elapsed = NULL;
-static TimerCallback_t tim_app_period_elapsed = NULL;
+static TimerDesc_t TimerDescs[TIMER_NUM];
+
+void TimerHwConfigSet(TimerConfig_t *config)
+{
+	if(config != NULL) {
+		TimerDescs[config->timer].handle.Instance = config->instance;
+		TimerDescs[config->timer].timer = config->timer;
+		TimerDescs[config->timer].irqn_elapsed = config->irqn_elapsed;
+		TimerDescs[config->timer].on_elapsed = config->cb_elapsed;
+
+		NvicInterruptPrioritySet(config->irqn_elapsed, config->irq_prio_elapsed, config->irq_subprio_elapsed);
+	}
+}
+
+TIM_HandleTypeDef *TimerHwHandleFromIrqn(IRQn_Type irqn)
+{
+	TIM_HandleTypeDef *tim = NULL;
+
+	for(uint32_t i = 0; i < TIMER_NUM; i++) {
+		if(TimerDescs[i].irqn_elapsed == irqn) {
+			tim = &TimerDescs[i].handle;
+			break;
+		}
+	}
+
+	return tim;
+}
 
 /* TIM init function */
-void TimerInit(TimerInst_t timer, uint32_t prescaler, uint32_t period)
+void TimerHwInit(Timer_t timer, uint32_t prescaler, uint32_t period)
 {
 	TIM_ClockConfigTypeDef sClockSourceConfig;
 	TIM_HandleTypeDef *tim = ITimHandleFromTimer(timer);
 
 	if(tim != NULL) {
-		if(tim == &tim_os) {
-			tim->Instance = TIMER_INST_OS;
-		} else {
-			tim->Instance = TIMER_INST_APP;
-		}
 		tim->Init.Prescaler = prescaler;
 		tim->Init.CounterMode = TIM_COUNTERMODE_UP;
 		tim->Init.Period = period;
@@ -86,13 +114,15 @@ void TimerInit(TimerInst_t timer, uint32_t prescaler, uint32_t period)
 		{
 			ErrorHandler(__FILE__, __LINE__);
 		}
+
+
 	} else {
 		ErrorHandler(__FILE__, __LINE__);
 	}
 
 }
 
-void TimerStart(TimerInst_t timer)
+void TimerHwStart(Timer_t timer)
 {
 	TIM_HandleTypeDef *tim = ITimHandleFromTimer(timer);
 	if(tim != NULL) {
@@ -100,7 +130,7 @@ void TimerStart(TimerInst_t timer)
 	}
 }
 
-void TimerStop(TimerInst_t timer)
+void TimerHwStop(Timer_t timer)
 {
 	TIM_HandleTypeDef *tim = ITimHandleFromTimer(timer);
 	if(tim != NULL) {
@@ -108,24 +138,57 @@ void TimerStop(TimerInst_t timer)
 	}
 }
 
-void TimerCallbackRegisterPeriodElapsed(TimerInst_t timer, TimerCallback_t on_elapsed)
+uint32_t TimerHwCountGet(Timer_t timer)
 {
-	if(timer == TIMER_OSTICK) {
-		tim_os_period_elapsed = on_elapsed;
-	} else if (timer == TIMER_APP_0) {
-		tim_app_period_elapsed = on_elapsed;
+	uint32_t cnt = 0;
+
+	TIM_HandleTypeDef *tim = ITimHandleFromTimer(timer);
+	if(tim != NULL) {
+		cnt = tim->Instance->CNT;
+	}
+
+	return cnt;
+}
+
+void TimerHwCountSet(Timer_t timer, uint32_t cnt)
+{
+	TIM_HandleTypeDef *tim = ITimHandleFromTimer(timer);
+	if(tim != NULL) {
+		tim->Instance->CNT = cnt;
+	}
+}
+
+void TimerHwIntEnablePeriodElapsed(Timer_t timer, uint8_t en)
+{
+	IRQn_Type irqn = ITimIrqnElapsedFromTimer(timer);
+	if(irqn != Invalid_IRQn) {
+		NvicInterruptEnable(irqn, en);
+	}
+}
+
+void TimerHwIntPrioSetPeriodElapsed(Timer_t timer, uint32_t prio)
+{
+	IRQn_Type irqn = ITimIrqnElapsedFromTimer(timer);
+	if(irqn != Invalid_IRQn) {
+		NvicInterruptPrioritySet(irqn, prio, 0);
+	}
+}
+
+void TimerHwCallbackRegisterPeriodElapsed(Timer_t timer, TimerCallback_t on_elapsed)
+{
+	TimerDesc_t *desc = ITimDescFromTimer(timer);
+	if(desc != NULL) {
+		desc->on_elapsed = on_elapsed;
 	}
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if(htim == &tim_os) {
-		if(tim_os_period_elapsed != NULL) {
-			tim_os_period_elapsed();
-		}
-	} else if (htim == &tim_app) {
-		if(tim_app_period_elapsed != NULL) {
-			tim_app_period_elapsed();
+	TimerDesc_t *desc = ITimDescFromHandle(htim);
+
+	if(desc != NULL) {
+		if(desc->on_elapsed != NULL) {
+			desc->on_elapsed();
 		}
 	}
 }
@@ -133,7 +196,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
-  if(tim_baseHandle->Instance==TIMER_INST_OS)
+  if(tim_baseHandle->Instance==TIM2)
   {
   /* USER CODE BEGIN TIM1_MspInit 0 */
 
@@ -144,7 +207,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 
   /* USER CODE END TIM1_MspInit 1 */
   }
-  else if(tim_baseHandle->Instance==TIMER_INST_APP)
+  else if(tim_baseHandle->Instance==TIM3)
   {
   /* USER CODE BEGIN TIM3_MspInit 0 */
 
@@ -160,7 +223,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
-  if(tim_baseHandle->Instance==TIMER_INST_OS)
+  if(tim_baseHandle->Instance==TIM2)
   {
   /* USER CODE BEGIN TIM1_MspDeInit 0 */
 
@@ -174,7 +237,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
   /* USER CODE END TIM1_MspDeInit 1 */
   }
-  else if(tim_baseHandle->Instance==TIMER_INST_APP)
+  else if(tim_baseHandle->Instance==TIM3)
   {
   /* USER CODE BEGIN TIM3_MspDeInit 0 */
 
@@ -192,27 +255,67 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
 /* USER CODE BEGIN 1 */
 
-static TIM_HandleTypeDef *ITimHandleFromTimer(TimerInst_t timer)
+
+static TimerDesc_t *ITimDescFromTimer(Timer_t timer)
+{
+	TimerDesc_t *desc = NULL;
+
+	for(uint32_t i = 0; i < TIMER_NUM; i++) {
+		if(TimerDescs[i].timer == timer) {
+			desc = &TimerDescs[i];
+			break;
+		}
+	}
+
+	return desc;
+}
+
+static TimerDesc_t *ITimDescFromHandle(TIM_HandleTypeDef *handle)
+{
+	TimerDesc_t *desc = NULL;
+
+	for(uint32_t i = 0; i < TIMER_NUM; i++) {
+		if(&TimerDescs[i].handle == handle) {
+			desc = &TimerDescs[i];
+			break;
+		}
+	}
+
+	return desc;
+}
+
+
+
+static TIM_HandleTypeDef *ITimHandleFromTimer(Timer_t timer)
 {
 	TIM_HandleTypeDef *tim = NULL;
 
-	switch(timer) {
-	case TIMER_OSTICK: {
-		tim = &tim_os;
-		break;
-	}
-	case TIMER_APP_0: {
-		tim = &tim_app;
-		break;
-	}
-	default: {
-		break;
-	}
+	for(uint32_t i = 0; i < TIMER_NUM; i++) {
+		if(TimerDescs[i].timer == timer) {
+			tim = &TimerDescs[i].handle;
+			break;
+		}
 	}
 
 	return tim;
 }
 
+
+
+
+static IRQn_Type ITimIrqnElapsedFromTimer(Timer_t timer)
+{
+	IRQn_Type irqn = Invalid_IRQn;
+
+	for(uint32_t i = 0; i < TIMER_NUM; i++) {
+		if(TimerDescs[i].timer == timer) {
+			irqn = TimerDescs[i].irqn_elapsed;
+			break;
+		}
+	}
+
+	return irqn;
+}
 /* USER CODE END 1 */
 
 /**

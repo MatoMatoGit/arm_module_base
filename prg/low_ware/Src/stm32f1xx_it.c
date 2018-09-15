@@ -36,6 +36,8 @@
 #include "stm32f1xx_it.h"
 #include "gpio.h"
 
+#include "tim_config.h"
+
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -43,8 +45,6 @@
 /* External variables --------------------------------------------------------*/
 extern ADC_HandleTypeDef hadc1;
 extern RTC_HandleTypeDef hrtc;
-extern TIM_HandleTypeDef tim_os;
-extern TIM_HandleTypeDef tim_app;
 extern UART_HandleTypeDef huart_debug;
 
 /******************************************************************************/
@@ -225,7 +225,10 @@ void TIM2_IRQHandler(void)
   /* USER CODE BEGIN TIM1_CC_IRQn 0 */
 
   /* USER CODE END TIM1_CC_IRQn 0 */
-  HAL_TIM_IRQHandler(&tim_os);
+	TIM_HandleTypeDef *tim = TimerHwHandleFromIrqn(TIM2_IRQn);
+	if(tim != NULL) {
+		HAL_TIM_IRQHandler(tim);
+	}
   /* USER CODE BEGIN TIM1_CC_IRQn 1 */
 
   /* USER CODE END TIM1_CC_IRQn 1 */
@@ -239,7 +242,10 @@ void TIM3_IRQHandler(void)
   /* USER CODE BEGIN TIM3_IRQn 0 */
 
   /* USER CODE END TIM3_IRQn 0 */
-  HAL_TIM_IRQHandler(&tim_app);
+	TIM_HandleTypeDef *tim = TimerHwHandleFromIrqn(TIM3_IRQn);
+	if(tim != NULL) {
+		HAL_TIM_IRQHandler(tim);
+	}
   /* USER CODE BEGIN TIM3_IRQn 1 */
 
   /* USER CODE END TIM3_IRQn 1 */

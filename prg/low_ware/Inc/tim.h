@@ -51,22 +51,27 @@
 
 /* USER CODE END Includes */
 
-typedef enum {
-	TIMER_OSTICK = 0,
-	TIMER_APP_0,
-	TIMER_NUM /* Must be the last in the enum. */
-}TimerInst_t;
+ typedef enum {
+ 	TIMER_OSTICK = 0,
+ 	TIMER_DRIVER_SEVENSEG,
+ 	TIMER_NUM /* Must be the last in the enum. */
+ }Timer_t;
 
-typedef void (* TimerCallback_t) (void);
+ typedef void (* TimerCallback_t) (void);
 
 /* USER CODE BEGIN Private defines */
 
+
 /* USER CODE END Private defines */
 
-void TimerInit(TimerInst_t timer, uint32_t prescaler, uint32_t period);
-void TimerStart(TimerInst_t timer);
-void TimerStop(TimerInst_t timer);
-void TimerCallbackRegisterPeriodElapsed(TimerInst_t timer, TimerCallback_t on_elapsed);
+void TimerHwInit(Timer_t timer, uint32_t prescaler, uint32_t period);
+void TimerHwStart(Timer_t timer);
+void TimerHwStop(Timer_t timer);
+uint32_t TimerHwCountGet(Timer_t timer);
+void TimerHwCountSet(Timer_t timer, uint32_t cnt);
+void TimerHwIntEnablePeriodElapsed(Timer_t timer, uint8_t en);
+void TimerHwIntPrioSetPeriodElapsed(Timer_t timer, uint32_t prio);
+void TimerHwCallbackRegisterPeriodElapsed(Timer_t timer, TimerCallback_t on_elapsed);
 
 /* USER CODE BEGIN Prototypes */
 
