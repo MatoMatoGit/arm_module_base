@@ -37,6 +37,10 @@ ScheduleManager_t ScheduleManager;
 static void TaskScheduleManager(void *p_arg, U32_t v_arg);
 
 static void IScheduleNextIrrigation(void);
+static SysResult_t IScheduleStore(void);
+static SysResult_t IScheduleLoad(void);
+static SysResult_t ITimeStore(Time_t *t);
+static SysResult_t ITimeLoad(Time_t *t);
 
 SysResult_t ScheduleManagerInit(ScheduleManagerConfig_t *config)
 {
@@ -61,7 +65,10 @@ SysResult_t ScheduleManagerInit(ScheduleManagerConfig_t *config)
 		/* Initialize irrigation data. */
 		memset(&ScheduleManager.data, 0, sizeof(ScheduleManager.data));
 
-		/* TODO: Read from storage. */
+		res = IScheduleLoad();
+		Time_t t;
+		res = ITimeLoad(&t);
+		TimeSet(&t);
 
 		/* If the irrigation data is valid, acquire current time and
 		 * set an alarm for the next irrigation. */
@@ -111,7 +118,8 @@ static void TaskScheduleManager(void *p_arg, U32_t v_arg)
 		 * Sync it with the schedule data and write the value to non-volatile storage. */
 		if(ScheduleManager.data.irg_amount_l != amount && amount != 0) {
 			ScheduleManager.data.irg_amount_l = amount;
-			/* TODO: Write to storage. */
+			/* Write to storage. */
+			res = IScheduleStore();
 		}
 	}
 
@@ -122,7 +130,8 @@ static void TaskScheduleManager(void *p_arg, U32_t v_arg)
 		if(ScheduleManager.data.irg_freq != freq && freq != 0) {
 			ScheduleManager.data.irg_freq = freq;
 			ScheduleManager.data.irg_interval = HOURS_IN_DAY / freq;
-			/* TODO: Write to storage. */
+			/* Write to storage. */
+			res = IScheduleStore();
 		}
 	}
 
@@ -147,4 +156,74 @@ static void IScheduleNextIrrigation(void)
 	ScheduleManager.data.irg_time = t.hours + ScheduleManager.data.irg_interval;
 	TimeAlarmSet(ScheduleManager.data.irg_time);
 	TimeAlarmEnable(1);
+	IScheduleStore();
+	ITimeStore(&t);
+}
+
+static SysResult_t ITimeStore(Time_t *t)
+{
+	OsResult_t res = OS_RES_ERROR;
+
+	res = StorageFileWrite(FILE_TIME, (void *)t, sizeof(Time_t));
+
+	return res;
+}
+
+static SysResult_t ITimeLoad(Time_t *t)
+{
+	OsResult_t res = OS_RES_ERROR;
+
+	/* Set the read offset to where the most recent copy of the time struct would be.
+	 * Read from storage.*/
+	uint32_t n = 0;
+	res = StorageFileReadOffsetSet(FILE_TIME, sizeof(Time_t), OFFSET_OPT_RELATIVE_SUB);
+	if(res == SYS_RESULT_OK) {
+		do {
+			res = StorageFileRead(FILE_TIME, (void *)t, sizeof(Time_t));
+			if(res == SYS_RESULT_OK) {
+				n++; /* Increment the number of successful reads. */
+			}
+		}
+		while(res == SYS_RESULT_OK);
+	}
+
+	if(n > 0) {
+		res = SYS_RESULT_OK;
+	}
+
+	return res;
+}
+
+static SysResult_t IScheduleStore(void)
+{
+	OsResult_t res = OS_RES_ERROR;
+
+	res = StorageFileWrite(FILE_SCHEDULE, (void *)&ScheduleManager.data, sizeof(ScheduleManager.data));
+
+	return res;
+}
+
+static SysResult_t IScheduleLoad(void)
+{
+	OsResult_t res = OS_RES_ERROR;
+
+	/* Set the read offset to where the most recent copy of the ScheduleManager data would be.
+	 * Read from storage.*/
+	uint32_t n = 0;
+	res = StorageFileReadOffsetSet(FILE_SCHEDULE, sizeof(ScheduleManager.data), OFFSET_OPT_RELATIVE_SUB);
+	if(res == SYS_RESULT_OK) {
+		do {
+			res = StorageFileRead(FILE_SCHEDULE, (void *)&ScheduleManager.data, sizeof(ScheduleManager.data));
+			if(res == SYS_RESULT_OK) {
+				n++; /* Increment the number of successful reads. */
+			}
+		}
+		while(res == SYS_RESULT_OK);
+	}
+
+	if(n > 0) {
+		res = SYS_RESULT_OK;
+	}
+
+	return res;
 }
