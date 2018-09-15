@@ -40,6 +40,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "gpio.h"
 
+#include "nvic.h"
 #include "stm32f1xx_hal.h"
 
 /* USER CODE BEGIN 0 */
@@ -70,6 +71,7 @@
 
 /***** User Interface Button GPIO. *****/
 #define CLOCK_ENABLE_UI_BUTTON	__HAL_RCC_GPIOB_CLK_ENABLE
+#define IRQ_UI_BUTTON		EXTI9_5_IRQn
 #define MODE_UI_BUTTON		GPIO_MODE_IT_FALLING
 #define PORT_UI_BUTTON		GPIOB
 #define PIN_UI_BUTTON_INC	GPIO_PIN_5
@@ -220,11 +222,17 @@ void GpioUiButtonInit(void)
 	GPIO_InitStruct.Mode = MODE_UI_BUTTON;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(PORT_UI_BUTTON, &GPIO_InitStruct);
+	NvicInterruptPrioritySet(IRQ_UI_BUTTON, UI_BUTTON_IRQ_PRIO, 0);
 }
 
 void GpioUiButtonDeinit(void)
 {
 	HAL_GPIO_DeInit(PORT_UI_BUTTON, PIN_UI_BUTTON_INC|PIN_UI_BUTTON_DEC|PIN_UI_BUTTON_SEL);
+}
+
+void GpioIntUiButtonEnable(uint8_t en)
+{
+	NvicInterruptEnable(IRQ_UI_BUTTON, en);
 }
 
 uint8_t GpioUiButtonStateGet(uint8_t btn)

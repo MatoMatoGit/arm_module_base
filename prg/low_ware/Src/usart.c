@@ -40,12 +40,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 
+#include "nvic.h"
 #include "err.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
 
 #define UART_INST_DEBUG USART2
+#define UART_IRQN_RX_DEBUG USART2_IRQn
+#define UART_IRQ_RX_PRIO_DEBUG 10
 
 /* USER CODE END 0 */
 
@@ -70,7 +73,14 @@ void UartDebugInit(uint32_t baud_rate)
   {
     ErrorHandler(__FILE__, __LINE__);
   }
+
+  NvicInterruptPrioritySet(UART_IRQN_RX_DEBUG, UART_IRQ_RX_PRIO_DEBUG, 0);
   HAL_UART_Receive_IT(&huart_debug, &DebugRxChar, 1);
+}
+
+void UartIntEnableRxDebug(uint8_t en)
+{
+	NvicInterruptEnable(UART_IRQN_RX_DEBUG, en);
 }
 
 void UartDebugCallbackSetOnRx(UartCallbackRx_t cb)

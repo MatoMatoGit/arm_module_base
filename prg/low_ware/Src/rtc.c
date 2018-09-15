@@ -40,16 +40,19 @@
 /* Includes ------------------------------------------------------------------*/
 #include "rtc.h"
 
+#include "nvic.h"
 #include "err.h"
 
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
 
+#define RTC_IRQN RTC_IRQn
+#define RTC_IRQ_PRIO 3
+
 RTC_HandleTypeDef hrtc;
 
 static RtcCallbackSecond_t OnSecond = NULL;
-
 /* RTC init function */
 void RtcInit(void)
 {
@@ -87,9 +90,10 @@ void RtcInit(void)
 	}
 
 	HAL_RTCEx_BKUPWrite(&hrtc,RTC_BKP_DR1,0x32F2);
+	NvicInterruptPrioritySet(RTC_IRQN, RTC_IRQ_PRIO, 0);
 	/* RTC interrupt Init */
 	HAL_RTCEx_SetSecond_IT(&hrtc);
-
+	NvicInterruptEnable(RTC_IRQN, 1);
 }
 
 void RtcCallbackSetOnSecond(RtcCallbackSecond_t cb)
