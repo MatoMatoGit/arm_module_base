@@ -65,6 +65,11 @@ void TimeGet(Time_t *time)
 	*time = TimeData.time;
 }
 
+void TimeSet(Time_t *time)
+{
+	TimeData.time = *time;
+}
+
 static void ITimeIncrement(uint8_t sec)
 {
 	TimeData.time.seconds++;
