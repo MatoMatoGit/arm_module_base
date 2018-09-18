@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define BUTTON_CONFIG_STABLE_THRESHOLD_MS		5
+#define BUTTON_CONFIG_STABLE_THRESHOLD_MS		1
 #define BUTTON_CONFIG_HOLD_THRESHOLD_MS_DEFAULT	3000
 #define BUTTON_CONFIG_PRESSED_LOW_ACTIVE		1
 
@@ -29,6 +29,7 @@ typedef enum {
 typedef void (*ButtonCallback_t)(Button_t button, ButtonTrigger_t trigger);
 
 int ButtonInit(void);
+void ButtonInterruptEnable(uint8_t en);
 int ButtonTriggerCallbackSet(Button_t button, ButtonTrigger_t trigger, ButtonCallback_t callback);
 int ButtonTriggerHoldThresholdSet(Button_t button, uint32_t threshold_ms);
 
