@@ -3,8 +3,9 @@
 
 #include "gpio.h"
 
-#include <Timer.h>
+#include "include/Timer.h"
 
+#include <stdlib.h>
 
 
 static void IRgbLedColorSet(RgbLedColor_t color);
@@ -27,7 +28,7 @@ int8_t RgbLedInit(void)
 	int8_t res = RGB_LED_ERR;
 
 	CurrentColor = RGB_LED_COLOR_RED;
-	BlinkTmr = TimerCreate(100e3, (TIMER_PARAMETER_AR | TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON), ITimerCallbackBlink, NULL);
+	BlinkTmr = TimerCreate(1000e3, (TIMER_PARAMETER_AR | TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON), ITimerCallbackBlink, NULL);
 	if(BlinkTmr != OS_RES_INVALID_ID) {
 		GpioRgbLedInit();
 		RgbLedModeSet(RGB_LED_MODE_OFF);
@@ -59,7 +60,6 @@ RgbLedColor_t RgbLedColorGet(void)
 int8_t RgbLedModeSet(RgbLedMode_t mode)
 {
 	int8_t res = RGB_LED_ERR;
-	OsResult_t os_res = OS_RES_ERROR;
 
 	switch(mode) {
 		default:
@@ -129,13 +129,13 @@ U32_t RgbLedBlinkIntervalGet(void)
 static void IRgbLedOff(void)
 {
 #ifdef RGB_LED_CONFIG_CONTROL_INVERTED
-	GpioRgbLedStateRedSet(1);
-	GpioRgbLedStateGreenSet(1);
-	GpioRgbLedStateBlueSet(1);
+	GpioRgbLedRedStateSet(1);
+	GpioRgbLedGreenStateSet(1);
+	GpioRgbLedBlueStateSet(1);
 #else
-	GpioRgbLedStateRedSet(0);
-	GpioRgbLedStateGreenSet(0);
-	GpioRgbLedStateBlueSet(0);
+	GpioRgbLedRedStateSet(0);
+	GpioRgbLedGreenStateSet(0);
+	GpioRgbLedBlueStateSet(0);
 #endif
 }
 
@@ -145,93 +145,93 @@ static void IRgbLedColorSet(RgbLedColor_t color)
 		default:
 		case RGB_LED_COLOR_RED: {
 #ifdef RGB_LED_CONFIG_CONTROL_INVERTED
-			GpioRgbLedStateRedSet(0);
-			GpioRgbLedStateGreenSet(1);
-			GpioRgbLedStateBlueSet(1);
+			GpioRgbLedRedStateSet(0);
+			GpioRgbLedGreenStateSet(1);
+			GpioRgbLedBlueStateSet(1);
 #else
-			GpioRgbLedStateRedSet(1);
-			GpioRgbLedStateGreenSet(0);
-			GpioRgbLedStateBlueSet(0);
+			GpioRgbLedRedStateSet(1);
+			GpioRgbLedGreenStateSet(0);
+			GpioRgbLedBlueStateSet(0);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_GREEN: {
 #ifdef RGB_LED_CONFIG_CONTROL_INVERTED
-			GpioRgbLedStateRedSet(1);
-			GpioRgbLedStateGreenSet(0);
-			GpioRgbLedStateBlueSet(1);
+			GpioRgbLedRedStateSet(1);
+			GpioRgbLedGreenStateSet(0);
+			GpioRgbLedBlueStateSet(1);
 #else
-			GpioRgbLedStateRedSet(0);
-			GpioRgbLedStateGreenSet(1);
-			GpioRgbLedStateBlueSet(0);
+			GpioRgbLedRedStateSet(0);
+			GpioRgbLedGreenStateSet(1);
+			GpioRgbLedBlueStateSet(0);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_BLUE: {
 #ifdef RGB_LED_CONFIG_CONTROL_INVERTED
-			GpioRgbLedStateRedSet(1);
-			GpioRgbLedStateGreenSet(1);
-			GpioRgbLedStateBlueSet(0);
+			GpioRgbLedRedStateSet(1);
+			GpioRgbLedGreenStateSet(1);
+			GpioRgbLedBlueStateSet(0);
 #else
-			GpioRgbLedStateRedSet(0);
-			GpioRgbLedStateGreenSet(0);
-			GpioRgbLedStateBlueSet(1);
+			GpioRgbLedRedStateSet(0);
+			GpioRgbLedGreenStateSet(0);
+			GpioRgbLedBlueStateSet(1);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_VIOLET: {
 #ifdef RGB_LED_CONFIG_CONTROL_INVERTED
-			GpioRgbLedStateRedSet(0);
-			GpioRgbLedStateGreenSet(1);
-			GpioRgbLedStateBlueSet(0);
+			GpioRgbLedRedStateSet(0);
+			GpioRgbLedGreenStateSet(1);
+			GpioRgbLedBlueStateSet(0);
 #else
-			GpioRgbLedStateRedSet(1);
-			GpioRgbLedStateGreenSet(0);
-			GpioRgbLedStateBlueSet(1);
+			GpioRgbLedRedStateSet(1);
+			GpioRgbLedGreenStateSet(0);
+			GpioRgbLedBlueStateSet(1);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_YELLOW: {
 #ifdef RGB_LED_CONFIG_CONTROL_INVERTED
-			GpioRgbLedStateRedSet(0);
-			GpioRgbLedStateGreenSet(0);
-			GpioRgbLedStateBlueSet(1);
+			GpioRgbLedRedStateSet(0);
+			GpioRgbLedGreenStateSet(0);
+			GpioRgbLedBlueStateSet(1);
 #else
-			GpioRgbLedStateRedSet(1);
-			GpioRgbLedStateGreenSet(1);
-			GpioRgbLedStateBlueSet(0);
+			GpioRgbLedRedStateSet(1);
+			GpioRgbLedGreenStateSet(1);
+			GpioRgbLedBlueStateSet(0);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_AQUA: {
 #ifdef RGB_LED_CONFIG_CONTROL_INVERTED
-			GpioRgbLedStateRedSet(1);
-			GpioRgbLedStateGreenSet(0);
-			GpioRgbLedStateBlueSet(0);
+			GpioRgbLedRedStateSet(1);
+			GpioRgbLedGreenStateSet(0);
+			GpioRgbLedBlueStateSet(0);
 #else
-			GpioRgbLedStateRedSet(0);
-			GpioRgbLedStateGreenSet(1);
-			GpioRgbLedStateBlueSet(1);
+			GpioRgbLedRedStateSet(0);
+			GpioRgbLedGreenStateSet(1);
+			GpioRgbLedBlueStateSet(1);
 #endif
 			break;
 		}
 
 		case RGB_LED_COLOR_WHITE: {
 #ifdef RGB_LED_CONFIG_CONTROL_INVERTED
-			GpioRgbLedStateRedSet(0);
-			GpioRgbLedStateGreenSet(0);
-			GpioRgbLedStateBlueSet(0);
+			GpioRgbLedRedStateSet(0);
+			GpioRgbLedGreenStateSet(0);
+			GpioRgbLedBlueStateSet(0);
 #else
-			GpioRgbLedStateRedSet(1);
-			GpioRgbLedStateGreenSet(1);
-			GpioRgbLedStateBlueSet(1);
+			GpioRgbLedRedStateSet(1);
+			GpioRgbLedGreenStateSet(1);
+			GpioRgbLedBlueStateSet(1);
 #endif
-			break;
+ 			break;
 		}
 		
 	}
