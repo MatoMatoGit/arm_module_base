@@ -47,6 +47,9 @@ extern ADC_HandleTypeDef hadc1;
 extern RTC_HandleTypeDef hrtc;
 extern UART_HandleTypeDef huart_debug;
 
+#define N_EXTI_INTS 3
+volatile uint8_t PinStates[N_EXTI_INTS] = {};
+
 /******************************************************************************/
 /*            Cortex-M3 Processor Interruption and Exception Handlers         */ 
 /******************************************************************************/
@@ -265,18 +268,37 @@ void USART2_IRQHandler(void)
   /* USER CODE END USART1_IRQn 1 */
 }
 
+
+
 void EXTI9_5_IRQHandler(void)
 {
-	uint16_t pin = 0;
+	uint16_t btn = 0xFFFF;
+	uint8_t state = 0;
+	static uint8_t new_pin_states[N_EXTI_INTS] = {1};
 
-	if(GpioUiButtonStateGet(UI_BUTTON_INC) == 0) {
-		pin = GPIO_PIN_5;
-	} else if(GpioUiButtonStateGet(UI_BUTTON_DEC) == 0) {
-		pin = GPIO_PIN_6;
-	} else if(GpioUiButtonStateGet(UI_BUTTON_SEL) == 0) {
-		pin = GPIO_PIN_7;
+	new_pin_states[UI_BUTTON_INC] = GpioUiButtonStateGet(UI_BUTTON_INC);
+	new_pin_states[UI_BUTTON_DEC] = GpioUiButtonStateGet(UI_BUTTON_DEC);
+	new_pin_states[UI_BUTTON_SEL] = GpioUiButtonStateGet(UI_BUTTON_SEL);
+
+	if(new_pin_states[UI_BUTTON_INC] != PinStates[UI_BUTTON_INC]) {
+		btn = UI_BUTTON_INC;
+		PinStates[UI_BUTTON_INC] = new_pin_states[UI_BUTTON_INC];
+	} else if(new_pin_states[UI_BUTTON_DEC] != PinStates[UI_BUTTON_DEC]) {
+		btn = UI_BUTTON_DEC;
+		PinStates[UI_BUTTON_DEC] = new_pin_states[UI_BUTTON_DEC];
+	} else if(new_pin_states[UI_BUTTON_SEL] != PinStates[UI_BUTTON_SEL]) {
+		btn = UI_BUTTON_SEL;
+		PinStates[UI_BUTTON_SEL] = new_pin_states[UI_BUTTON_SEL];
 	}
-	HAL_GPIO_EXTI_IRQHandler(pin);
+	if(btn != 0xFFFF) {
+		/* The button number is passed to the IRQ handler instead of the pin
+		 * number. */
+		HAL_GPIO_EXTI_IRQHandler(btn, PinStates[btn]);
+	}
+
+	HAL_GPIO_EXTI_Clear(GpioPinGetButton(UI_BUTTON_INC));
+	HAL_GPIO_EXTI_Clear(GpioPinGetButton(UI_BUTTON_DEC));
+	HAL_GPIO_EXTI_Clear(GpioPinGetButton(UI_BUTTON_SEL));
 }
 
 /* USER CODE BEGIN 1 */
