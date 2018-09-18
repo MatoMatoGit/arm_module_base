@@ -78,6 +78,7 @@ void Gpio7SdSelStateSet(uint8_t n, uint8_t state);
 void GpioUiButtonInit(void);
 void GpioUiButtonDeinit(void);
 void GpioIntUiButtonEnable(uint8_t en);
+uint16_t GpioPinGetButton(uint8_t btn);
 uint8_t GpioUiButtonStateGet(uint8_t btn);
 void GpioUiButtonIntCallbackSet(uint8_t btn, GpioIntCallback_t cb);
 

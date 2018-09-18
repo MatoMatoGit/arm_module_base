@@ -72,7 +72,7 @@
 /***** User Interface Button GPIO. *****/
 #define CLOCK_ENABLE_UI_BUTTON	__HAL_RCC_GPIOB_CLK_ENABLE
 #define IRQ_UI_BUTTON		EXTI9_5_IRQn
-#define MODE_UI_BUTTON		GPIO_MODE_IT_FALLING
+#define MODE_UI_BUTTON		GPIO_MODE_IT_RISING_FALLING
 #define PORT_UI_BUTTON		GPIOB
 #define PIN_UI_BUTTON_INC	GPIO_PIN_5
 #define PIN_UI_BUTTON_DEC	GPIO_PIN_6
@@ -235,6 +235,29 @@ void GpioIntUiButtonEnable(uint8_t en)
 	NvicInterruptEnable(IRQ_UI_BUTTON, en);
 }
 
+uint16_t GpioPinGetButton(uint8_t btn)
+{
+	uint16_t pin = 0;
+
+	switch(btn) {
+	default:
+	case UI_BUTTON_INC: {
+		pin = PIN_UI_BUTTON_INC;
+		break;
+	}
+	case UI_BUTTON_DEC: {
+		pin = PIN_UI_BUTTON_DEC;
+		break;
+	}
+	case UI_BUTTON_SEL: {
+		pin = PIN_UI_BUTTON_SEL;
+		break;
+	}
+	}
+
+	return pin;
+}
+
 uint8_t GpioUiButtonStateGet(uint8_t btn)
 {
 	uint8_t state = 0;
@@ -280,31 +303,29 @@ void GpioUiButtonIntCallbackSet(uint8_t btn, GpioIntCallback_t cb)
 	}
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin, uint8_t state)
 {
+	uint8_t btn = (uint8_t)GPIO_Pin;
 	GpioIntCallback_t cb = NULL;
 
-	switch(GPIO_Pin) {
-	default:{
-		cb = NULL;
-		break;
-	}
-	case PIN_UI_BUTTON_INC: {
+	switch(btn) {
+	default:
+	case UI_BUTTON_INC: {
 		cb = UiButtonIncCb;
 		break;
 	}
-	case PIN_UI_BUTTON_DEC: {
+	case UI_BUTTON_DEC: {
 		cb = UiButtonDecCb;
 		break;
 	}
-	case PIN_UI_BUTTON_SEL: {
-		cb= UiButtonSelCb;
+	case UI_BUTTON_SEL: {
+		cb = UiButtonSelCb;
 		break;
 	}
 	}
 
 	if(cb != NULL) {
-		cb(GPIO_Pin, HAL_GPIO_ReadPin(PORT_UI_BUTTON, GPIO_Pin));
+		cb(GPIO_Pin, state);
 	}
 }
 
