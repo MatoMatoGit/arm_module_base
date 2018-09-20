@@ -12,6 +12,9 @@
 
 #include "OsTypes.h"
 
+/* 1 Second becomes 1 hour, for debugging. */
+#define HOUR_IS_SECOND 1
+
 typedef struct {
 	U8_t hours;
 	U8_t minutes;

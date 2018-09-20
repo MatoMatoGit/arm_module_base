@@ -72,7 +72,11 @@ void TimeSet(Time_t *time)
 
 static void ITimeIncrement(uint8_t sec)
 {
+#if HOUR_IS_SECOND==1
+	TimeData.time.minutes = MINUTES_IN_HOUR;
+#else
 	TimeData.time.seconds++;
+#endif
 
 	if(TimeData.time.seconds >= SECONDS_IN_MINUTE) {
 		TimeData.time.minutes++;
@@ -83,7 +87,7 @@ static void ITimeIncrement(uint8_t sec)
 		TimeData.time.hours++;
 		TimeData.cont_hours++;
 		TimeData.time.minutes = 0;
-		if(!TimeData.alarm_en || TimeData.time.hours == TimeData.alarm_hour) {
+		if(TimeData.alarm_en && TimeData.time.hours == TimeData.alarm_hour) {
 			EventgroupFlagsSet(TimeData.evg, TimeData.evg_alarm_flag);
 		}
 	}
