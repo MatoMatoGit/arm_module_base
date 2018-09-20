@@ -273,7 +273,6 @@ void USART2_IRQHandler(void)
 void EXTI9_5_IRQHandler(void)
 {
 	uint16_t btn = 0xFFFF;
-	uint8_t state = 0;
 	static uint8_t new_pin_states[N_EXTI_INTS] = {1};
 
 	new_pin_states[UI_BUTTON_INC] = GpioUiButtonStateGet(UI_BUTTON_INC);
