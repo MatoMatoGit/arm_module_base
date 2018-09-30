@@ -10,7 +10,7 @@
 
 #include "pump_config.h"
 
-#include <OsTypes.h>
+#include "OsTypes.h"
 #include "SystemResult.h"
 
 /* Called when the duration/amount was pumped or stopped manually. */
@@ -18,7 +18,7 @@ typedef void (*PumpCallback_t)(void);
 
 SysResult_t PumpInit(PumpCallback_t on_stopped);
 
-void PumpEnable(U8_t val);
+void PumpEnable(U8_t en);
 
 SysResult_t PumpRunForDuration(U32_t duration_s);
 
