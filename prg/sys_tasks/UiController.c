@@ -16,6 +16,7 @@
 /* Driver includes. */
 #include "RgbLed/rgb_led.h"
 #include "SevenSegDisplay/seven_seg.h"
+#include "Button/button.h"
 
 /* OS includes. */
 #include "PriorRTOS.h"
@@ -26,7 +27,7 @@
 
 LOG_FILE_NAME("UiController");
 
-static void UiControllerTask(void *p_arg, U32_t v_arg);
+static void UiControllerTask(const void *p_arg, U32_t v_arg);
 
 static SysResult_t IValueDecrement(U8_t index, S32_t val);
 static SysResult_t IValueIncrement(U8_t index, S32_t val);
@@ -86,7 +87,7 @@ SysResult_t UiControllerInit(Id_t mbox_irrigation, Id_t mbox_schedule, Id_t evg_
 }
 
 
-static void UiControllerTask(void *p_arg, U32_t v_arg)
+static void UiControllerTask(const void *p_arg, U32_t v_arg)
 {
 	OsResult_t res = OS_RES_ERROR;
 
@@ -146,7 +147,7 @@ static U8_t IMapIndexToAddress(U8_t index)
 
 static void IDisplayUpdate(void)
 {
-	SevenSegDisplaySet(UiValues[SelectedValue]);
+	SevenSegDisplaySet((U32_t)UiValues[SelectedValue].current_val);
 }
 
 

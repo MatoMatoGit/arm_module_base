@@ -9,10 +9,13 @@
 #define COMPOSER_H_
 
 #include "SystemResult.h"
-#include <stdbool.h>
+
+#include "pump.h"
 
 SysResult_t ComposerInit(void);
 
-void ComposerCallbackSetOnPumpStopped(CallbackPumpStopped_t cb);
+void ComposerCallbackSetOnPumpStopped(PumpCallback_t cb);
+
+void IComposerCallbackOnPumpStopped(void);
 
 #endif /* COMPOSER_H_ */

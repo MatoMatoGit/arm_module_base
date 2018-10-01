@@ -8,8 +8,8 @@
 #ifndef PUMP_CONFIG_H_
 #define PUMP_CONFIG_H_
 
-#define PUMP_CONFIG_ML_PER_MIN 600
+#define PUMP_CONFIG_ML_PER_MIN 12000 /* 12 L per minute. */
 
-#define PUMP_CONFIG_CONTROL_INVERTED
+//#define PUMP_CONFIG_CONTROL_INVERTED
 
 #endif /* PUMP_CONFIG_H_ */

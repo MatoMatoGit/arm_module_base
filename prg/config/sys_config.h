@@ -12,7 +12,8 @@
 #include "pump_config.h"
 #include "rgb_led_config.h"
 #include "storage_config.h"
-#include "ui_config.h"
+//#include "ui_config.h"
+#include "composer_config.h"
 
 /***** Hardware Configuration macros. *****/
 

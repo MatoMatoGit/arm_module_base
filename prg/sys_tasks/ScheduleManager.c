@@ -34,7 +34,7 @@ typedef struct {
 
 ScheduleManager_t ScheduleManager;
 
-static void TaskScheduleManager(void *p_arg, U32_t v_arg);
+static void TaskScheduleManager(const void *p_arg, U32_t v_arg);
 
 static void IScheduleNextIrrigation(void);
 static SysResult_t IScheduleStore(void);
@@ -54,7 +54,7 @@ SysResult_t ScheduleManagerInit(ScheduleManagerConfig_t *config)
 	if(res == SYS_RESULT_OK) {
 		tsk_schedule_manager = TaskCreate(TaskScheduleManager, TASK_CAT_MEDIUM, 5,
 			(TASK_PARAMETER_START | TASK_PARAMETER_ESSENTIAL), 0, NULL, 0);
-		config->mbox_schedule = MailboxCreate(MBOX_SCHEDULE_NUM_ADDR, tsk_schedule_manager, 1);
+		config->mbox_schedule = MailboxCreate(MBOX_SCHEDULE_NUM_ADDR, &tsk_schedule_manager, 1);
 		if(tsk_schedule_manager == ID_INVALID || config->mbox_schedule == ID_INVALID) {
 			res = SYS_RESULT_ERROR;
 		}
@@ -102,7 +102,7 @@ SysResult_t ScheduleManagerIrrigationDataGet(IrrigationData_t *data)
 
 
 
-static void TaskScheduleManager(void *p_arg, U32_t v_arg)
+static void TaskScheduleManager(const void *p_arg, U32_t v_arg)
 {
 	OsResult_t res = OS_RES_ERROR;
 	U16_t amount = 0;

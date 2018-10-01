@@ -12,7 +12,7 @@
 
 #include "OsTypes.h"
 
-/* 1 Second becomes 1 hour, for debugging. */
+/* 1 hour becomes 1 second, for debugging. */
 #define HOUR_IS_SECOND 1
 
 typedef struct {
