@@ -162,7 +162,7 @@ static void IScheduleNextIrrigation(void)
 
 static SysResult_t ITimeStore(Time_t *t)
 {
-	OsResult_t res = OS_RES_ERROR;
+	SysResult_t res = SYS_RESULT_ERROR;
 
 	res = StorageFileWrite(FILE_TIME, (void *)t, sizeof(Time_t));
 
@@ -171,7 +171,7 @@ static SysResult_t ITimeStore(Time_t *t)
 
 static SysResult_t ITimeLoad(Time_t *t)
 {
-	OsResult_t res = OS_RES_ERROR;
+	SysResult_t res = SYS_RESULT_ERROR;
 
 	/* Set the read offset to where the most recent copy of the time struct would be.
 	 * Read from storage.*/
@@ -196,7 +196,7 @@ static SysResult_t ITimeLoad(Time_t *t)
 
 static SysResult_t IScheduleStore(void)
 {
-	OsResult_t res = OS_RES_ERROR;
+	OsResult_t res = SYS_RESULT_ERROR;
 
 	res = StorageFileWrite(FILE_SCHEDULE, (void *)&ScheduleManager.data, sizeof(ScheduleManager.data));
 
@@ -205,7 +205,7 @@ static SysResult_t IScheduleStore(void)
 
 static SysResult_t IScheduleLoad(void)
 {
-	OsResult_t res = OS_RES_ERROR;
+	SysResult_t res = SYS_RESULT_ERROR;
 
 	/* Set the read offset to where the most recent copy of the ScheduleManager data would be.
 	 * Read from storage.*/
