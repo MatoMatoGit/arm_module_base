@@ -31,6 +31,8 @@ LOG_FILE_NAME("IrrigationController");
 
 U32_t PumpAmountMl = 0;
 
+static volatile Id_t TmrIrrigationDelay = ID_INVALID;
+
 static void ICallbackPumpStopped(void);
 static void ICallbackDelayedPumpRun(Id_t timer_id, void *context);
 
@@ -45,10 +47,12 @@ SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation)
 		(TASK_PARAMETER_ESSENTIAL), 0, NULL, 0);
 	*mbox_irrigation = MailboxCreate(MBOX_IRRIGATION_NUM_ADDR, &tsk_irrigation_controller, 1);
 	if(tsk_irrigation_controller == ID_INVALID || *mbox_irrigation == ID_INVALID) {
+		LOG_ERROR_NEWLINE("Failed to create IrrigationController task or Irrigation mailbox");
 		res = SYS_RESULT_ERROR;
 	}
 
 	if(res == SYS_RESULT_OK) {
+		LOG_DEBUG_NEWLINE("IrrigationController initialized.");
 		ComposerCallbackSetOnPumpStopped(ICallbackPumpStopped);
 		PumpEnable(1);
 		TaskResumeWithVarg(tsk_irrigation_controller, (U32_t)*mbox_irrigation);
@@ -69,6 +73,8 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 	TASK_INIT_BEGIN() {
 		mbox_irrigation = (Id_t)v_arg;
 	} TASK_INIT_END();
+
+	LOG_DEBUG_NEWLINE("IrrigationControllerTask running.");
 
 	res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_TRIGGER, &trigger, OS_TIMEOUT_INFINITE);
 
@@ -110,9 +116,12 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 					 * run must still occur. */
 					if(PumpIsRunning()) {
 						LOG_DEBUG_NEWLINE("Pump is already running. Delaying scheduled run.");
-						if(TimerCreate(PUMP_RUN_DELAY_MS, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
-							ICallbackDelayedPumpRun, NULL) == ID_INVALID) {
-							LOG_ERROR_NEWLINE("Delay timer was not created.");
+						if(TmrIrrigationDelay == ID_INVALID) {
+							TmrIrrigationDelay = TimerCreate(PUMP_RUN_DELAY_MS, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
+									ICallbackDelayedPumpRun, NULL);
+							if(TmrIrrigationDelay == ID_INVALID) {
+								LOG_ERROR_NEWLINE("Delay timer was not created.");
+							}
 						}
 					} else {
 						/* If the pump is not running, run it for the specified amount. */
@@ -137,6 +146,8 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 			}
 		}
 	}
+
+	//TaskSleep(5000);
 }
 
 static void ICallbackPumpStopped(void)
@@ -153,7 +164,7 @@ static void ICallbackDelayedPumpRun(Id_t timer_id, void *context)
 	 * amount. */
 	if(PumpIsRunning()) {
 		LOG_DEBUG_NEWLINE("Delay expired. Pump is still running. Delay again.");
-		TimerReset(timer_id);
+		TimerReset(TmrIrrigationDelay);
 	} else {
 		if(PumpRunForAmount(PumpAmountMl) == SYS_RESULT_OK) {
 			LOG_DEBUG_NEWLINE("Delay expired. Pump turned on.");
@@ -161,7 +172,7 @@ static void ICallbackDelayedPumpRun(Id_t timer_id, void *context)
 			LOG_ERROR_NEWLINE("Pump could not be turned on.");
 		}
 		PumpAmountMl = 0;
-		TimerDelete(&timer_id);
+		TimerDelete(&TmrIrrigationDelay);
 	}
 }
 
