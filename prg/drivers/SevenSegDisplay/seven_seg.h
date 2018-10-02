@@ -25,6 +25,7 @@ typedef enum {
 struct SevenSegDisplay {
 	uint8_t num_digits;
 	uint32_t max_value;
+	uint32_t min_value;
 	SevenSegMode_t mode;
 	uint16_t refresh_rate_hz;
 

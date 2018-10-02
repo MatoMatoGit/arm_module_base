@@ -88,7 +88,7 @@ int SevenSegDisplaySet(uint32_t val)
 	uint8_t digit = 0;
 	uint8_t i = 0;
 
-	if(val <= DisplayConfig.max_value) {
+	if(val <= DisplayConfig.max_value && val >= DisplayConfig.min_value) {
 		res = SEVEN_SEG_RES_OK;
 
 		while(val > 0 && i < DisplayConfig.num_digits && res == SEVEN_SEG_RES_OK) {
