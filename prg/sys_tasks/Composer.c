@@ -31,6 +31,7 @@
 struct SevenSegDisplay SevenSegConfig = {
 	.num_digits = DISPLAY_NUM_DIGITS,
 	.max_value = DISPLAY_MAX_VALUE,
+	.min_value = DISPLAY_MIN_VALUE,
 	.mode = SEVEN_SEG_MODE_DEC,
 	.refresh_rate_hz = DISPLAY_REFRESH_RATE
 };
