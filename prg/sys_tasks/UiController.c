@@ -61,16 +61,17 @@ SysResult_t UiControllerInit(Id_t mbox_irrigation, Id_t mbox_schedule, Id_t evg_
 
 	tsk_irrigation_controller = TaskCreate(UiControllerTask, TASK_CAT_MEDIUM, 1,
 		(TASK_PARAMETER_START | TASK_PARAMETER_ESSENTIAL), 0, NULL, 0);
-	TmrValueStable = TimerCreate(UI_THRESHOLD_VALUE_STABLE_MS, TIMER_PARAMETER_PERIODIC, ITimerCallbackValueStable, NULL);
-	TmrUiInactive = TimerCreate(UI_THRESHOLD_INACTIVE_MS, TIMER_PARAMETER_PERIODIC, ITimerCallbackUiInactive, NULL);
+	TmrValueStable = TimerCreate(UI_THRESHOLD_VALUE_STABLE_MS * 1000, TIMER_PARAMETER_PERIODIC, ITimerCallbackValueStable, NULL);
+	TmrUiInactive = TimerCreate(UI_THRESHOLD_INACTIVE_MS * 1000, TIMER_PARAMETER_PERIODIC, ITimerCallbackUiInactive, NULL);
 	if(tsk_irrigation_controller == ID_INVALID || TmrValueStable == ID_INVALID || TmrUiInactive == ID_INVALID) {
-		MboxIrrigation = mbox_irrigation;
-		MboxSchedule = mbox_schedule;
-		EvgSystem = evg_system;
 		res = SYS_RESULT_ERROR;
 	}
 
 	if(res == SYS_RESULT_OK) {
+		MboxIrrigation = mbox_irrigation;
+		MboxSchedule = mbox_schedule;
+		EvgSystem = evg_system;
+
 		/* Configure the select button as wake-up trigger. */
 		ButtonTriggerCallbackSet(BUTTON_UI_SEL, BUTTON_TRIGGER_RELEASE, IButtonCallbackUiActivate);
 		ButtonCallbackSelectRelease = IButtonCallbackUiActivate;
@@ -94,6 +95,9 @@ static void UiControllerTask(const void *p_arg, U32_t v_arg)
 	TASK_INIT_BEGIN() {
 	} TASK_INIT_END();
 
+	LOG_DEBUG_NEWLINE("UiControllerTask running");
+
+	TaskSleep(10000);
 }
 
 
@@ -153,11 +157,14 @@ static void IDisplayUpdate(void)
 
 static void ITimerCallbackValueStable(Id_t timer_id, void *context)
 {
+	LOG_DEBUG_NEWLINE("Value stable");
 	MailboxPost(MboxSchedule, IMapIndexToAddress(SelectedValue), (U16_t)UiValues[SelectedValue].current_val, OS_TIMEOUT_NONE);
 }
 
 static void ITimerCallbackUiInactive(Id_t timer_id, void *context)
 {
+	LOG_DEBUG_NEWLINE("Deactivating UI");
+
 	TimerStop(TmrValueStable);
 	TimerStop(TmrUiInactive);
 	SevenSegDisplayEnable(0); /* Turn display off. */
@@ -176,11 +183,14 @@ static void ITimerCallbackUiInactive(Id_t timer_id, void *context)
 
 static void IButtonCallbackUiActivate(Button_t button, ButtonTrigger_t trigger)
 {
+	LOG_DEBUG_NEWLINE("Activating UI");
+
 	ButtonTriggerCallbackSet(BUTTON_UI_INC, BUTTON_TRIGGER_PRESS, IButtonCallbackIncrement);
 	ButtonTriggerCallbackSet(BUTTON_UI_DEC, BUTTON_TRIGGER_PRESS, IButtonCallbackDecrement);
 	ButtonTriggerCallbackSet(BUTTON_UI_SEL, BUTTON_TRIGGER_RELEASE, IButtonCallbackSelect);
 	ButtonCallbackSelectRelease = IButtonCallbackSelect;
 	SevenSegDisplayEnable(1); /* Turn display on. */
+	IDisplayUpdate();
 	TimerReset(TmrUiInactive);
 	TimerStart(TmrUiInactive);
 }
@@ -189,6 +199,8 @@ static void IButtonCallbackUiActivate(Button_t button, ButtonTrigger_t trigger)
 
 static void IButtonCallbackIncrement(Button_t button, ButtonTrigger_t trigger)
 {
+	LOG_DEBUG_NEWLINE("Increment value");
+
 	TimerReset(TmrUiInactive);
 	IValueIncrement(SelectedValue, 1);
 	TimerReset(TmrValueStable);
@@ -197,6 +209,8 @@ static void IButtonCallbackIncrement(Button_t button, ButtonTrigger_t trigger)
 
 static void IButtonCallbackDecrement(Button_t button, ButtonTrigger_t trigger)
 {
+	LOG_DEBUG_NEWLINE("Decrement value");
+
 	TimerReset(TmrUiInactive);
 	IValueDecrement(SelectedValue, 1);
 	TimerReset(TmrValueStable);
@@ -214,20 +228,25 @@ static void IButtonCallbackSelect(Button_t button, ButtonTrigger_t trigger)
 	} else {
 		SelectedValue = 0;
 	}
+
+	LOG_DEBUG_NEWLINE("Select: %d", SelectedValue);
 	
 	IDisplayUpdate();
 }
 
 static void IButtonCallbackPumpOn(Button_t button, ButtonTrigger_t trigger)
 {
-	TimerStop(TmrUiInactive);
+	LOG_DEBUG_NEWLINE("Pump on");
 
+	TimerStop(TmrUiInactive);
 	ButtonTriggerCallbackSet(BUTTON_UI_SEL, BUTTON_TRIGGER_RELEASE, IButtonCallbackPumpOff);
 	MailboxPost(MboxIrrigation, IRRIGATION_MBOX_ADDR_TRIGGER, IRRIGATION_TRIGGER_MANUAL_ON, OS_TIMEOUT_NONE);
 }
 
 static void IButtonCallbackPumpOff(Button_t button, ButtonTrigger_t trigger)
 {
+	LOG_DEBUG_NEWLINE("Pump off");
+
 	MailboxPost(MboxIrrigation, IRRIGATION_MBOX_ADDR_TRIGGER, IRRIGATION_TRIGGER_MANUAL_OFF, OS_TIMEOUT_NONE);
 	ButtonTriggerCallbackSet(BUTTON_UI_SEL, BUTTON_TRIGGER_RELEASE, ButtonCallbackSelectRelease); /* Restore callback. */
 
