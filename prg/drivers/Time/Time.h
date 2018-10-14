@@ -13,7 +13,10 @@
 #include "OsTypes.h"
 
 /* 1 hour becomes 1 second, for debugging. */
-#define HOUR_IS_SECOND 1
+#define HOUR_IS_SECOND 0
+
+/* 1 hour becomes 1 minute, for debugging. */
+#define HOUR_IS_MINUTE 1
 
 typedef struct {
 	U8_t hours;
@@ -21,8 +24,7 @@ typedef struct {
 	U8_t seconds;
 } Time_t;
 
-/* evg_alarm must be an eventgroup. */
-SysResult_t TimeInit(Id_t evg_alarm, U8_t evg_alarm_flag);
+SysResult_t TimeInit(void);
 
 /* When the alarm expires the evg_alarm_flag is set in evg_alarm. */
 void TimeAlarmSet(U8_t hour);

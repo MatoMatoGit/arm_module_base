@@ -19,8 +19,7 @@ typedef struct {
 
 	Id_t mbox_irrigation;
 
-	Id_t evg_alarm;
-	U8_t evg_alarm_flag;
+	Id_t evg_sys;
 }ScheduleManagerConfig_t;
 
 typedef struct {

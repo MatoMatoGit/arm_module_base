@@ -11,6 +11,11 @@
 /* System configuration. */
 #include "sys_config.h"
 
+#include "EvgSystem.h"
+
+/* GPIO, for direct LED control. */
+#include "gpio.h"
+
 /* Drivers. */
 #include "button.h"
 #include "storage.h"
@@ -50,6 +55,7 @@ ScheduleManagerConfig_t ScheduleManagerConfig = {
 const U32_t FileSizes[FILE_NUM] = {
 	FILE_SIZE_LOG,
 	FILE_SIZE_SCHEDULE,
+	FILE_SIZE_TIME
 };
 #endif
 
@@ -78,12 +84,11 @@ static void ComposerTask(const void *p_arg, U32_t v_arg)
 
 	SysResult_t res = SYS_RESULT_OK;
 	
-	/* Create common eventgroup. */
-	evg_system = EventgroupCreate();
-	if(evg_system == ID_INVALID) {
+	/* Initialize System Eventgroup. */
+	if(EvgSystemInit() != OS_RES_OK) {
 		res = SYS_RESULT_ERROR;
 	}
-	
+
 	/***** Drivers. *****/
 
 #if COMPOSER_CONFIG_ENABLE_MODULE_RGBLED==1
@@ -165,6 +170,12 @@ static void ComposerTask(const void *p_arg, U32_t v_arg)
 	}
 #endif
 
+	if(res != SYS_RESULT_OK) {
+		GpioRgbLedInit();
+		GpioRgbLedRedStateSet(1);
+	}
+
+	TaskDelete(NULL);
 }
 
 void ComposerCallbackSetOnPumpStopped(PumpCallback_t cb)

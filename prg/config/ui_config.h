@@ -18,27 +18,27 @@
 #define UI_VALUE_AMOUNT_LITERS_DEFAULT	10
 
 #define UI_VALUE_INDEX_FREQ		1
-#define UI_VALUE_FREQ_MAX		1000
+#define UI_VALUE_FREQ_MAX		24
 #define UI_VALUE_FREQ_MIN		1
 #define UI_VALUE_FREQ_DEFAULT	UI_VALUE_FREQ_MIN
 
 typedef struct {
-	S32_t default_val;
-	S32_t current_val;
-	S32_t max_val;
-	S32_t min_val;
+	volatile S32_t default_val;
+	volatile S32_t current_val;
+	volatile S32_t max_val;
+	volatile S32_t min_val;
 }UiValue_t;
 
 UiValue_t UiValues[UI_NUM_VALUES] = {
 	{
 		.default_val = UI_VALUE_AMOUNT_LITERS_DEFAULT,
-		.current_val = 0,
+		.current_val = UI_VALUE_AMOUNT_LITERS_MIN,
 		.max_val = UI_VALUE_AMOUNT_LITERS_MAX,
 		.min_val = UI_VALUE_AMOUNT_LITERS_MIN,
 	},
 	{
 		.default_val = UI_VALUE_FREQ_DEFAULT,
-		.current_val = 0,
+		.current_val = UI_VALUE_FREQ_MIN,
 		.max_val = UI_VALUE_FREQ_MAX,
 		.min_val = UI_VALUE_FREQ_MIN,
 	},

@@ -18,8 +18,7 @@
 
 /* File specification. */
 typedef enum {
-	FILE_LOG = 0,
-	FILE_SCHEDULE,
+	FILE_SCHEDULE = 0,
 	FILE_TIME,
 	FILE_NUM /* Must be last in this enum. */
 }File_t;

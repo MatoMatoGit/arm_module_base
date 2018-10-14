@@ -10,6 +10,7 @@
 
 /* System tasks includes. */
 #include "Composer.h"
+#include "EvgSystem.h"
 
 /* Driver includes. */
 #include "Pump/pump.h"
@@ -74,7 +75,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 		mbox_irrigation = (Id_t)v_arg;
 	} TASK_INIT_END();
 
-	LOG_DEBUG_NEWLINE("IrrigationControllerTask running.");
+	//LOG_DEBUG_NEWLINE("IrrigationControllerTask running.");
 
 	res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_TRIGGER, &trigger, OS_TIMEOUT_INFINITE);
 
@@ -87,6 +88,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 				LOG_DEBUG_NEWLINE("Received trigger: manual, on.");
 				pump_res = PumpRun();
 				if(pump_res == SYS_RESULT_OK) {
+					EventgroupFlagsSet(EvgSystemGet(), SYSTEM_FLAG_PUMP_RUNNING);
 					LOG_DEBUG_NEWLINE("Pump turned on.");
 				} else {
 					LOG_ERROR_NEWLINE("Pump could not be turned on.");
@@ -127,6 +129,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 						/* If the pump is not running, run it for the specified amount. */
 						pump_res = PumpRunForAmount(PumpAmountMl);
 						if(pump_res == SYS_RESULT_OK) {
+							EventgroupFlagsSet(EvgSystemGet(), SYSTEM_FLAG_PUMP_RUNNING);
 							LOG_DEBUG_NEWLINE("Pump turned on.");
 						} else {
 							LOG_ERROR_NEWLINE("Pump could not be turned on.");
@@ -147,11 +150,12 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 		}
 	}
 
-	//TaskSleep(5000);
+	TaskSleep(1000);
 }
 
 static void ICallbackPumpStopped(void)
 {
+	EventgroupFlagsClear(EvgSystemGet(), SYSTEM_FLAG_PUMP_RUNNING);
 	LOG_DEBUG_NEWLINE("Pump stopped.");
 }
 
@@ -167,6 +171,7 @@ static void ICallbackDelayedPumpRun(Id_t timer_id, void *context)
 		TimerReset(TmrIrrigationDelay);
 	} else {
 		if(PumpRunForAmount(PumpAmountMl) == SYS_RESULT_OK) {
+			EventgroupFlagsSet(EvgSystemGet(), SYSTEM_FLAG_PUMP_RUNNING);
 			LOG_DEBUG_NEWLINE("Delay expired. Pump turned on.");
 		} else {
 			LOG_ERROR_NEWLINE("Pump could not be turned on.");
