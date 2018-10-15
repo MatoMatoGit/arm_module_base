@@ -131,7 +131,6 @@ static void UiControllerTask(const void *p_arg, U32_t v_arg)
 			IUiInit();
 			EventgroupFlagsClear(EvgSystem, SYSTEM_FLAG_SCHED_LOADED);
 			ui_init_done = 1;
-			TaskSleep(500);
 		}
 	} else {
 		if(CurrentState != SYS_STATE_PUMPING) {
@@ -147,9 +146,9 @@ static void UiControllerTask(const void *p_arg, U32_t v_arg)
 				ISysStateSet(SYS_STATE_IDLE);
 			}
 		}
-
-		TaskSleep(500);
 	}
+
+	TaskSleep(500);
 }
 
 
