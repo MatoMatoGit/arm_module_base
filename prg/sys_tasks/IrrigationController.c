@@ -100,6 +100,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 			case IRRIGATION_TRIGGER_MANUAL_OFF: {
 				LOG_DEBUG_NEWLINE("Received trigger: manual, off.");
 				PumpStop();
+				EventgroupFlagsClear(EvgSystemGet(), SYSTEM_FLAG_PUMP_RUNNING);
 				LOG_DEBUG_NEWLINE("Pump turned off.");
 				break;
 			}
