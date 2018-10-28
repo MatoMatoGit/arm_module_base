@@ -9,7 +9,6 @@
 #include "ScheduleManager.h"
 
 /* System tasks includes. */
-#include "EvgSystem.h"
 #include "IrrigationController.h"
 
 /* Driver includes. */
@@ -22,6 +21,7 @@
 /* Standard includes. */
 #include <stdlib.h>
 #include <string.h>
+#include "SystemEvg.h"
 
 LOG_FILE_NAME("ScheduleManager");
 
@@ -106,7 +106,7 @@ SysResult_t ScheduleManagerInit(ScheduleManagerConfig_t *config)
 	/* Copy the schedule manager config. */
 	if(res == SYS_RESULT_OK) {
 		ScheduleManager.config = *config;
-		ScheduleManager.config.evg_sys = EvgSystemGet();
+		ScheduleManager.config.evg_sys = SystemEvgGet();
 	}
 
 	return res;

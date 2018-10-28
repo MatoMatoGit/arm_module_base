@@ -11,9 +11,6 @@
 /* System configuration. */
 #include "sys_config.h"
 
-#include "EvgSystem.h"
-
-/* GPIO, for direct LED control. */
 #include "gpio.h"
 
 /* Drivers. */
@@ -31,6 +28,7 @@
 #include "UiController.h"
 
 #include <stdbool.h>
+#include "SystemEvg.h"
 
 #if COMPOSER_CONFIG_ENABLE_MODULE_SEVENSEG==1
 struct SevenSegDisplay SevenSegConfig = {
@@ -85,7 +83,7 @@ static void ComposerTask(const void *p_arg, U32_t v_arg)
 	SysResult_t res = SYS_RESULT_OK;
 	
 	/* Initialize System Eventgroup. */
-	if(EvgSystemInit() != OS_RES_OK) {
+	if(SystemEvgInit() != OS_RES_OK) {
 		res = SYS_RESULT_ERROR;
 	}
 

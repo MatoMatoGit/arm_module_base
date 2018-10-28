@@ -8,11 +8,11 @@
 #include "time.h"
 #include "Eventgroup.h"
 #include "Logger.h"
+#include "SystemEvg.h"
 
 #include "rtc.h"
 #include "stm32f1xx_hal.h"
 
-#include "sys_tasks/EvgSystem.h"
 
 LOG_FILE_NAME("Time");
 
@@ -39,7 +39,7 @@ SysResult_t TimeInit(void)
 {
 	SysResult_t res = SYS_RESULT_ERROR;
 
-	TimeData.evg = EvgSystemGet();
+	TimeData.evg = SystemEvgGet();
 	TimeData.evg_alarm_flag = SYSTEM_FLAG_ALARM;
 	TimeData.alarm_en = 0;
 	TimeData.alarm_hour = 0;

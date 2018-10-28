@@ -6,13 +6,12 @@
  */
 
 
-#include "EvgSystem.h"
-
+#include "SystemEvg.h"
 #include "include/Eventgroup.h"
 
 static Id_t EvgSystem = ID_INVALID;
 
-OsResult_t EvgSystemInit(void)
+OsResult_t SystemEvgInit(void)
 {
 	OsResult_t res = OS_RES_OK;
 
@@ -24,7 +23,7 @@ OsResult_t EvgSystemInit(void)
 	return res;
 }
 
-Id_t EvgSystemGet(void)
+Id_t SystemEvgGet(void)
 {
 	Id_t evg_sys = EvgSystem;
 

@@ -10,9 +10,6 @@
 
 /* System tasks includes. */
 #include "Composer.h"
-#include "EvgSystem.h"
-
-/* Driver includes. */
 #include "Pump/pump.h"
 
 /* OS includes. */
@@ -21,6 +18,7 @@
 /* Standard includes. */
 #include <stdlib.h>
 #include <string.h>
+#include "SystemEvg.h"
 
 LOG_FILE_NAME("IrrigationController");
 
@@ -88,7 +86,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 				LOG_DEBUG_NEWLINE("Received trigger: manual, on.");
 				pump_res = PumpRun();
 				if(pump_res == SYS_RESULT_OK) {
-					EventgroupFlagsSet(EvgSystemGet(), SYSTEM_FLAG_PUMP_RUNNING);
+					EventgroupFlagsSet(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
 					LOG_DEBUG_NEWLINE("Pump turned on.");
 				} else {
 					LOG_ERROR_NEWLINE("Pump could not be turned on.");
@@ -100,7 +98,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 			case IRRIGATION_TRIGGER_MANUAL_OFF: {
 				LOG_DEBUG_NEWLINE("Received trigger: manual, off.");
 				PumpStop();
-				EventgroupFlagsClear(EvgSystemGet(), SYSTEM_FLAG_PUMP_RUNNING);
+				EventgroupFlagsClear(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
 				LOG_DEBUG_NEWLINE("Pump turned off.");
 				break;
 			}
@@ -130,7 +128,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 						/* If the pump is not running, run it for the specified amount. */
 						pump_res = PumpRunForAmount(PumpAmountMl);
 						if(pump_res == SYS_RESULT_OK) {
-							EventgroupFlagsSet(EvgSystemGet(), SYSTEM_FLAG_PUMP_RUNNING);
+							EventgroupFlagsSet(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
 							LOG_DEBUG_NEWLINE("Pump turned on.");
 						} else {
 							LOG_ERROR_NEWLINE("Pump could not be turned on.");
@@ -156,7 +154,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 
 static void ICallbackPumpStopped(void)
 {
-	EventgroupFlagsClear(EvgSystemGet(), SYSTEM_FLAG_PUMP_RUNNING);
+	EventgroupFlagsClear(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
 	LOG_DEBUG_NEWLINE("Pump stopped.");
 }
 
@@ -172,7 +170,7 @@ static void ICallbackDelayedPumpRun(Id_t timer_id, void *context)
 		TimerReset(TmrIrrigationDelay);
 	} else {
 		if(PumpRunForAmount(PumpAmountMl) == SYS_RESULT_OK) {
-			EventgroupFlagsSet(EvgSystemGet(), SYSTEM_FLAG_PUMP_RUNNING);
+			EventgroupFlagsSet(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
 			LOG_DEBUG_NEWLINE("Delay expired. Pump turned on.");
 		} else {
 			LOG_ERROR_NEWLINE("Pump could not be turned on.");
