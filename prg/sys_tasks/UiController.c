@@ -10,9 +10,9 @@
 #include "ui_Config.h"
 
 /* System task includes. */
-#include "EvgSystem.h"
 #include "ScheduleManager.h"
 #include "IrrigationController.h"
+#include "SystemManager.h"
 
 /* Driver includes. */
 #include "RgbLed/rgb_led.h"
@@ -25,6 +25,7 @@
 /* Standard includes. */
 #include <stdlib.h>
 #include <string.h>
+#include <SystemEvg.h>
 
 LOG_FILE_NAME("UiController");
 
@@ -38,6 +39,8 @@ static void IUiInit(void);
 static void IRgbLedStateSet(SysState_t state);
 static void ISysStateSet(SysState_t state);
 static void ISysStateReturn(void);
+const char *ISysStateToString(SysState_t state);
+static U8_t IStateIndexFromState(SysState_t state);
 
 static void ITimerCallbackValueStable(Id_t timer_id, void *context);
 static void ITimerCallbackUiInactive(Id_t timer_id, void *context);
@@ -58,33 +61,45 @@ static Id_t MboxIrrigation = ID_INVALID;
 static Id_t MboxSchedule = ID_INVALID;
 static Id_t EvgSystem = ID_INVALID;
 
-static volatile SysState_t CurrentState = SYS_STATE_IDLE;
-static volatile SysState_t PreviousState = SYS_STATE_IDLE;
-static volatile SysState_t SavedState = SYS_STATE_IDLE;
+static volatile SysState_t CurrentState = SYS_STATE_INITIALIZED;
+static volatile SysState_t PreviousState = SYS_STATE_INITIALIZED;
+static volatile SysState_t SavedState = SYS_STATE_INITIALIZED;
 
 RgbLedColor_t SysStateColors[] = {
-	RGB_LED_COLOR_GREEN,
-	RGB_LED_COLOR_BLUE,
+	RGB_LED_COLOR_RED,
+
 	RGB_LED_COLOR_BLUE,
 	RGB_LED_COLOR_VIOLET,
+
+	RGB_LED_COLOR_GREEN,
+	RGB_LED_COLOR_BLUE,
+
 	RGB_LED_COLOR_RED,
 	RGB_LED_COLOR_RED
 };
 
 RgbLedMode_t SysStateModes[] = {
 	RGB_LED_MODE_ON,
+
+	RGB_LED_MODE_BLINK,
+	RGB_LED_MODE_BLINK,
+
 	RGB_LED_MODE_ON,
-	RGB_LED_MODE_BLINK,
-	RGB_LED_MODE_BLINK,
+	RGB_LED_MODE_ON,
+
 	RGB_LED_MODE_BLINK,
 	RGB_LED_MODE_ON
 };
 
 U32_t SysStateBlinkIntervals[] = {
 	0,
+
+	250,
+	250,
+
 	0,
-	250,
-	250,
+	0,
+
 	1000,
 	0
 };
@@ -107,7 +122,7 @@ SysResult_t UiControllerInit(Id_t mbox_irrigation, Id_t mbox_schedule)
 		LOG_DEBUG_NEWLINE("UiController task and timers created.");
 		MboxIrrigation = mbox_irrigation;
 		MboxSchedule = mbox_schedule;
-		EvgSystem = EvgSystemGet();
+		EvgSystem = SystemEvgGet();
 	}
 
 	return res;
@@ -118,6 +133,8 @@ static void UiControllerTask(const void *p_arg, U32_t v_arg)
 {
 	OsResult_t res = OS_RES_ERROR;
 	static U8_t ui_init_done = 0;
+	static U8_t sys_flags = 0;
+	static U8_t prev_sys_flags = 0;
 
 	TASK_INIT_BEGIN() {
 	} TASK_INIT_END();
@@ -133,19 +150,22 @@ static void UiControllerTask(const void *p_arg, U32_t v_arg)
 			ui_init_done = 1;
 		}
 	} else {
-		if(CurrentState != SYS_STATE_PUMPING) {
-			res = EventgroupFlagsRequireSet(EvgSystem, SYSTEM_FLAG_PUMP_RUNNING, OS_TIMEOUT_INFINITE);
-			if(res == OS_RES_OK || res == OS_RES_EVENT) {
-				LOG_DEBUG_NEWLINE("Pump is running.");
-				ISysStateSet(SYS_STATE_PUMPING);
-			}
+
+		prev_sys_flags = sys_flags;
+		sys_flags = EventgroupFlagsGet(EvgSystem, 0xFF);
+
+		if(sys_flags & SYSTEM_FLAG_ERROR_CRIT) {
+			ISysStateSet(SYS_STATE_CRIT_ERROR);
 		} else {
-			res = EventgroupFlagsRequireCleared(EvgSystem, SYSTEM_FLAG_PUMP_RUNNING, OS_TIMEOUT_INFINITE);
-			if(res == OS_RES_OK || res == OS_RES_EVENT) {
-				LOG_DEBUG_NEWLINE("Pump stopped.");
-				ISysStateSet(SYS_STATE_IDLE);
+			if(sys_flags & SYSTEM_FLAG_PUMP_RUNNING) {
+				ISysStateSet(SYS_STATE_PUMPING);
+			} else if(sys_flags & SYSTEM_FLAG_ERROR) {
+				ISysStateSet(SYS_STATE_ERROR);
+			} else if(prev_sys_flags) {
+				ISysStateReturn();
 			}
 		}
+
 	}
 
 	TaskSleep(500);
@@ -245,26 +265,46 @@ static void IUiInit(void)
 
 static void IRgbLedStateSet(SysState_t state)
 {
+	U8_t idx = IStateIndexFromState(state);
 	RgbLedModeSet(RGB_LED_MODE_OFF);
-	RgbLedColorSet(SysStateColors[state]);
-	if(SysStateModes[state] == RGB_LED_MODE_BLINK) {
-		RgbLedBlinkIntervalSet(SysStateBlinkIntervals[state]);
+	RgbLedColorSet(SysStateColors[idx]);
+	if(SysStateModes[idx] == RGB_LED_MODE_BLINK) {
+		RgbLedBlinkIntervalSet(SysStateBlinkIntervals[idx]);
 	}
-	RgbLedModeSet(SysStateModes[state]);
+	RgbLedModeSet(SysStateModes[idx]);
 }
 
 static void ISysStateSet(SysState_t state)
 {
+	if(state == CurrentState) {
+		return;
+	}
 
-	if(CurrentState != SYS_STATE_SET_AMOUNT && CurrentState != SYS_STATE_SET_FREQ) {
-		if(state == SYS_STATE_SET_AMOUNT || state == SYS_STATE_SET_FREQ) {
+	LOG_DEBUG_NEWLINE("[CURRENT] Saved state: %s | Current state: %s | New state: %s",
+			ISysStateToString(SavedState), ISysStateToString(CurrentState), ISysStateToString(state));
+	if(state == SYS_STATE_CLEAR_ERROR) {
+		LOG_DEBUG_NEWLINE("Clearing error.");
+		CurrentState = SavedState = SYS_STATE_IDLE;
+		state = SYS_STATE_IDLE;
+	}
+	if(CurrentState < SYS_STATE_INDICATOR_PRESERVE) {
+		if(CurrentState > SYS_STATE_INDICATOR_SAVE && CurrentState >= SavedState) {
 			SavedState = CurrentState;
+			LOG_DEBUG_NEWLINE("New saved state: %s", ISysStateToString(SavedState));
+		}
+		PreviousState = CurrentState;
+		CurrentState = state;
+		IRgbLedStateSet(CurrentState);
+	} else {
+		if(state > CurrentState) {
+			PreviousState = CurrentState;
+			CurrentState = state;
+			IRgbLedStateSet(CurrentState);
 		}
 	}
-	PreviousState = CurrentState;
-	CurrentState = state;
+	LOG_DEBUG_NEWLINE("[UPDATED] Saved state: %s | Current state: %s",
+				ISysStateToString(SavedState), ISysStateToString(CurrentState));
 
-	IRgbLedStateSet(CurrentState);
 }
 
 static void ISysStateReturn(void)
@@ -272,9 +312,73 @@ static void ISysStateReturn(void)
 	ISysStateSet(SavedState);
 }
 
+const char *ISysStateToString(SysState_t state)
+{
+	switch(state)
+	{
+	case SYS_STATE_SET_AMOUNT:
+		return "SetAmount";
+	case SYS_STATE_SET_FREQ:
+		return "SetFrequency";
+	case SYS_STATE_IDLE:
+		return "Idle";
+	case SYS_STATE_PUMPING:
+		return "Pumping";
+	case SYS_STATE_ERROR:
+		return "Error";
+	case SYS_STATE_CRIT_ERROR:
+		return "CriticalError";
+	case SYS_STATE_CLEAR_ERROR:
+		return "ClearError";
+	case SYS_STATE_INITIALIZED:
+		return "Initialized";
+	default:
+		return "Invalid";
+	}
+}
+
+static U8_t IStateIndexFromState(SysState_t state)
+{
+	U8_t idx = 0;
+
+	switch(state) {
+	default:
+	case SYS_STATE_INITIALIZED: {
+		idx = 0;
+		break;
+	}
+	case SYS_STATE_SET_AMOUNT: {
+		idx = 1;
+		break;
+	}
+	case SYS_STATE_SET_FREQ: {
+		idx = 2;
+		break;
+	}
+	case SYS_STATE_IDLE: {
+		idx = 3;
+		break;
+	}
+	case SYS_STATE_PUMPING: {
+		idx = 4;
+		break;
+	}
+	case SYS_STATE_ERROR: {
+		idx = 5;
+		break;
+	}
+	case SYS_STATE_CRIT_ERROR: {
+		idx = 6;
+		break;
+	}
+	}
+
+	return idx;
+}
+
 static void ITimerCallbackValueStable(Id_t timer_id, void *context)
 {
-	LOG_DEBUG_NEWLINE("Posting values in Schedule mailbox: Amount: %u | Freq: %u", UiValues[UI_VALUE_INDEX_AMOUNT], UiValues[UI_VALUE_INDEX_FREQ]);
+	LOG_DEBUG_NEWLINE("Posting values in Schedule mailbox: Amount: %u | Freq: %u", UiValues[UI_VALUE_INDEX_AMOUNT].current_val, UiValues[UI_VALUE_INDEX_FREQ].current_val);
 	MailboxPost(MboxSchedule, SCHEDULE_MBOX_ADDR_AMOUNT, (U16_t)UiValues[UI_VALUE_INDEX_AMOUNT].current_val, OS_TIMEOUT_NONE);
 	MailboxPost(MboxSchedule, SCHEDULE_MBOX_ADDR_FREQ, (U16_t)UiValues[UI_VALUE_INDEX_FREQ].current_val, OS_TIMEOUT_NONE);
 }
@@ -296,26 +400,32 @@ static void ITimerCallbackUiInactive(Id_t timer_id, void *context)
 	TimerStart(TmrValueStable);
 	SelectedValue = 0;
 	ISysStateReturn();
+	SystemRaiseError(SYSTEM_COMP_APP_UI_CONTROLLER, SYSTEM_ERROR);
 }
 
 /* Button callbacks. */
 
 static void IButtonCallbackUiActivate(Button_t button, ButtonTrigger_t trigger)
 {
-	LOG_DEBUG_NEWLINE("Activating UI");
+	if(CurrentState != SYS_STATE_ERROR && CurrentState != SYS_STATE_PUMPING) {
+		LOG_DEBUG_NEWLINE("Activating UI");
 
-	TimerStop(TmrValueStable);
+		TimerStop(TmrValueStable);
 
-	ButtonTriggerCallbackSet(BUTTON_UI_INC, BUTTON_TRIGGER_PRESS, IButtonCallbackIncrement);
-	ButtonTriggerCallbackSet(BUTTON_UI_DEC, BUTTON_TRIGGER_PRESS, IButtonCallbackDecrement);
-	ButtonTriggerCallbackSet(BUTTON_UI_SEL, BUTTON_TRIGGER_RELEASE, IButtonCallbackSelect);
-	ButtonCallbackSelectRelease = IButtonCallbackSelect;
-	SevenSegDisplayEnable(1); /* Turn display on. */
-	IDisplayUpdate();
-	TimerReset(TmrUiInactive);
-	TimerStart(TmrUiInactive);
+		ButtonTriggerCallbackSet(BUTTON_UI_INC, BUTTON_TRIGGER_PRESS, IButtonCallbackIncrement);
+		ButtonTriggerCallbackSet(BUTTON_UI_DEC, BUTTON_TRIGGER_PRESS, IButtonCallbackDecrement);
+		ButtonTriggerCallbackSet(BUTTON_UI_SEL, BUTTON_TRIGGER_RELEASE, IButtonCallbackSelect);
+		ButtonCallbackSelectRelease = IButtonCallbackSelect;
+		SevenSegDisplayEnable(1); /* Turn display on. */
+		IDisplayUpdate();
+		TimerReset(TmrUiInactive);
+		TimerStart(TmrUiInactive);
 
-	ISysStateSet(SYS_STATE_SET_AMOUNT);
+		ISysStateSet(SYS_STATE_SET_AMOUNT);
+	} else if(CurrentState == SYS_STATE_ERROR) {
+		SystemClearError();
+		ISysStateSet(SYS_STATE_CLEAR_ERROR);
+	}
 }
 
 
@@ -353,7 +463,7 @@ static void IButtonCallbackSelect(Button_t button, ButtonTrigger_t trigger)
 	}
 
 	LOG_DEBUG_NEWLINE("Select: %d", SelectedValue);
-	
+
 	IDisplayUpdate();
 }
 
@@ -376,4 +486,6 @@ static void IButtonCallbackPumpOff(Button_t button, ButtonTrigger_t trigger)
 	TimerReset(TmrUiInactive);
 	TimerStart(TmrUiInactive);
 }
+
+
 
