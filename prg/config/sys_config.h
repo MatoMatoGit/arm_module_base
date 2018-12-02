@@ -14,19 +14,7 @@
 #include "storage_config.h"
 //#include "ui_config.h"
 #include "composer_config.h"
-
-/***** Hardware Configuration macros. *****/
-
-#define DISPLAY_NUM_DIGITS					4
-#define DISPLAY_MAX_VALUE					9//999
-#define DISPLAY_MIN_VALUE					1
-#define DISPLAY_REFRESH_RATE				25
-
-/***** Software Configuration macros. *****/
-
-#define FILE_SIZE_LOG						0x400
-#define FILE_SIZE_SCHEDULE					0x200
-#define FILE_SIZE_TIME						0x200
+#include "seven_seg_config.h"
 
 
 #endif /* SYS_CONFIG_H_ */

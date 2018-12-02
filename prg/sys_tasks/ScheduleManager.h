@@ -11,6 +11,8 @@
 #include "SystemResult.h"
 #include "OsTypes.h"
 
+#define SCHEDULE_MANAGER_DEBUG_DISABLE_STORAGE_WRITE
+
 #define SCHEDULE_MBOX_ADDR_AMOUNT	0x00
 #define SCHEDULE_MBOX_ADDR_FREQ		0x01
 
@@ -28,6 +30,13 @@ typedef struct {
 	U8_t irg_interval;	/* Irrigation interval (hours). */
 	U8_t irg_time;		/* Next moment of irrigation (hour of day). */
 }IrrigationData_t;
+
+typedef enum {
+	ERROR_SCHEDULE_STORE = 1,
+	ERROR_SCHEDULE_LOAD = 2,
+	ERROR_TIME_STORE = 3,
+	ERROR_TIME_LOAD = 4,
+}ScheduleManagerError;
 
 SysResult_t ScheduleManagerInit(ScheduleManagerConfig_t *config);
 

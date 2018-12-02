@@ -33,8 +33,7 @@ static void UiControllerTask(const void *p_arg, U32_t v_arg);
 
 static SysResult_t IValueDecrement(U8_t index, S32_t val);
 static SysResult_t IValueIncrement(U8_t index, S32_t val);
-static U8_t IMapIndexToAddress(U8_t index);
-static void IDisplayUpdate(void);
+static void IDisplayUpdate(U32_t value);
 static void IUiInit(void);
 static void IRgbLedStateSet(SysState_t state);
 static void ISysStateSet(SysState_t state);
@@ -51,6 +50,7 @@ static void IButtonCallbackSelect(Button_t button, ButtonTrigger_t trigger);
 static void IButtonCallbackPumpOn(Button_t button, ButtonTrigger_t trigger);
 static void IButtonCallbackPumpOff(Button_t button, ButtonTrigger_t trigger);
 static void IButtonCallbackUiActivate(Button_t button, ButtonTrigger_t trigger);
+static void IButtonCallbackClearError(Button_t button, ButtonTrigger_t trigger);
 
 static volatile ButtonCallback_t ButtonCallbackSelectRelease;
 
@@ -182,7 +182,7 @@ static SysResult_t IValueIncrement(U8_t index, S32_t val)
 		UiValues[index].current_val = UiValues[index].max_val;
 	}
 
-	IDisplayUpdate();
+	IDisplayUpdate(UiValues[SelectedValue].current_val);
 
 	return res;
 }
@@ -197,33 +197,18 @@ static SysResult_t IValueDecrement(U8_t index, S32_t val)
 		UiValues[index].current_val = UiValues[index].min_val;
 	}
 
-	IDisplayUpdate();
+	IDisplayUpdate(UiValues[SelectedValue].current_val);
 
 	return res;
 }
 
-static U8_t IMapIndexToAddress(U8_t index)
+static void IDisplayUpdate(U32_t value)
 {
-	U8_t addr = 0;
-
-	switch(index) {
-	case UI_VALUE_INDEX_AMOUNT: {
-		addr = SCHEDULE_MBOX_ADDR_AMOUNT;
-		break;
+	if(value > SEVEN_SEG_CONFIG_MAX_VALUE) {
+		value = SEVEN_SEG_CONFIG_MAX_VALUE;
 	}
-	case UI_VALUE_INDEX_FREQ: {
-		addr = SCHEDULE_MBOX_ADDR_FREQ;
-		break;
-	}
-	}
-
-	return addr;
-}
-
-static void IDisplayUpdate(void)
-{
-	LOG_DEBUG_NEWLINE("Updating display value: %u.", UiValues[SelectedValue].current_val);
-	SevenSegDisplaySet((U32_t)UiValues[SelectedValue].current_val);
+	LOG_DEBUG_NEWLINE("Updating display value: %u.", value);
+	SevenSegDisplaySet(value);
 }
 
 static void IUiInit(void)
@@ -257,7 +242,7 @@ static void IUiInit(void)
 
 	ButtonInterruptEnable(1);
 	SevenSegDisplayEnable(1); /* Turn display on. */
-	IDisplayUpdate(); /* Make sure display will show a valid value when the UI is activated. */
+	IDisplayUpdate(UiValues[SelectedValue].current_val); /* Make sure display will show a valid value when the UI is activated. */
 	SevenSegDisplayEnable(0); /* Turn display off. */
 
 	ISysStateSet(SYS_STATE_IDLE);
@@ -400,32 +385,33 @@ static void ITimerCallbackUiInactive(Id_t timer_id, void *context)
 	TimerStart(TmrValueStable);
 	SelectedValue = 0;
 	ISysStateReturn();
-	SystemRaiseError(SYSTEM_COMP_APP_UI_CONTROLLER, SYSTEM_ERROR);
 }
 
 /* Button callbacks. */
 
 static void IButtonCallbackUiActivate(Button_t button, ButtonTrigger_t trigger)
 {
+	LOG_DEBUG_NEWLINE("Activating UI");
+	TimerStop(TmrValueStable);
+
 	if(CurrentState != SYS_STATE_ERROR && CurrentState != SYS_STATE_PUMPING) {
-		LOG_DEBUG_NEWLINE("Activating UI");
-
-		TimerStop(TmrValueStable);
-
 		ButtonTriggerCallbackSet(BUTTON_UI_INC, BUTTON_TRIGGER_PRESS, IButtonCallbackIncrement);
 		ButtonTriggerCallbackSet(BUTTON_UI_DEC, BUTTON_TRIGGER_PRESS, IButtonCallbackDecrement);
 		ButtonTriggerCallbackSet(BUTTON_UI_SEL, BUTTON_TRIGGER_RELEASE, IButtonCallbackSelect);
 		ButtonCallbackSelectRelease = IButtonCallbackSelect;
+		IDisplayUpdate(UiValues[SelectedValue].current_val);
 		SevenSegDisplayEnable(1); /* Turn display on. */
-		IDisplayUpdate();
-		TimerReset(TmrUiInactive);
-		TimerStart(TmrUiInactive);
 
 		ISysStateSet(SYS_STATE_SET_AMOUNT);
 	} else if(CurrentState == SYS_STATE_ERROR) {
-		SystemClearError();
-		ISysStateSet(SYS_STATE_CLEAR_ERROR);
+		ButtonTriggerCallbackSet(BUTTON_UI_SEL, BUTTON_TRIGGER_RELEASE, IButtonCallbackClearError);
+		ButtonCallbackSelectRelease = IButtonCallbackClearError;
+		IDisplayUpdate((U32_t)SystemErrorCodeGet());
+		SevenSegDisplayEnable(1); /* Turn display on. */
 	}
+
+	TimerReset(TmrUiInactive);
+	TimerStart(TmrUiInactive);
 }
 
 
@@ -446,6 +432,16 @@ static void IButtonCallbackDecrement(Button_t button, ButtonTrigger_t trigger)
 	IValueDecrement(SelectedValue, 1);
 }
 
+static void IButtonCallbackClearError(Button_t button, ButtonTrigger_t trigger)
+{
+	LOG_DEBUG_NEWLINE("Clearing error code: %04d", SystemErrorCodeGet());
+
+	SystemClearError();
+	ISysStateSet(SYS_STATE_CLEAR_ERROR);
+
+	ITimerCallbackUiInactive(TmrUiInactive, NULL);
+}
+
 static void IButtonCallbackSelect(Button_t button, ButtonTrigger_t trigger)
 {
 	TimerReset(TmrUiInactive);
@@ -464,14 +460,13 @@ static void IButtonCallbackSelect(Button_t button, ButtonTrigger_t trigger)
 
 	LOG_DEBUG_NEWLINE("Select: %d", SelectedValue);
 
-	IDisplayUpdate();
+	IDisplayUpdate(UiValues[SelectedValue].current_val);
 }
 
 static void IButtonCallbackPumpOn(Button_t button, ButtonTrigger_t trigger)
 {
 	LOG_DEBUG_NEWLINE("Pump on");
 
-	TimerStop(TmrUiInactive);
 	ButtonTriggerCallbackSet(BUTTON_UI_SEL, BUTTON_TRIGGER_RELEASE, IButtonCallbackPumpOff);
 	MailboxPost(MboxIrrigation, IRRIGATION_MBOX_ADDR_TRIGGER, IRRIGATION_TRIGGER_MANUAL_ON, OS_TIMEOUT_NONE);
 }
@@ -482,9 +477,6 @@ static void IButtonCallbackPumpOff(Button_t button, ButtonTrigger_t trigger)
 
 	MailboxPost(MboxIrrigation, IRRIGATION_MBOX_ADDR_TRIGGER, IRRIGATION_TRIGGER_MANUAL_OFF, OS_TIMEOUT_NONE);
 	ButtonTriggerCallbackSet(BUTTON_UI_SEL, BUTTON_TRIGGER_RELEASE, ButtonCallbackSelectRelease); /* Restore callback. */
-
-	TimerReset(TmrUiInactive);
-	TimerStart(TmrUiInactive);
 }
 
 

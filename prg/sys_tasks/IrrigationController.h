@@ -18,6 +18,10 @@
 #define IRRIGATION_TRIGGER_MANUAL_ON	0x01
 #define IRRIGATION_TRIGGER_MANUAL_OFF	0x02
 
+typedef enum {
+	ERROR_PUMP_ACTIVATION = 1,
+}IrrigationControllerError;
+
 SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation);
 
 #endif /* IRRIGATION_CONTROLLER_H_ */

@@ -10,6 +10,7 @@
 
 #include "seven_seg_common.h"
 #include "seven_seg_hal.h"
+#include "seven_seg_config.h"
 
 #include <stdint.h>
 

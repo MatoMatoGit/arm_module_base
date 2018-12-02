@@ -10,6 +10,7 @@
 
 /* System tasks includes. */
 #include "IrrigationController.h"
+#include "SystemManager.h"
 
 /* Driver includes. */
 #include "Time/time.h"
@@ -158,7 +159,10 @@ static void ScheduleManagerTask(const void *p_arg, U32_t v_arg)
 				LOG_DEBUG_NEWLINE("Value is different, storing new value.");
 				ScheduleManager.data.irg_amount_l = amount;
 				/* Write to storage. */
-				res = IScheduleStore();
+				if(IScheduleStore() != SYS_RESULT_OK) {
+					LOG_ERROR_NEWLINE("Schedule store error.");
+					SystemRaiseError(SYSTEM_COMP_APP_SCHEDULE_MANAGER, SYSTEM_ERROR, ERROR_SCHEDULE_STORE);
+				}
 			}
 		}
 
@@ -210,19 +214,24 @@ static void IScheduleNextIrrigation(void)
 	LOG_DEBUG_NEWLINE("Scheduling next irrigation hour: %u.", ScheduleManager.data.irg_time);
 	TimeAlarmSet(ScheduleManager.data.irg_time);
 	TimeAlarmEnable(1);
-	IScheduleStore();
-	//ITimeStore(&t);
+	if(IScheduleStore() != SYS_RESULT_OK) {
+		LOG_ERROR_NEWLINE("Schedule store error.");
+	}
+	if(ITimeStore(&t) != SYS_RESULT_OK) {
+		LOG_ERROR_NEWLINE("Time store error.");
+		SystemRaiseError(SYSTEM_COMP_APP_SCHEDULE_MANAGER, SYSTEM_ERROR, ERROR_TIME_STORE);
+	}
+
 }
 
 static SysResult_t ITimeStore(Time_t *t)
 {
-	SysResult_t res = SYS_RESULT_ERROR;
+	SysResult_t res = SYS_RESULT_OK;
 
 	LOG_DEBUG_NEWLINE("Storing time.");
-	//res = StorageFileWrite(FILE_TIME, (void *)t, sizeof(Time_t));
-	if(res != SYS_RESULT_OK) {
-		LOG_ERROR_NEWLINE("Storage write error");
-	}
+#ifndef SCHEDULE_MANAGER_DEBUG_DISABLE_STORAGE_WRITE
+	res = StorageFileWrite(FILE_TIME, (void *)t, sizeof(Time_t));
+#endif
 	return res;
 }
 
@@ -256,13 +265,12 @@ static SysResult_t ITimeLoad(Time_t *t)
 
 static SysResult_t IScheduleStore(void)
 {
-	SysResult_t res = SYS_RESULT_ERROR;
+	SysResult_t res = SYS_RESULT_OK;
 
 	LOG_DEBUG_NEWLINE("Storing schedule.");
-	//res = StorageFileWrite(FILE_SCHEDULE, (void *)&ScheduleManager.data, sizeof(ScheduleManager.data));
-	if(res != SYS_RESULT_OK) {
-		LOG_ERROR_NEWLINE("Storage write error");
-	}
+#ifndef SCHEDULE_MANAGER_DEBUG_DISABLE_STORAGE_WRITE
+	res = StorageFileWrite(FILE_SCHEDULE, (void *)&ScheduleManager.data, sizeof(ScheduleManager.data));
+#endif
 
 	return res;
 }

@@ -10,6 +10,9 @@
 
 /* System tasks includes. */
 #include "Composer.h"
+#include "SystemManager.h"
+
+/* Driver includes. */
 #include "Pump/pump.h"
 
 /* OS includes. */
@@ -118,7 +121,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 					if(PumpIsRunning()) {
 						LOG_DEBUG_NEWLINE("Pump is already running. Delaying scheduled run.");
 						if(TmrIrrigationDelay == ID_INVALID) {
-							TmrIrrigationDelay = TimerCreate(PUMP_RUN_DELAY_MS, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
+							TmrIrrigationDelay = TimerCreate(PUMP_RUN_DELAY_MS * 1000, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
 									ICallbackDelayedPumpRun, NULL);
 							if(TmrIrrigationDelay == ID_INVALID) {
 								LOG_ERROR_NEWLINE("Delay timer was not created.");
@@ -132,6 +135,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 							LOG_DEBUG_NEWLINE("Pump turned on.");
 						} else {
 							LOG_ERROR_NEWLINE("Pump could not be turned on.");
+							SystemRaiseError(SYSTEM_COMP_APP_IRRIGATION_CONTROLLER, SYSTEM_ERROR, ERROR_PUMP_ACTIVATION);
 						}
 					}
 				} else {
@@ -161,6 +165,7 @@ static void ICallbackPumpStopped(void)
 static void ICallbackDelayedPumpRun(Id_t timer_id, void *context)
 {
 	OS_ARG_UNUSED(context);
+	OS_ARG_UNUSED(timer_id);
 
 	/* If the pump is still running after the delay, the delay timer is reset.
 	 * If the pump is not running anymore, the pump is ran to pump the scheduled
@@ -176,7 +181,7 @@ static void ICallbackDelayedPumpRun(Id_t timer_id, void *context)
 			LOG_ERROR_NEWLINE("Pump could not be turned on.");
 		}
 		PumpAmountMl = 0;
-		TimerDelete(&TmrIrrigationDelay);
+		TimerDelete((Id_t *)&TmrIrrigationDelay);
 	}
 }
 

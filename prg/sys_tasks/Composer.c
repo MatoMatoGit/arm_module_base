@@ -24,36 +24,37 @@
 
 /* Tasks. */
 #include "IrrigationController.h"
-#include "ScheduleManager.h"
 #include "UiController.h"
-
-#include <stdbool.h>
+#include "ScheduleManager.h"
+#include "SystemManager.h"
 #include "SystemEvg.h"
 
-#if COMPOSER_CONFIG_ENABLE_MODULE_SEVENSEG==1
+#include <stdbool.h>
+
+LOG_FILE_NAME("Composer");
+
+#if COMPOSER_CONFIG_ENABLE_MODULE_SEVEN_SEG==1
 struct SevenSegDisplay SevenSegConfig = {
-	.num_digits = DISPLAY_NUM_DIGITS,
-	.max_value = DISPLAY_MAX_VALUE,
-	.min_value = DISPLAY_MIN_VALUE,
+	.num_digits = SEVEN_SEG_CONFIG_NUM_DIGITS,
+	.max_value = SEVEN_SEG_CONFIG_MAX_VALUE,
+	.min_value = SEVEN_SEG_CONFIG_MIN_VALUE,
 	.mode = SEVEN_SEG_MODE_DEC,
-	.refresh_rate_hz = DISPLAY_REFRESH_RATE
+	.refresh_rate_hz = SEVEN_SEG_CONFIG_REFRESH_RATE
 };
 #endif
 
-#if COMPOSER_CONFIG_ENABLE_MODULE_SCHEDULEMANAGER==1
+#if COMPOSER_CONFIG_ENABLE_MODULE_SCHEDULE_MANAGER==1
 ScheduleManagerConfig_t ScheduleManagerConfig = {
 	.mbox_schedule = ID_INVALID,
 	.mbox_irrigation = ID_INVALID,
-	.evg_alarm = ID_INVALID,
-	.evg_alarm_flag = EVG_SYSTEM_FLAG_ALARM,
+	.evg_sys = ID_INVALID
 };
 #endif
 
 #if COMPOSER_CONFIG_ENABLE_MODULE_STORAGE==1
 const U32_t FileSizes[FILE_NUM] = {
-	FILE_SIZE_LOG,
 	FILE_SIZE_SCHEDULE,
-	FILE_SIZE_TIME
+	FILE_SIZE_TIME,
 };
 #endif
 
@@ -76,7 +77,7 @@ SysResult_t ComposerInit(void)
 
 static void ComposerTask(const void *p_arg, U32_t v_arg)
 {
-	Id_t evg_system = ID_INVALID;
+
 	Id_t mbox_irrigation = ID_INVALID;
 	Id_t mbox_schedule = ID_INVALID;
 
@@ -89,16 +90,19 @@ static void ComposerTask(const void *p_arg, U32_t v_arg)
 
 	/***** Drivers. *****/
 
-#if COMPOSER_CONFIG_ENABLE_MODULE_RGBLED==1
+#if COMPOSER_CONFIG_ENABLE_MODULE_RGB_LED==1
 	/* Initialize RGB LED driver. */
 	if(res == SYS_RESULT_OK) {
 		if(RgbLedInit() != RGB_LED_OK) {
 			res = SYS_RESULT_ERROR;
+		} else {
+			RgbLedColorSet(RGB_LED_COLOR_RED);
+			RgbLedModeSet(RGB_LED_MODE_ON);
 		}
 	}
 #endif
 	
-#if COMPOSER_CONFIG_ENABLE_MODULE_SEVENSEG==1
+#if COMPOSER_CONFIG_ENABLE_MODULE_SEVEN_SEG==1
 	/* Initialize Seven Segment display driver. */
 	if(res == SYS_RESULT_OK) {
 		SevenSegPortBind(&SevenSegConfig.hal);
@@ -111,7 +115,7 @@ static void ComposerTask(const void *p_arg, U32_t v_arg)
 #if COMPOSER_CONFIG_ENABLE_MODULE_TIME==1
 	/* Initialize Time driver. */
 	if(res == SYS_RESULT_OK) {
-		res = TimeInit(evg_system, EVG_SYSTEM_FLAG_ALARM);
+		res = TimeInit();
 	}
 #endif
 	
@@ -125,11 +129,19 @@ static void ComposerTask(const void *p_arg, U32_t v_arg)
 #if COMPOSER_CONFIG_ENABLE_MODULE_STORAGE==1
 	/* Initialize Storage driver. */
 	res = StorageMount();
-	if(res == SYS_RESULT_FAIL) { /* Storage has not been formatted yet. */
-		res = StorageFormat((uint32_t *)FileSizes); /* Attempt to format storage. */
-		if(res == SYS_RESULT_OK) { /* If successful, retry to mount. */
+	if(res == SYS_RESULT_FAIL) {
+		LOG_DEBUG_NEWLINE("Formatting storage.");
+		res = StorageFormat((uint32_t *)FileSizes);
+		if(res == SYS_RESULT_OK) {
+			LOG_DEBUG_NEWLINE("Storage mounted.");
 			res = StorageMount();
+		} else {
+			LOG_ERROR_NEWLINE("Storage initialization error.");
 		}
+	} else if(res == SYS_RESULT_OK) {
+		LOG_DEBUG_NEWLINE("Storage mounted.");
+	} else {
+		LOG_ERROR_NEWLINE("Storage initialization error.");
 	}
 #endif
 	
@@ -143,33 +155,37 @@ static void ComposerTask(const void *p_arg, U32_t v_arg)
 #endif
 
 	/***** System tasks. *****/
-	
-#if COMPOSER_CONFIG_ENABLE_MODULE_IRRIGATIONCONTROLLER==1
+#if COMPOSER_CONFIG_ENABLE_MODULE_SYSTEM_MANAGER==1
+	SystemManagerInit();
+#endif
+
+#if COMPOSER_CONFIG_ENABLE_MODULE_IRRIGATION_CONTROLLER==1
 	/* Initialize Irrigation Controller. */
 	if(res == SYS_RESULT_OK) {
 		res = IrrigationControllerInit(&mbox_irrigation);
 	}
 #endif
 	
-#if COMPOSER_CONFIG_ENABLE_MODULE_SCHEDULEMANAGER==1
+#if COMPOSER_CONFIG_ENABLE_MODULE_SCHEDULE_MANAGER==1
 	/* Initialize Schedule Manager. */
 	if(res == SYS_RESULT_OK) {
 		ScheduleManagerConfig.mbox_irrigation = mbox_irrigation;
-		ScheduleManagerConfig.evg_alarm = evg_system;
 		res = ScheduleManagerInit(&ScheduleManagerConfig);
 		mbox_schedule = ScheduleManagerConfig.mbox_schedule;
 	}
 #endif
 	
-#if COMPOSER_CONFIG_ENABLE_MODULE_UICONTROLLER==1
+#if COMPOSER_CONFIG_ENABLE_MODULE_UI_CONTROLLER==1
 	/* Initialize UI Controller. */
 	if(res == SYS_RESULT_OK) {
-		res = UiControllerInit(mbox_irrigation, mbox_schedule, evg_system);
+		res = UiControllerInit(mbox_irrigation, mbox_schedule);
 	}
 #endif
 
 	if(res != SYS_RESULT_OK) {
 		GpioRgbLedInit();
+		GpioRgbLedGreenStateSet(0);
+		GpioRgbLedBlueStateSet(0);
 		GpioRgbLedRedStateSet(1);
 	}
 

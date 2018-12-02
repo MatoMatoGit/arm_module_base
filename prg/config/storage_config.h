@@ -24,4 +24,8 @@ typedef enum {
 }File_t;
 
 
+#define FILE_SIZE_SCHEDULE					0x200
+#define FILE_SIZE_TIME						0x200
+#define FILE_SIZE_LOG						0x400
+
 #endif /* STORAGE_CONFIG_H_ */
