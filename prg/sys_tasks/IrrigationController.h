@@ -20,6 +20,7 @@
 
 typedef enum {
 	ERROR_PUMP_ACTIVATION = 1,
+	ERROR_WATER_LEVEL	  = 2,
 }IrrigationControllerError;
 
 SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation);
