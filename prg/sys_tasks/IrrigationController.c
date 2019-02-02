@@ -14,6 +14,7 @@
 
 /* Driver includes. */
 #include "Pump/pump.h"
+#include "LevelSensor/level_sensor.h"
 
 /* OS includes. */
 #include "PriorRTOS.h"
@@ -37,6 +38,7 @@ static volatile Id_t TmrIrrigationDelay = ID_INVALID;
 
 static void ICallbackPumpStopped(void);
 static void ICallbackDelayedPumpRun(Id_t timer_id, void *context);
+static void ICallbackLevelSensorCheck(LevelSensorState_t state);
 
 static void IrrigationControllerTask(const void *p_arg, U32_t v_arg);
 
@@ -57,7 +59,7 @@ SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation)
 		LOG_DEBUG_NEWLINE("IrrigationController initialized.");
 		ComposerCallbackSetOnPumpStopped(ICallbackPumpStopped);
 		PumpEnable(1);
-		TaskResumeWithVarg(tsk_irrigation_controller, (U32_t)*mbox_irrigation);
+		TaskNotify(tsk_irrigation_controller, (U32_t)*mbox_irrigation);
 	}
 	
 	return res;
@@ -80,7 +82,20 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 
 	res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_TRIGGER, &trigger, OS_TIMEOUT_INFINITE);
 
+	/* If a mailbox event was received, check the Level Sensor state.
+	 * The Level Sensor state must be closed, which indicates the pump
+	 * is submerged. */
 	if(res == OS_RES_OK || res == OS_RES_EVENT) {
+		if(LevelSensorStateGet() == LEVEL_SENSOR_STATE_OPEN) {
+			SystemRaiseError(SYSTEM_COMP_APP_IRRIGATION_CONTROLLER, SYSTEM_ERROR, ERROR_WATER_LEVEL);
+			pump_res = SYS_RESULT_ERROR;
+
+		} else {
+			pump_res = SYS_RESULT_OK;
+		}
+	}
+
+	if(pump_res == SYS_RESULT_OK) {
 		switch(trigger) {
 
 			/* If the trigger is manual on the pump is ran indefinitely until
@@ -89,6 +104,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 				LOG_DEBUG_NEWLINE("Received trigger: manual, on.");
 				pump_res = PumpRun();
 				if(pump_res == SYS_RESULT_OK) {
+					LevelSensorProbeStart();
 					EventgroupFlagsSet(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
 					LOG_DEBUG_NEWLINE("Pump turned on.");
 				} else {
@@ -101,6 +117,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 			case IRRIGATION_TRIGGER_MANUAL_OFF: {
 				LOG_DEBUG_NEWLINE("Received trigger: manual, off.");
 				PumpStop();
+				LevelSensorProbeStop();
 				EventgroupFlagsClear(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
 				LOG_DEBUG_NEWLINE("Pump turned off.");
 				break;
@@ -131,6 +148,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 						/* If the pump is not running, run it for the specified amount. */
 						pump_res = PumpRunForAmount(PumpAmountMl);
 						if(pump_res == SYS_RESULT_OK) {
+							LevelSensorProbeStart();
 							EventgroupFlagsSet(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
 							LOG_DEBUG_NEWLINE("Pump turned on.");
 						} else {
@@ -158,6 +176,7 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 
 static void ICallbackPumpStopped(void)
 {
+	LevelSensorProbeStop();
 	EventgroupFlagsClear(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
 	LOG_DEBUG_NEWLINE("Pump stopped.");
 }
@@ -175,6 +194,7 @@ static void ICallbackDelayedPumpRun(Id_t timer_id, void *context)
 		TimerReset(TmrIrrigationDelay);
 	} else {
 		if(PumpRunForAmount(PumpAmountMl) == SYS_RESULT_OK) {
+			LevelSensorProbeStart();
 			EventgroupFlagsSet(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
 			LOG_DEBUG_NEWLINE("Delay expired. Pump turned on.");
 		} else {
@@ -182,6 +202,23 @@ static void ICallbackDelayedPumpRun(Id_t timer_id, void *context)
 		}
 		PumpAmountMl = 0;
 		TimerDelete((Id_t *)&TmrIrrigationDelay);
+	}
+}
+
+static void ICallbackLevelSensorCheck(LevelSensorState_t state)
+{
+	/* If the Level Sensor is open the pump is no longer
+	 * submerged. The pump is stopped and disabled.
+	 * The Level Sensor probe must be restarted to re-enable
+	 * the pump when the tank has been refilled. */
+	if(state == LEVEL_SENSOR_STATE_OPEN) {
+		PumpStop();
+		PumpEnable(0);
+		SystemRaiseError(SYSTEM_COMP_APP_IRRIGATION_CONTROLLER, SYSTEM_ERROR, ERROR_WATER_LEVEL);
+		LevelSensorProbeStart();
+	} else {
+		LevelSensorProbeStop();
+		PumpEnable(1);
 	}
 }
 
