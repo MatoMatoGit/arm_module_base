@@ -15,6 +15,7 @@
 /* Driver includes. */
 #include "Pump/pump.h"
 #include "LevelSensor/level_sensor.h"
+#include "MoistureSensor/moisture_sensor.h"
 
 /* OS includes. */
 #include "PriorRTOS.h"
@@ -35,10 +36,13 @@ LOG_FILE_NAME("IrrigationController");
 U32_t PumpAmountMl = 0;
 
 static volatile Id_t TmrIrrigationDelay = ID_INVALID;
+static Id_t TmrMoistureSensorCheck = ID_INVALID;
+static MoistureSensor_t MoistureSensor = NULL;
 
 static void ICallbackPumpStopped(void);
 static void ICallbackDelayedPumpRun(Id_t timer_id, void *context);
 static void ICallbackLevelSensorCheck(LevelSensorState_t state);
+static void ICallbackMoistureSensorCheck(Id_t timer_id, void *context);
 
 static void IrrigationControllerTask(const void *p_arg, U32_t v_arg);
 
@@ -50,6 +54,8 @@ SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation)
 	tsk_irrigation_controller = TaskCreate(IrrigationControllerTask, TASK_CAT_HIGH, 5,
 		(TASK_PARAMETER_ESSENTIAL), 0, NULL, 0);
 	*mbox_irrigation = MailboxCreate(MBOX_IRRIGATION_NUM_ADDR, &tsk_irrigation_controller, 1);
+	TmrMoistureSensorCheck = TimerCreate(IRRIGATION_CONTROLLER_CONFIG_MOISTURE_CHECK_INTERVAL_MS * 1000, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
+			ICallbackMoistureSensorCheck, MoistureSensor);
 	if(tsk_irrigation_controller == ID_INVALID || *mbox_irrigation == ID_INVALID) {
 		LOG_ERROR_NEWLINE("Failed to create IrrigationController task or Irrigation mailbox");
 		res = SYS_RESULT_ERROR;
@@ -69,9 +75,11 @@ SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation)
 static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 {
 	static Id_t mbox_irrigation;
+	static U16_t threshold = 0;
+	static U16_t amount = 0;
+
 	OsResult_t res = OS_RES_ERROR;
 	SysResult_t pump_res = SYS_RESULT_OK;
-	U16_t amount = 0;
 	U16_t trigger = 0;
 
 	TASK_INIT_BEGIN() {
@@ -79,6 +87,14 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 	} TASK_INIT_END();
 
 	//LOG_DEBUG_NEWLINE("IrrigationControllerTask running.");
+	res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_MOISTURE_THRESHOLD, &threshold, OS_TIMEOUT_INFINITE);
+
+	/* If a mailbox event was received, check the Level Sensor state.
+	 * The Level Sensor state must be closed, which indicates the pump
+	 * is submerged. */
+	if(res == OS_RES_OK || res == OS_RES_EVENT) {
+
+	}
 
 	res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_TRIGGER, &trigger, OS_TIMEOUT_INFINITE);
 
@@ -220,5 +236,12 @@ static void ICallbackLevelSensorCheck(LevelSensorState_t state)
 		LevelSensorProbeStop();
 		PumpEnable(1);
 	}
+}
+
+static void ICallbackMoistureSensorCheck(Id_t timer_id, void *context)
+{
+	uint32_t value = MoistureSensorRead((MoistureSensor_t *)context);
+	/* Check if the value is below the set threshold, if it is
+	 * trigger a irrigation cycle. */
 }
 
