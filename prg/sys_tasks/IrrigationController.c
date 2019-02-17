@@ -33,11 +33,13 @@ LOG_FILE_NAME("IrrigationController");
 
 #define MBOX_IRRIGATION_NUM_ADDR 2
 
-U32_t PumpAmountMl = 0;
+static U32_t PumpAmountMl = 0;
+static volatile U16_t MoistureThreshold = 0;
+static MoistureSensor_t MoistureSensor = NULL;
 
+static Id_t MboxIrrigation = ID_INVALID;
 static volatile Id_t TmrIrrigationDelay = ID_INVALID;
 static Id_t TmrMoistureSensorCheck = ID_INVALID;
-static MoistureSensor_t MoistureSensor = NULL;
 
 static void ICallbackPumpStopped(void);
 static void ICallbackDelayedPumpRun(Id_t timer_id, void *context);
@@ -54,7 +56,7 @@ SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation)
 	tsk_irrigation_controller = TaskCreate(IrrigationControllerTask, TASK_CAT_HIGH, 5,
 		(TASK_PARAMETER_ESSENTIAL), 0, NULL, 0);
 	*mbox_irrigation = MailboxCreate(MBOX_IRRIGATION_NUM_ADDR, &tsk_irrigation_controller, 1);
-	TmrMoistureSensorCheck = TimerCreate(IRRIGATION_CONTROLLER_CONFIG_MOISTURE_CHECK_INTERVAL_MS * 1000, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
+	TmrMoistureSensorCheck = TimerCreate(IRRIGATION_CONTROLLER_CONFIG_MOISTURE_CHECK_INTERVAL_MS, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
 			ICallbackMoistureSensorCheck, MoistureSensor);
 	if(tsk_irrigation_controller == ID_INVALID || *mbox_irrigation == ID_INVALID) {
 		LOG_ERROR_NEWLINE("Failed to create IrrigationController task or Irrigation mailbox");
@@ -62,10 +64,11 @@ SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation)
 	}
 
 	if(res == SYS_RESULT_OK) {
+		MboxIrrigation = *mbox_irrigation;
 		LOG_DEBUG_NEWLINE("IrrigationController initialized.");
 		ComposerCallbackSetOnPumpStopped(ICallbackPumpStopped);
 		PumpEnable(1);
-		TaskNotify(tsk_irrigation_controller, (U32_t)*mbox_irrigation);
+		TaskResume(tsk_irrigation_controller);
 	}
 	
 	return res;
@@ -74,10 +77,8 @@ SysResult_t IrrigationControllerInit(Id_t *mbox_irrigation)
 
 static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 {
-	static Id_t mbox_irrigation;
-	static U16_t threshold = 0;
-	static U16_t amount = 0;
-
+	U16_t threshold = 0;
+	U16_t amount = 0;
 	OsResult_t res = OS_RES_ERROR;
 	SysResult_t pump_res = SYS_RESULT_OK;
 	U16_t trigger = 0;
@@ -86,18 +87,14 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 		mbox_irrigation = (Id_t)v_arg;
 	} TASK_INIT_END();
 
-	//LOG_DEBUG_NEWLINE("IrrigationControllerTask running.");
-	res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_MOISTURE_THRESHOLD, &threshold, OS_TIMEOUT_INFINITE);
-
-	/* If a mailbox event was received, check the Level Sensor state.
-	 * The Level Sensor state must be closed, which indicates the pump
-	 * is submerged. */
+	res = MailboxPend(MboxIrrigation, IRRIGATION_MBOX_ADDR_MOISTURE_THRESHOLD, &threshold, OS_TIMEOUT_INFINITE);
+	/* Update the moisture threshold if the pend operation
+	 * was successful. */
 	if(res == OS_RES_OK || res == OS_RES_EVENT) {
-
+		MoistureThreshold = threshold;
 	}
 
-	res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_TRIGGER, &trigger, OS_TIMEOUT_INFINITE);
-
+	res = MailboxPend(MboxIrrigation, IRRIGATION_MBOX_ADDR_TRIGGER, &trigger, OS_TIMEOUT_INFINITE);
 	/* If a mailbox event was received, check the Level Sensor state.
 	 * The Level Sensor state must be closed, which indicates the pump
 	 * is submerged. */
@@ -142,38 +139,39 @@ static void IrrigationControllerTask(const void *p_arg, U32_t v_arg)
 			/* If the trigger is the schedule the pump is ran for the amount received
 			 * in the mailbox. */
 			case IRRIGATION_TRIGGER_SCHEDULE: {
-				res = MailboxPend(mbox_irrigation, IRRIGATION_MBOX_ADDR_AMOUNT, &amount, OS_TIMEOUT_NONE);
+				LOG_DEBUG_NEWLINE("Received trigger: schedule.");
+
+				/* Update the amount if specified in the mailbox. */
+				res = MailboxPend(MboxIrrigation, IRRIGATION_MBOX_ADDR_AMOUNT, &amount, OS_TIMEOUT_NONE);
 				if(res == OS_RES_OK || res == OS_RES_EVENT) {
-					LOG_DEBUG_NEWLINE("Received trigger: schedule.");
 					LOG_DEBUG_NEWLINE("Received amount: %u L.", amount);
 					PumpAmountMl = (U32_t)LITER_TO_MILLILITER(amount); /* Convert liters to milliliters and store it. */
 
-					/*If the pump is already running due to a manual trigger, the
-					 * scheduled run is delayed. This is because the scheduled
-					 * run must still occur. */
-					if(PumpIsRunning()) {
-						LOG_DEBUG_NEWLINE("Pump is already running. Delaying scheduled run.");
+				}
+
+				/* If the pump is already running due to a manual trigger, the
+				 * scheduled run is delayed. This is because the scheduled
+				 * run must still occur. */
+				if(PumpIsRunning()) {
+					LOG_DEBUG_NEWLINE("Pump is already running. Delaying scheduled run.");
+					if(TmrIrrigationDelay == ID_INVALID) {
+						TmrIrrigationDelay = TimerCreate(PUMP_RUN_DELAY_MS, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
+								ICallbackDelayedPumpRun, NULL);
 						if(TmrIrrigationDelay == ID_INVALID) {
-							TmrIrrigationDelay = TimerCreate(PUMP_RUN_DELAY_MS * 1000, (TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
-									ICallbackDelayedPumpRun, NULL);
-							if(TmrIrrigationDelay == ID_INVALID) {
-								LOG_ERROR_NEWLINE("Delay timer was not created.");
-							}
-						}
-					} else {
-						/* If the pump is not running, run it for the specified amount. */
-						pump_res = PumpRunForAmount(PumpAmountMl);
-						if(pump_res == SYS_RESULT_OK) {
-							LevelSensorProbeStart();
-							EventgroupFlagsSet(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
-							LOG_DEBUG_NEWLINE("Pump turned on.");
-						} else {
-							LOG_ERROR_NEWLINE("Pump could not be turned on.");
-							SystemRaiseError(SYSTEM_COMP_APP_IRRIGATION_CONTROLLER, SYSTEM_ERROR, ERROR_PUMP_ACTIVATION);
+							LOG_ERROR_NEWLINE("Delay timer was not created.");
 						}
 					}
 				} else {
-					LOG_ERROR_NEWLINE("Amount unspecified.");
+					/* If the pump is not running, run it for the specified amount. */
+					pump_res = PumpRunForAmount(PumpAmountMl);
+					if(pump_res == SYS_RESULT_OK) {
+						LevelSensorProbeStart();
+						EventgroupFlagsSet(SystemEvgGet(), SYSTEM_FLAG_PUMP_RUNNING);
+						LOG_DEBUG_NEWLINE("Pump turned on.");
+					} else {
+						LOG_ERROR_NEWLINE("Pump could not be turned on.");
+						SystemRaiseError(SYSTEM_COMP_APP_IRRIGATION_CONTROLLER, SYSTEM_ERROR, ERROR_PUMP_ACTIVATION);
+					}
 				}
 
 				break;
@@ -215,6 +213,7 @@ static void ICallbackDelayedPumpRun(Id_t timer_id, void *context)
 			LOG_DEBUG_NEWLINE("Delay expired. Pump turned on.");
 		} else {
 			LOG_ERROR_NEWLINE("Pump could not be turned on.");
+			SystemRaiseError(SYSTEM_COMP_APP_IRRIGATION_CONTROLLER, SYSTEM_ERROR, ERROR_PUMP_ACTIVATION);
 		}
 		PumpAmountMl = 0;
 		TimerDelete((Id_t *)&TmrIrrigationDelay);
@@ -240,8 +239,14 @@ static void ICallbackLevelSensorCheck(LevelSensorState_t state)
 
 static void ICallbackMoistureSensorCheck(Id_t timer_id, void *context)
 {
-	uint32_t value = MoistureSensorRead((MoistureSensor_t *)context);
+	U16_t trigger = IRRIGATION_TRIGGER_SCHEDULE;
+	U32_t value = MoistureSensorRead((MoistureSensor_t *)context);
+
 	/* Check if the value is below the set threshold, if it is
 	 * trigger a irrigation cycle. */
+	if((U16_t)value <= MoistureThreshold) {
+		MailboxPost(MboxIrrigation, IRRIGATION_MBOX_ADDR_AMOUNT, &trigger, OS_TIMEOUT_NONE);
+		TimerIntervalSet(timer_id, IRRIGATION_CONTROLLER_CONFIG_MOISTURE_BACKOFF_INTERVAL_MS);
+	}
 }
 
