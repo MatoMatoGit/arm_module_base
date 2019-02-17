@@ -28,7 +28,7 @@ int8_t RgbLedInit(void)
 	int8_t res = RGB_LED_ERR;
 
 	CurrentColor = RGB_LED_COLOR_RED;
-	BlinkTmr = TimerCreate(1000e3, (TIMER_PARAMETER_AR | TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON), ITimerCallbackBlink, NULL);
+	BlinkTmr = TimerCreate(1000, (TIMER_PARAMETER_AR | TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON), ITimerCallbackBlink, NULL);
 	if(BlinkTmr != OS_RES_INVALID_ID) {
 		GpioRgbLedInit();
 		RgbLedModeSet(RGB_LED_MODE_OFF);
@@ -112,7 +112,7 @@ int8_t RgbLedBlinkIntervalSet(U32_t interval_ms)
 	int8_t res = RGB_LED_ERR;
 
 	if(interval_ms >= RGB_LED_CONFIG_BLINK_INTERVAL_MS_MIN && interval_ms <= RGB_LED_CONFIG_BLINK_INTERVAL_MS_MAX) {
-		TimerIntervalSet(BlinkTmr, interval_ms * 1000);
+		TimerIntervalSet(BlinkTmr, interval_ms);
 		res = RGB_LED_OK;
 	}
 

@@ -23,7 +23,6 @@ static PumpCallback_t OnPumpStopped = NULL;
 
 #define SEC_PER_MIN		60
 #define MSEC_PER_SEC	1e3
-#define USEC_PER_SEC	1e6
 #define MSEC_TO_USEC(msec) (msec * 1e3)
 #define PUMP_MSEC_PER_ML (U32_t)ceil( 1 / (double)( (double)PUMP_CONFIG_ML_PER_MIN / (SEC_PER_MIN * MSEC_PER_SEC) ) ) /* Time in milliseconds to pump 1 mL*/
 #define ML_TO_MSEC(ml) (PUMP_MSEC_PER_ML * ml)
@@ -73,7 +72,7 @@ SysResult_t PumpRunForDuration(U32_t duration_s)
 
 	if(!Running && Enabled) {
 		Running = 1;
-		TimerIntervalSet(PumpTmr, USEC_PER_SEC * duration_s);
+		TimerIntervalSet(PumpTmr, MSEC_PER_SEC * duration_s);
 		TimerStart(PumpTmr);
 #ifdef PUMP_CONFIG_CONTROL_INVERTED
 		GpioPumpStateSet(0);
@@ -92,7 +91,7 @@ SysResult_t PumpRunForAmount(U32_t amount_ml)
 
 	if(!Running && Enabled) {
 		Running = 1;
-		TimerIntervalSet(PumpTmr, MSEC_TO_USEC(ML_TO_MSEC(amount_ml)));
+		TimerIntervalSet(PumpTmr, ML_TO_MSEC(amount_ml));
 		TimerStart(PumpTmr);
 #ifdef PUMP_CONFIG_CONTROL_INVERTED
 		GpioPumpStateSet(0);

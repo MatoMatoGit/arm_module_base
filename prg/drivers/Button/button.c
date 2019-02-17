@@ -43,7 +43,7 @@ int ButtonInit(void)
 		for(uint32_t i = 0; i < BUTTON_NUM; i++) {
 			ButtonDescs[i].btn = i;
 			ButtonDescs[i].hold_th_ms = BUTTON_CONFIG_HOLD_THRESHOLD_MS_DEFAULT;
-			ButtonDescs[i].hold_tmr = TimerCreate(ButtonDescs[i].hold_th_ms * 1000,
+			ButtonDescs[i].hold_tmr = TimerCreate(ButtonDescs[i].hold_th_ms,
 					(TIMER_PARAMETER_AR | TIMER_PARAMETER_PERIODIC), TimerCallbackHold, &ButtonDescs[i]);
 			if(ButtonDescs[i].hold_tmr == ID_INVALID) {
 				res = BUTTON_RESULT_ERR;

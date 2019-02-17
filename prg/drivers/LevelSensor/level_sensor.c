@@ -21,7 +21,7 @@ SysResult_t LevelSensorInit(uint32_t probe_interval_ms, LevelSensorCbStateChange
 {
 	SysResult_t res = SYS_RESULT_OK;
 
-	TmrProbe = TimerCreate(probe_interval_ms * 1e3, (TIMER_PARAMETER_PERIODIC), ICallbackTmrProbe);
+	TmrProbe = TimerCreate(probe_interval_ms, (TIMER_PARAMETER_PERIODIC), ICallbackTmrProbe);
 	if(TmrProbe == ID_INVALID) {
 		res = SYS_RESULT_ERROR;
 	}

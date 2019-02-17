@@ -112,8 +112,8 @@ SysResult_t UiControllerInit(Id_t mbox_irrigation, Id_t mbox_schedule)
 
 	tsk_irrigation_controller = TaskCreate(UiControllerTask, TASK_CAT_MEDIUM, 1,
 		(TASK_PARAMETER_START | TASK_PARAMETER_ESSENTIAL), 0, NULL, 0);
-	TmrValueStable = TimerCreate(UI_THRESHOLD_VALUE_STABLE_MS * 1000, TIMER_PARAMETER_PERIODIC, ITimerCallbackValueStable, NULL);
-	TmrUiInactive = TimerCreate(UI_THRESHOLD_INACTIVE_MS * 1000, TIMER_PARAMETER_PERIODIC, ITimerCallbackUiInactive, NULL);
+	TmrValueStable = TimerCreate(UI_THRESHOLD_VALUE_STABLE_MS, TIMER_PARAMETER_PERIODIC, ITimerCallbackValueStable, NULL);
+	TmrUiInactive = TimerCreate(UI_THRESHOLD_INACTIVE_MS, TIMER_PARAMETER_PERIODIC, ITimerCallbackUiInactive, NULL);
 	if(tsk_irrigation_controller == ID_INVALID || TmrValueStable == ID_INVALID || TmrUiInactive == ID_INVALID) {
 		res = SYS_RESULT_ERROR;
 	}
