@@ -47,21 +47,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
 
-/* USER CODE BEGIN Includes */
+extern SPI_HandleTypeDef hspi_shiftreg;
 
-/* USER CODE END Includes */
+#define SPI_SHIFTREG_WRITE_TIMEOUT_MS 3000
 
-extern SPI_HandleTypeDef hspi_7sd;
+void SpiShiftregInit(void);
 
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
-
-void Spi7SdInit(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }

@@ -49,25 +49,25 @@
 
 /* USER CODE END 0 */
 
-SPI_HandleTypeDef hspi_7sd;
+SPI_HandleTypeDef hspi_shiftreg;
 
 /* SPI1 init function */
-void Spi7SdInit(void)
+void SpiShiftregInit(void)
 {
 
-  hspi_7sd.Instance = SPI_INST_7SD;
-  hspi_7sd.Init.Mode = SPI_MODE_MASTER;
-  hspi_7sd.Init.Direction = SPI_DIRECTION_1LINE;
-  hspi_7sd.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi_7sd.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi_7sd.Init.CLKPhase = SPI_PHASE_2EDGE;
-  hspi_7sd.Init.NSS = SPI_NSS_SOFT;
-  hspi_7sd.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256; /* 281.25 kBit/s */
-  hspi_7sd.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi_7sd.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi_7sd.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi_7sd.Init.CRCPolynomial = 10;
-  if (HAL_SPI_Init(&hspi_7sd) != HAL_OK)
+  hspi_shiftreg.Instance = SPI_INST_7SD;
+  hspi_shiftreg.Init.Mode = SPI_MODE_MASTER;
+  hspi_shiftreg.Init.Direction = SPI_DIRECTION_1LINE;
+  hspi_shiftreg.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi_shiftreg.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi_shiftreg.Init.CLKPhase = SPI_PHASE_2EDGE;
+  hspi_shiftreg.Init.NSS = SPI_NSS_SOFT;
+  hspi_shiftreg.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256; /* 281.25 kBit/s */
+  hspi_shiftreg.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi_shiftreg.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi_shiftreg.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi_shiftreg.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi_shiftreg) != HAL_OK)
   {
     ErrorHandler(__FILE__, __LINE__);
   }
@@ -83,7 +83,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI1_MspInit 0 */
     /* SPI1 clock enable */
     __HAL_RCC_SPI1_CLK_ENABLE();
-    Gpio7SdSpiInit();
+    GpioShiftregSpiInit();
   /* USER CODE BEGIN SPI1_MspInit 1 */
 
   /* USER CODE END SPI1_MspInit 1 */
@@ -100,7 +100,7 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI1_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_SPI1_CLK_DISABLE();
-    Gpio7SdSpiDeinit();
+    GpioShiftregSpiDeinit();
 
   /* USER CODE BEGIN SPI1_MspDeInit 1 */
 
