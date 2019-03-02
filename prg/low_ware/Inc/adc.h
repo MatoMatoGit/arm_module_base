@@ -47,21 +47,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
 
- /* USER CODE BEGIN Includes */
+extern ADC_HandleTypeDef hadc_sensor;
 
-/* USER CODE END Includes */
+#define ADC_MOISTURE_SENSOR_CONV_TIMEOUT_MS 1e6
 
-extern ADC_HandleTypeDef hadc1;
+void AdcSensorInit(void);
 
-/* USER CODE BEGIN Private defines */
+uint32_t AdcMoistureSensorRead(void);
 
-/* USER CODE END Private defines */
-
-void MX_ADC1_Init(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }
