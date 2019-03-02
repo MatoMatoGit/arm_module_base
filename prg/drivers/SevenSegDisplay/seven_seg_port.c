@@ -38,7 +38,7 @@ int SevenSegPortInit(uint32_t update_freq_hz)
 {
 	uint32_t period = DISPLAY_TIMER_SCALED_FREQ_HZ / update_freq_hz;
 
-	Spi7SdInit();
+	SpiShiftregInit();
 	Gpio7SdSelInit();
 	TimerConfig_t tmr_sevenseg_cfg = {
 		.timer = TIMER_DRIVER_SEVENSEG,
@@ -77,9 +77,9 @@ void SevenSegPortDigitDeselect(uint8_t digit_num)
 
 void SevenSegPortDigitSet(uint8_t digit_num, uint8_t segments)
 {
-	Gpio7SdSpiNssStateSet(0);
-	HAL_SPI_Transmit(&hspi_7sd, &segments, sizeof(segments), SpiWriteTimeoutMs);
-	Gpio7SdSpiNssStateSet(1);
+	GpioShiftregSpiNssStateSet(0);
+	HAL_SPI_Transmit(&hspi_shiftreg, &segments, sizeof(segments), SpiWriteTimeoutMs);
+	GpioShiftregSpiNssStateSet(1);
 }
 
 static void SevenSegCallbackTimer(void)
