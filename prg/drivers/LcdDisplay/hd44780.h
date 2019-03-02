@@ -43,10 +43,12 @@ struct HD44780_GPIO_Interface_Struct
 {
   HD44780_Result (*configure)(HD44780_GPIO_Interface *interface,
     HD44780_Pin pin, HD44780_PinMode mode);
-  HD44780_Result (*write)(HD44780_GPIO_Interface *interface,
+  HD44780_Result (*write_ctrl)(HD44780_GPIO_Interface *interface,
     HD44780_Pin pin, HD44780_PinState value);
-  HD44780_Result (*read)(HD44780_GPIO_Interface *interface,
-    HD44780_Pin pin, HD44780_PinState *value);
+  HD44780_Result (*write_data)(HD44780_GPIO_Interface *interface,
+    uint8_t data);
+  HD44780_Result (*read_data)(HD44780_GPIO_Interface *interface,
+    uint8_t *data);
 };
 
 typedef void (*HD44780_AssertFn)(const char *filename, unsigned long line);
