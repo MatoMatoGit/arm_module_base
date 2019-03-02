@@ -4,56 +4,23 @@
   * Description        : This file provides code for the configuration
   *                      of all used GPIO pins.
   ******************************************************************************
-  ** This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * COPYRIGHT(c) 2018 STMicroelectronics
-  *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+*/
 
-/* Includes ------------------------------------------------------------------*/
 #include "gpio.h"
 
 #include "nvic.h"
 #include "stm32f1xx_hal.h"
 
-/* USER CODE BEGIN 0 */
+/***** Shiftregister SPI GPIO. *****/
+#define CLOCK_ENABLE_SHIFTREG_SPI	__HAL_RCC_GPIOA_CLK_ENABLE
+#define MODE_SHIFTREG_SPI		GPIO_MODE_AF_PP
+#define MODE_SHIFTREG_SPI_NSS	GPIO_MODE_OUTPUT_PP
+#define PORT_SHIFTREG_SPI		GPIOA
+#define PIN_SHIFTREG_SPI_NSS		GPIO_PIN_4
+#define PIN_SHIFTREG_SPI_SCK		GPIO_PIN_5
+#define PIN_SHIFTREG_SPI_MOSI	GPIO_PIN_7
 
-/***** 7 Segment Display SPI & Select GPIO. *****/
-#define CLOCK_ENABLE_7SD_SPI	__HAL_RCC_GPIOA_CLK_ENABLE
-#define MODE_7SD_SPI		GPIO_MODE_AF_PP
-#define MODE_7SD_SPI_NSS	GPIO_MODE_OUTPUT_PP
-#define PORT_7SD_SPI		GPIOA
-#define PIN_7SD_SPI_NSS		GPIO_PIN_4
-#define PIN_7SD_SPI_SCK		GPIO_PIN_5
-#define PIN_7SD_SPI_MOSI	GPIO_PIN_7
-
+/***** 7 Segment Display select GPIO. *****/
 #define CLOCK_ENABLE_7SD_GPIO	__HAL_RCC_GPIOC_CLK_ENABLE
 #define MODE_7SD_SEL		GPIO_MODE_OUTPUT_PP
 #define PORT_7SD_SEL		GPIOC
@@ -68,6 +35,16 @@
 #define PIN_7SD_SEL_SET		GPIO_PIN_SET
 #define PIN_7SD_SEL_RESET	GPIO_PIN_RESET
 #endif
+
+/***** LCD Display control GPIO. *****/
+#define CLOCK_ENABLE_LCD_GPIO	__HAL_RCC_GPIOC_CLK_ENABLE
+#define MODE_LCD_CTRL		GPIO_MODE_OUTPUT_PP
+#define PORT_LCD_CTRL		GPIOC
+#define PIN_LCD_CTRL_RS		GPIO_PIN_6
+#define PIN_LCD_CTRL_RW		GPIO_PIN_7
+#define PIN_LCD_CTRL_ENABLE	GPIO_PIN_8
+#define PIN_LCD_CTRL_BACKLIGHT GPIO_PIN_9
+
 
 /***** User Interface Button GPIO. *****/
 #define CLOCK_ENABLE_UI_BUTTON	__HAL_RCC_GPIOB_CLK_ENABLE
@@ -97,67 +74,70 @@ static GpioIntCallback_t UiButtonSelCb = NULL;
 #define PIN_RGBLED_BLUE		GPIO_PIN_12
 
 /***** Debug UART GPIO. *****/
+#define CLOCK_ENABLE_DEBUG_UART	__HAL_RCC_GPIOA_CLK_ENABLE
 #define MODE_DEBUG_UART_TX	GPIO_MODE_AF_PP
 #define MODE_DEBUG_UART_RX	GPIO_MODE_INPUT
 #define PORT_DEBUG_UART		GPIOA
 #define PIN_DEBUG_UART_TX	GPIO_PIN_2
 #define PIN_DEBUG_UART_RX	GPIO_PIN_3
 
-/* USER CODE END 0 */
+/***** Sensor ADC GPIO. *****/
+#define CLOCK_ENABLE_SENSOR_ADC	__HAL_RCC_GPIOA_CLK_ENABLE
+#define MODE_SENSOR_ADC GPIO_MODE_ANALOG
+#define PORT_SENSOR_ADC	GPIOA
+#define PIN_SENSOR_ADC_0 GPIO_PIN_1
 
-/*----------------------------------------------------------------------------*/
-/* Configure GPIO                                                             */
-/*----------------------------------------------------------------------------*/
-/* USER CODE BEGIN 1 */
+/***** Level Sensor GPIO. *****/
+#define CLOCK_ENABLE_LEVEL_SENSOR __HAL_RCC_GPIOB_CLK_ENABLE
+#define MODE_LEVEL_SENSOR GPIO_MODE_OUTPUT_PP
+#define PORT_LEVEL_SENSOR GPIOB
+#define PIN_LEVEL_SENSOR GPIO_PIN_1
 
-/* USER CODE END 1 */
+/***** Shiftregister SPI GPIO. *****/
 
-
-/* USER CODE BEGIN 2 */
-
-/***** 7 Segment Display SPI & Select GPIO. *****/
-
-void Gpio7SdSpiInit(void)
+void GpioShiftregSpiInit(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
 
-	CLOCK_ENABLE_7SD_SPI();
+	CLOCK_ENABLE_SHIFTREG_SPI();
 
 	/**SPI1 GPIO Configuration
 	PA4     ------> SPI1_NSS
 	PA5     ------> SPI1_SCK
 	PA7     ------> SPI1_MOSI
 	*/
-	GPIO_InitStruct.Pin = PIN_7SD_SPI_SCK|PIN_7SD_SPI_MOSI;
-	GPIO_InitStruct.Mode = MODE_7SD_SPI;
+	GPIO_InitStruct.Pin = PIN_SHIFTREG_SPI_SCK|PIN_SHIFTREG_SPI_MOSI;
+	GPIO_InitStruct.Mode = MODE_SHIFTREG_SPI;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(PORT_7SD_SPI, &GPIO_InitStruct);
+	HAL_GPIO_Init(PORT_SHIFTREG_SPI, &GPIO_InitStruct);
 
-	GPIO_InitStruct.Pin = PIN_7SD_SPI_NSS;
-	GPIO_InitStruct.Mode = MODE_7SD_SPI_NSS;
+	GPIO_InitStruct.Pin = PIN_SHIFTREG_SPI_NSS;
+	GPIO_InitStruct.Mode = MODE_SHIFTREG_SPI_NSS;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(PORT_7SD_SPI, &GPIO_InitStruct);
+	HAL_GPIO_Init(PORT_SHIFTREG_SPI, &GPIO_InitStruct);
 }
 
-void Gpio7SdSpiDeinit(void)
+void GpioShiftregSpiDeinit(void)
 {
 	/**SPI1 GPIO Configuration
 	PA4     ------> SPI1_NSS
 	PA5     ------> SPI1_SCK
 	PA7     ------> SPI1_MOSI
 	*/
-	HAL_GPIO_DeInit(PORT_7SD_SPI, PIN_7SD_SPI_NSS|PIN_7SD_SPI_SCK|PIN_7SD_SPI_MOSI);
+	HAL_GPIO_DeInit(PORT_SHIFTREG_SPI, PIN_SHIFTREG_SPI_NSS|PIN_SHIFTREG_SPI_SCK|PIN_SHIFTREG_SPI_MOSI);
 }
 
-void Gpio7SdSpiNssStateSet(uint8_t state)
+void GpioShiftregSpiNssStateSet(uint8_t state)
 {
 	if(state) {
-		HAL_GPIO_WritePin(PORT_7SD_SPI, PIN_7SD_SPI_NSS, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(PORT_SHIFTREG_SPI, PIN_SHIFTREG_SPI_NSS, GPIO_PIN_SET);
 	} else {
-		HAL_GPIO_WritePin(PORT_7SD_SPI, PIN_7SD_SPI_NSS, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(PORT_SHIFTREG_SPI, PIN_SHIFTREG_SPI_NSS, GPIO_PIN_RESET);
 	}
 
 }
+
+/***** 7 Segment Display select GPIO. *****/
 
 void Gpio7SdSelInit(void)
 {
@@ -208,6 +188,67 @@ void Gpio7SdSelStateSet(uint8_t n, uint8_t state)
 		HAL_GPIO_WritePin(PORT_7SD_SEL, pin, PIN_7SD_SEL_RESET);
 	}
 }
+
+/***** LCD Display control GPIO. *****/
+
+void GpioLcdCtrlInit(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	CLOCK_ENABLE_LCD_GPIO();
+
+	HAL_GPIO_WritePin(PORT_LCD_CTRL, PIN_LCD_CTRL_RS|PIN_LCD_CTRL_RW|
+			PIN_LCD_CTRL_ENABLE|PIN_LCD_CTRL_BACKLIGHT, GPIO_PIN_RESET);
+
+	GPIO_InitStruct.Pin =  PIN_LCD_CTRL_RS|PIN_LCD_CTRL_RW|PIN_LCD_CTRL_ENABLE|
+			PIN_LCD_CTRL_BACKLIGHT;
+	GPIO_InitStruct.Mode = MODE_LCD_CTRL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(PORT_LCD_CTRL, &GPIO_InitStruct);
+}
+
+void GpioLcdCtrlDeinit(void)
+{
+	HAL_GPIO_DeInit(MODE_LCD_CTRL, PIN_LCD_CTRL_RS|PIN_LCD_CTRL_RW|
+			PIN_LCD_CTRL_ENABLE|PIN_LCD_CTRL_BACKLIGHT);
+}
+
+void GpioLcdCtrlRsStateSet(uint8_t state)
+{
+	if(state) {
+		HAL_GPIO_WritePin(PORT_LCD_CTRL, PIN_LCD_CTRL_RS, GPIO_PIN_SET);
+	} else {
+		HAL_GPIO_WritePin(PORT_LCD_CTRL, PIN_LCD_CTRL_RS, GPIO_PIN_RESET);
+	}
+}
+
+void GpioLcdCtrlRwStateSet(uint8_t state)
+{
+	if(state) {
+		HAL_GPIO_WritePin(PORT_LCD_CTRL, PIN_LCD_CTRL_RW, GPIO_PIN_SET);
+	} else {
+		HAL_GPIO_WritePin(PORT_LCD_CTRL, PIN_LCD_CTRL_RW, GPIO_PIN_RESET);
+	}
+}
+
+void GpioLcdCtrlEnableStateSet(uint8_t state)
+{
+	if(state) {
+		HAL_GPIO_WritePin(PORT_LCD_CTRL, PIN_LCD_CTRL_ENABLE, GPIO_PIN_SET);
+	} else {
+		HAL_GPIO_WritePin(PORT_LCD_CTRL, PIN_LCD_CTRL_ENABLE, GPIO_PIN_RESET);
+	}
+}
+
+void GpioLcdCtrlBacklightStateSet(uint8_t state)
+{
+	if(state) {
+		HAL_GPIO_WritePin(PORT_LCD_CTRL, PIN_LCD_CTRL_BACKLIGHT, GPIO_PIN_SET);
+	} else {
+		HAL_GPIO_WritePin(PORT_LCD_CTRL, PIN_LCD_CTRL_BACKLIGHT, GPIO_PIN_RESET);
+	}
+}
+
 
 /***** User Interface Button GPIO. *****/
 
@@ -409,6 +450,8 @@ void GpioDebugUartInit(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
 
+	CLOCK_ENABLE_DEBUG_UART();
+
 	/**USART1 GPIO Configuration
 	PA9     ------> USART1_TX
 	PA10     ------> USART1_RX
@@ -433,14 +476,45 @@ void GpioDebugUartDeinit(void)
 	HAL_GPIO_DeInit(PORT_DEBUG_UART, PIN_DEBUG_UART_TX|PIN_DEBUG_UART_RX);
 }
 
-/* USER CODE END 2 */
+/***** Sensor ADC GPIO *****/
 
-/**
-  * @}
-  */
+void GpioSensorAdcInit(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
 
-/**
-  * @}
-  */
+	CLOCK_ENABLE_SENSOR_ADC();
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+    GPIO_InitStruct.Pin = PIN_SENSOR_ADC_0;
+    GPIO_InitStruct.Mode = MODE_SENSOR_ADC;
+    HAL_GPIO_Init(PORT_SENSOR_ADC, &GPIO_InitStruct);
+}
+
+void GpioSensorAdcDeinit(void)
+{
+	HAL_GPIO_DeInit(PORT_SENSOR_ADC, PIN_SENSOR_ADC_0);
+}
+
+/***** Level Sensor GPIO *****/
+
+void GpioLevelSensorInit(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	CLOCK_ENABLE_LEVEL_SENSOR();
+
+    GPIO_InitStruct.Pin = PIN_LEVEL_SENSOR;
+    GPIO_InitStruct.Mode = MODE_LEVEL_SENSOR;
+    HAL_GPIO_Init(PORT_LEVEL_SENSOR, &GPIO_InitStruct);
+}
+
+void GpioLevelSensorDeinit(void)
+{
+	HAL_GPIO_DeInit(PORT_LEVEL_SENSOR, PIN_LEVEL_SENSOR);
+}
+
+uint8_t GpioLevelSensorStateGet(void)
+{
+	return HAL_GPIO_ReadPin(PORT_LEVEL_SENSOR, PIN_LEVEL_SENSOR);
+}
+
+

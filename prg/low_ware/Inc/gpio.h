@@ -66,13 +66,23 @@
 
 /* USER CODE END Private defines */
 
-/***** 7 Segment Display SPI & Select GPIO. *****/
-void Gpio7SdSpiInit(void);
-void Gpio7SdSpiDeinit(void);
-void Gpio7SdSpiNssStateSet(uint8_t state);
+/***** Shiftregister SPI GPIO. *****/
+void GpioShiftregSpiInit(void);
+void GpioShiftregSpiDeinit(void);
+void GpioShiftregSpiNssStateSet(uint8_t state);
+
+/***** 7 Segment Display select GPIO. *****/
 void Gpio7SdSelInit(void);
 void Gpio7SdSelDeinit(void);
 void Gpio7SdSelStateSet(uint8_t n, uint8_t state);
+
+/***** LCD Display control GPIO. *****/
+void GpioLcdCtrlInit(void);
+void GpioLcdCtrlDeinit(void);
+void GpioLcdCtrlRsStateSet(uint8_t state);
+void GpioLcdCtrlRwStateSet(uint8_t state);
+void GpioLcdCtrlEnableStateSet(uint8_t state);
+void GpioLcdCtrlBacklightStateSet(uint8_t state);
 
 /***** User Interface Button GPIO. *****/
 void GpioUiButtonInit(void);
@@ -96,6 +106,16 @@ void GpioPumpStateSet(uint8_t state);
 /***** Debug UART GPIO. *****/
 void GpioDebugUartInit(void);
 void GpioDebugUartDeinit(void);
+
+/***** Sensor ADC GPIO *****/
+void GpioSensorAdcInit(void);
+void GpioSensorAdcDeinit(void);
+
+/***** Level Sensor GPIO *****/
+void GpioLevelSensorInit(void);
+void GpioLevelSensorDeinit(void);
+uint8_t GpioLevelSensorStateGet(void);
+
 
 /* USER CODE BEGIN Prototypes */
 
