@@ -3,13 +3,14 @@
 * @brief library 1-Wire(www.maxim-ic.com)
 * @author Maciej Rajtar (Published 10 May 2010 www.mbed.org)
 * @author Frederic BLANC
-* @author Dorus van de SPijker
+* @author Dorus van de Spijker
 */
 
 #ifndef _onewire_
 #define _onewire_
 
-#include "onewire_pin.h"
+#include "onewire_io.h"
+
 #include <stdint.h>
 
 #define MAX_DEVICES 16
@@ -42,7 +43,7 @@
 typedef void (*ow_fn_wait_t) (uint32_t us);
 
 typedef struct {
-	ow_pin_t pin;
+	ow_io_t io;
 	ow_fn_wait_t wait_us;
 } ow_config_t;
 
@@ -57,24 +58,23 @@ uint8_t ow_reset(void);
 
 /**
 *    @brief read write onewire
-*    @param  [in/out] b data
+*    @param  [in/out] bit data
 *    @return data
 *    @date 20/06/2011
 */
-uint8_t ow_bit_io( uint8_t b );
+uint8_t ow_bit_io( uint8_t bit );
 
 /**
 *    @brief byte write on onewire
-*    @param  [in] b data
+*    @param  [in] byte data
 *    @return data
 *    @date 20/06/2011
 */
-uint8_t ow_byte_wr( uint8_t b );
+uint8_t ow_byte_wr( uint8_t byte );
 
 /**
 *    @brief byte read on onewire
-*    @param  [in] uint8_t b
-*    @return 
+*    @return uint8_t data byte
 *    @date 20/06/2011
 */
 uint8_t ow_byte_rd( void );
@@ -94,7 +94,8 @@ uint8_t ow_parasite_disable(void);
 /**
 *    @brief write command
 *    @param  [in] command
-*    @param  [in] id romcode
+*    @param  [in] id romcode, use NULL to
+*    broadcast the command.
 *    @date 20/06/2011
 */
 uint8_t ow_command( uint8_t command, uint8_t id[] );

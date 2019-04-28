@@ -10,12 +10,12 @@
 
 #include <string.h>
 
-static ow_pin_t *ow_pin;
+static ow_io_t *ow_io;
 static ow_fn_wait_t *wait_us;
 
 void ow_init(ow_config_t *config)
 {
-	ow_pin = config->pin;
+	ow_io = config->io;
 	wait_us = config->wait_us;
 }
 
@@ -23,45 +23,45 @@ void ow_init(ow_config_t *config)
 uint8_t ow_reset(void) { // reset.  Should improve to act as a presence pulse
     uint8_t err;
 
-    ow_pin->output();
-    ow_pin->write(0);     // bring low for 500 us
+    ow_io->output();
+    ow_io->write(0);     // bring low for 500 us
     wait_us(500);
-    ow_pin->input();
+    ow_io->input();
     wait_us(60);
-    err = ow_pin->read();
+    err = ow_io->read();
     wait_us(240);
-    if ( ow_pin->read() == 0 )    {    // short circuit
+    if ( ow_io->read() == 0 )    {    // short circuit
         err = OW_SHORT_CIRCUIT;
     }
     return err;
 }
 
-uint8_t ow_bit_io( uint8_t b ) {
+uint8_t ow_bit_io( uint8_t bit ) {
 
-    ow_pin->output(); // drive bus low
-    ow_pin->write(0);
-    wait_us(1); // Recovery-Time wuffwuff was 1
+    ow_io->output(); // drive bus low
+    ow_io->write(0);
+    wait_us(1); // Recovery-Time was 1
     
-    if ( b ) 
-        ow_pin->input(); // if bit is 1 set bus high (by ext. pull-up)
+    if ( bit ) 
+        ow_io->input(); // if bit is 1 set bus high (by ext. pull-up)
     //  delay was 15uS-1 see comment above
     wait_us(15-1);
-    if ( ow_pin->read() == 0 ) b = 0; // sample at end of read-timeslot
+    if ( ow_io->read() == 0 ) bit = 0; // sample at end of read-timeslot
     wait_us(60-15);
-    ow_pin->input();
-    return b;
+    ow_io->input();
+    return bit;
 }
 
-uint8_t ow_byte_wr( uint8_t b ) {
+uint8_t ow_byte_wr( uint8_t byte ) {
     uint8_t i = 8, j;
 
     do {
-        j = ow_bit_io( b & 1 );
-        b >>= 1;
+        j = ow_bit_io( byte & 1 );
+        byte >>= 1;
         if ( j )
-            b |= 0x80;
+            byte |= 0x80;
     } while ( --i );
-    return b;
+    return byte;
 }
 
 uint8_t ow_byte_rd( void ) {
@@ -70,14 +70,14 @@ uint8_t ow_byte_rd( void ) {
 }
 
 uint8_t ow_parasite_enable(void) {
-    ow_pin->output();
-    ow_pin->write(1);
+    ow_io->output();
+    ow_io->write(1);
     return 0;
 }
 
 uint8_t ow_parasite_disable(void) {
 
-    ow_pin->input();
+    ow_io->input();
     return 0;
 }
 
@@ -189,7 +189,7 @@ uint8_t ow_show_id( uint8_t id[], size_t n ,char *text) {
 }
 
 uint8_t ow_test_pin (void){
-    if (ow_pin->read())
+    if (ow_io->read())
         return 1;
     return 0;
 }
@@ -202,16 +202,16 @@ uint8_t ow_test_pin (void){
 uint8_t OneWireOutByte(uint8_t d) { // output byte d (least sig bit first).
     for (int n=8; n!=0; n--) {
         if ((d & 0x01) == 1) { // test least sig bit
-            ow_pin->output();
-            ow_pin->write(0);
+            ow_io->output();
+            ow_io->write(0);
             wait_us(5);
-            ow_pin->input();
+            ow_io->input();
             wait_us(80);
         } else {
-            ow_pin->output();
-            ow_pin->write(0);
+            ow_io->output();
+            ow_io->write(0);
             wait_us(80);
-            ow_pin->input();
+            ow_io->input();
         }
         d=d>>1; // now the next bit is in the least sig bit position.
     }
@@ -224,12 +224,12 @@ uint8_t OneWireOutByte(uint8_t d) { // output byte d (least sig bit first).
 uint8_t OneWireInByte(void) { // read byte, least sig byte first
     uint8_t d = 0, b;
     for (int n=0; n<8; n++) {
-        ow_pin->output();
-        ow_pin->write(0);
+        ow_io->output();
+        ow_io->write(0);
         wait_us(5);
-        ow_pin->input();
+        ow_io->input();
         wait_us(5);
-        b = ow_pin->read();
+        b = ow_io->read();
         wait_us(50);
         d = (d >> 1) | (b << 7); // shift d to right and insert b in most sig bit position
     }
