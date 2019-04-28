@@ -13,7 +13,11 @@
 
 void ow_port_io_set_input(void)
 {
+	/* Set the input pin and the output pin as inputs. The output pin no longer
+	 * actively drives the bus low, the ext. pull up resistor will pull the bus
+	 * high. */
 	ONEWIRE_PORT_CONFIG_DDR_INPUT &= ~(1 << ONEWIRE_PORT_CONFIG_PIN_INPUT);
+	ONEWIRE_PORT_CONFIG_DDR_OUTPUT &= ~(1 << ONEWIRE_PORT_CONFIG_PIN_OUTPUT);
 }
 
 void ow_port_io_set_output(void)
