@@ -59,6 +59,7 @@ uint8_t ow_reset(void);
 /**
 *    @brief read write onewire
 *    @param  [in/out] bit data
+*    To read a bit always pass 1.
 *    @return data
 *    @date 20/06/2011
 */

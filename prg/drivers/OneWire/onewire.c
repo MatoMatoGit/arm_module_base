@@ -40,7 +40,7 @@ uint8_t ow_bit_io( uint8_t bit ) {
 
     ow_io->output(); // drive bus low
     ow_io->write(0);
-    wait_us(1); // Recovery-Time was 1
+    wait_us(1); // Recovery-Time is 1
     
     if ( bit ) 
         ow_io->input(); // if bit is 1 set bus high (by ext. pull-up)
