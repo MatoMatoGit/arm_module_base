@@ -16,9 +16,9 @@
  *                                                                           *
  ****************************************************************************/
 #include "mbed.h"
-#include "onewire.h"
 #include "DS18X20.h"
 #include "DS2450.h"
+#include "ow_ll_master.h"
 
 uint8_t gSensorIDs[MAXSENSORS][OW_ROMCODE_SIZE];
 uint8_t nSensors;
