@@ -16,10 +16,12 @@ typedef enum {
 #define DELTA_TX_PRESENCE	60
 
 ow_hal_slave_t *slave_hal = NULL;
+ow_ll_slave_cbs_t *slave_cbs = NULL;
 
-void ow_ll_slave_init(ow_hal_slave_t *hal)
+void ow_ll_slave_init(ow_hal_slave_t *hal, ow_ll_slave_cbs_t *cbs)
 {
 	slave_hal = hal;
+	slave_cbs = cbs;
 }
 
 void ow_ll_slave_int_handler(void)
@@ -46,13 +48,13 @@ void ow_ll_slave_int_handler(void)
 			slave_hal->hal_int.int_disable();
 			
 			if(dt <= DELTA_RX_ONE) {
-				tx_bit = slave_hal->receive_transmit_bit(1);
+				tx_bit = slave_cbs->receive_transmit_bit(1);
 				ow_write_bit(tx_bit);
 			} else if(dt >= DELTA_RX_ZERO_MIN && dt <= DELTA_RX_ZERO_MAX) {
-				slave_hal->receive_transmit_bit(0);
+				slave_cbs->receive_transmit_bit(0);
 			} else if(dt >= DELTA_RESET_MIN && dt <= DELTA_RESET_MAX) {
 				ow_write_presence(); /* Presence pulse ~60us. */
-				slave_hal->reset();
+				slave_cbs->reset();
 			}
 			
 			slave_hal->hal_int.int_set_falling();
