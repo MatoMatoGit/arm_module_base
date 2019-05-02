@@ -12,9 +12,15 @@
 
 static ow_hal_master_t *master_hal;
 
-void ow_ll_master_init(ow_hal_master_t *hal)
+uint8_t ow_ll_master_init(ow_hal_master_t *hal)
 {
+	if(hal == NULL) {
+		return OW_INV_ARG;
+	}
+
 	master_hal = hal;
+
+	return OW_OK;
 }
 
 
@@ -25,7 +31,7 @@ uint8_t ow_ll_master_reset(void) { // reset.  Should improve to act as a presenc
     master_hal->hal_io.write(0);     // bring low for 500 us
     master_hal->hal_gen.wait_us(500);
     master_hal->hal_io.input();
-    master_hal->hal_gen.wait_us(60);
+    master_hal->hal_gen.wait_us(40);
     err = master_hal->hal_io.read();
     master_hal->hal_gen.wait_us(240);
     if ( master_hal->hal_io.read() == 0 )    {    // short circuit
@@ -34,7 +40,7 @@ uint8_t ow_ll_master_reset(void) { // reset.  Should improve to act as a presenc
     return err;
 }
 
-uint8_t ow_ll_master_bit_io( uint8_t bit ) {
+uint8_t ow_ll_master_transmit_receive_bit( uint8_t bit ) {
 
     master_hal->hal_io.output(); // drive bus low
     master_hal->hal_io.write(0);
@@ -50,11 +56,11 @@ uint8_t ow_ll_master_bit_io( uint8_t bit ) {
     return bit;
 }
 
-uint8_t ow_ll_master_write_byte( uint8_t byte ) {
+uint8_t ow_ll_master_transmit_byte( uint8_t byte ) {
     uint8_t i = 8, j;
 
     do {
-        j = ow_ll_master_bit_io( byte & 1 );
+        j = ow_ll_master_transmit_receive_bit( byte & 1 );
         byte >>= 1;
         if ( j )
             byte |= 0x80;
@@ -62,9 +68,9 @@ uint8_t ow_ll_master_write_byte( uint8_t byte ) {
     return byte;
 }
 
-uint8_t ow_ll_master_read_byte( void ) {
+uint8_t ow_ll_master_receive_byte( void ) {
     // read by sending 0xff (a dontcare?)
-    return ow_ll_master_write_byte( 0xFF );
+    return ow_ll_master_transmit_byte( 0xFF );
 }
 
 uint8_t ow_ll_master_parasite_enable(void) {

@@ -16,7 +16,8 @@
 #define OW_START_FAIL  0x02
 #define OW_ERROR_CRC   0x03
 #define OW_ERROR_BAD_ID 0x04
-#define OW_BUSY          0x05
+#define OW_BUSY         0x05
+#define OW_INV_ARG		0x06
 
 #define OW_MATCH_ROM    0x55
 #define OW_SKIP_ROM     0xCC
@@ -32,6 +33,8 @@
 #define OW_DATA_ERR        0xFE
 #define OW_LAST_DEVICE     0x00        // last device found
 //            0x01 ... 0x40: continue searching
+
+typedef void (*ow_cb_generic_t) (void);
 
 /**
 *    @brief print the ids

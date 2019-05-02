@@ -10,4 +10,6 @@
 
 typedef void (*ow_hal_fn_generic_t)(void);
 
+typedef void (*ow_hal_cb_generic_t)(void);
+
 #endif /* ONEWIRE_HAL_COMMON_H_ */

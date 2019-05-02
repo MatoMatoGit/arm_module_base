@@ -8,21 +8,30 @@
 #include "ow_cmd_master.h"
 #include "ow_ll_master.h"
 
-uint8_t ow_cmd_master_send( uint8_t command, uint8_t id[] ) {
+uint8_t ow_cmd_master_init(ow_hal_master_t *hal)
+{
+	if(hal == NULL) {
+		return OW_INV_ARG;
+	}
+
+	return ow_ll_master_init(hal);
+}
+
+uint8_t ow_cmd_master_transmit( uint8_t command, uint8_t id[] ) {
     uint8_t i;
 
-    ow_master_reset();
+    ow_ll_master_reset();
     if ( id ) {
-        ow_ll_master_write_byte( OW_MATCH_ROM );            // to a single device
+        ow_ll_master_transmit_byte( OW_MATCH_ROM );            // to a single device
         i = OW_ROMCODE_SIZE;
         do {
-            ow_ll_master_write_byte( *id );
+            ow_ll_master_transmit_byte( *id );
             ++id;
         } while ( --i );
     } else {
-        ow_ll_master_write_byte( OW_SKIP_ROM );            // to all devices
+        ow_ll_master_transmit_byte( OW_SKIP_ROM );            // to all devices
     }
-    ow_ll_master_write_byte( command );
+    ow_ll_master_transmit_byte( command );
     return 0;
 }
 
@@ -32,14 +41,14 @@ uint8_t ow_cmd_master_rom_search( uint8_t diff, uint8_t id[] ) {
 
     if ( ow_ll_master_reset() )
         return OW_PRESENCE_ERR;    // error, no device found
-    ow_ll_master_write_byte( OW_SEARCH_ROM );            // ROM search command
+    ow_ll_master_transmit_byte( OW_SEARCH_ROM );            // ROM search command
     next_diff = OW_LAST_DEVICE;            // unchanged on last device
     i = OW_ROMCODE_SIZE * 8;                    // 8 bytes
     do {
         j = 8;                                // 8 bits
         do {
-            b = ow_ll_master_bit_io( 1 );                // read bit
-            if ( ow_ll_master_bit_io( 1 ) ) {            // read complement bit
+            b = ow_ll_master_transmit_receive_bit( 1 );                // read bit
+            if ( ow_ll_master_transmit_receive_bit( 1 ) ) {            // read complement bit
                 if ( b )                    // 11
                     return OW_DATA_ERR;        // data error
             } else {
@@ -50,7 +59,7 @@ uint8_t ow_cmd_master_rom_search( uint8_t diff, uint8_t id[] ) {
                     }
                 }
             }
-            ow_ll_master_bit_io( b );                 // write bit
+            ow_ll_master_transmit_receive_bit( b );                 // write bit
             *id >>= 1;
             if ( b )
                 *id |= 0x80;            // store bit

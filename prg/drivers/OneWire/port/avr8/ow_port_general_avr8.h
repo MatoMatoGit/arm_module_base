@@ -10,9 +10,7 @@
 
 #include "ow_hal_general.h"
 
-const ow_hal_general_t ow_port_general_avr8 = {
-	.wait_us = ow_port_general_wait_us,
-};
+ow_hal_general_t *ow_port_general_avr8_get(void);
 
 
 #endif /* ONEWIRE_PORT_GENERAL_AVR8_H_ */

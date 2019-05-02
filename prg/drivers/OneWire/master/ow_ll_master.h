@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 
-void ow_ll_master_init(ow_hal_master_t *hal);
+uint8_t ow_ll_master_init(ow_hal_master_t *hal);
 
 /**
 *    @brief onewire reset bus
@@ -30,7 +30,7 @@ uint8_t ow_ll_master_reset(void);
 *    @return data
 *    @date 20/06/2011
 */
-uint8_t ow_ll_master_bit_io( uint8_t bit );
+uint8_t ow_ll_master_transmit_receive_bit( uint8_t bit );
 
 /**
 *    @brief byte write on onewire
@@ -38,14 +38,14 @@ uint8_t ow_ll_master_bit_io( uint8_t bit );
 *    @return data
 *    @date 20/06/2011
 */
-uint8_t ow_ll_master_write_byte( uint8_t byte );
+uint8_t ow_ll_master_transmit_byte( uint8_t byte );
 
 /**
 *    @brief byte read on onewire
 *    @return uint8_t data byte
 *    @date 20/06/2011
 */
-uint8_t ow_ll_master_read_byte( void );
+uint8_t ow_ll_master_receive_byte( void );
 
 /**
 *     @brief parasite enable

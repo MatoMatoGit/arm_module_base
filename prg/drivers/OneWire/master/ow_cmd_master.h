@@ -9,8 +9,11 @@
 #define ONEWIRE_CMD_MASTER_H_
 
 #include "ow_common.h"
+#include "ow_hal_master.h"
 
 #define MAX_DEVICES 16
+
+uint8_t ow_cmd_master_init()
 
 /**
 *    @brief write command
@@ -19,7 +22,7 @@
 *    broadcast the command.
 *    @date 20/06/2011
 */
-uint8_t ow_cmd_master_send( uint8_t command, uint8_t id[] );
+uint8_t ow_cmd_master_transmit( uint8_t command, uint8_t id[] );
 
 /**
 *    @brief search romcode

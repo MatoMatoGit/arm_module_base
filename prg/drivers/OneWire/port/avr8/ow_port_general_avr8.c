@@ -9,7 +9,18 @@
 
 #include <util/delay.h>
 
-void ow_port_general_wait_us(uint32_t us)
+static void ow_port_general_wait_us(uint32_t us);
+
+const ow_hal_general_t ow_port_general_avr8 = {
+	.wait_us = ow_port_general_wait_us,
+};
+
+ow_hal_general_t *ow_port_general_avr8_get(void)
+{
+	return &ow_port_general_avr8;
+}
+
+static void ow_port_general_wait_us(uint32_t us)
 {
 	_delay_us(us);
 }
