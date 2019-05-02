@@ -14,7 +14,7 @@ static void ow_port_io_set_output(void);
 static void ow_port_io_write(uint8_t bit);
 static uint8_t ow_port_io_read(void);
 
-const ow_hal_io_t ow_port_io_avr8 = {
+static const ow_hal_io_t ow_port_io_avr8 = {
 	.input = ow_port_io_set_input,
 	.output = ow_port_io_set_output,
 	.write = ow_port_io_write,
@@ -23,7 +23,7 @@ const ow_hal_io_t ow_port_io_avr8 = {
 
 ow_hal_io_t *ow_port_io_avr8_get(void)
 {
-	return &ow_port_io_avr8;
+	return (ow_hal_io_t *)&ow_port_io_avr8;
 }
 
 static void ow_port_io_set_input(void)

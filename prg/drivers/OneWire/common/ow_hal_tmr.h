@@ -9,6 +9,7 @@
 #define ONEWIRE_HAL_TMR_H_
 
 #include "ow_hal_common.h"
+#include <stdint.h>
 
 typedef uint32_t (*ow_hal_tmr_fn_time_t) (void);
 

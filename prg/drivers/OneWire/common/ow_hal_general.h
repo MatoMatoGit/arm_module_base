@@ -8,6 +8,8 @@
 #ifndef ONEWIRE_HAL_GENERAL_H_
 #define ONEWIRE_HAL_GENERAL_H_
 
+#include <stdint.h>
+
 typedef void (*ow_fn_wait_t) (uint32_t us);
 
 typedef struct {

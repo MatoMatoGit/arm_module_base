@@ -6,6 +6,10 @@
  */
 
 #include "ow_common.h"
+#include "crc8.h"
+
+#include <stdio.h>
+#include <string.h>
 
 uint8_t ow_common_show_id( uint8_t id[], size_t n ,char *text) {
     size_t i;

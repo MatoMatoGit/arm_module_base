@@ -8,6 +8,9 @@
 #include "ow_cmd_master.h"
 #include "ow_ll_master.h"
 
+#include <string.h>
+#include <stdio.h>
+
 uint8_t ow_cmd_master_init(ow_hal_master_t *hal)
 {
 	if(hal == NULL) {
@@ -86,12 +89,12 @@ uint8_t ow_cmd_master_find_device(uint8_t family_code, uint8_t *diff, uint8_t id
 }
 
 uint8_t ow_cmd_master_search_devices(uint8_t family_code, uint8_t *n ,uint8_t *ids) {
-    uint8_t i;
+    uint8_t i = 0;
     uint8_t id[OW_ROMCODE_SIZE];
     uint8_t diff;
     printf( "Scanning Bus\n" );
     diff = OW_SEARCH_FIRST;
-    for (*n = 0 ; (diff != OW_LAST_DEVICE) && (*n < MAXSENSORS) ;++(*n) ) {
+    for (*n = 0 ; (diff != OW_LAST_DEVICE) && (*n < MAX_DEVICES) ;++(*n) ) {
     	ow_cmd_master_find_device( family_code, &diff, &id[0] );
         if ( diff == OW_PRESENCE_ERR ) {
             printf( "No Sensor found\n" );

@@ -17,10 +17,14 @@ const ow_hal_general_t ow_port_general_avr8 = {
 
 ow_hal_general_t *ow_port_general_avr8_get(void)
 {
-	return &ow_port_general_avr8;
+	return (ow_hal_general_t *)&ow_port_general_avr8;
 }
 
 static void ow_port_general_wait_us(uint32_t us)
 {
-	_delay_us(us);
+	while(us > 0) {
+		_delay_us(1);
+		us--;
+	}
+	
 }

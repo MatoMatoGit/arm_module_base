@@ -8,6 +8,9 @@
 #ifndef ONEWIRE_COMMON_H_
 #define ONEWIRE_COMMON_H_
 
+#include <stdint.h>
+#include <stdlib.h>
+
 // rom-code size including CRC
 #define OW_ROMCODE_SIZE 8
 
