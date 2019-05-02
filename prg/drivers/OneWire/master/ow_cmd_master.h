@@ -13,7 +13,7 @@
 
 #define MAX_DEVICES 16
 
-uint8_t ow_cmd_master_init()
+uint8_t ow_cmd_master_init(ow_hal_master_t *hal);
 
 /**
 *    @brief write command
