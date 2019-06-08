@@ -10,7 +10,7 @@
 
 #include "rgb_led_config.h"
 
-#include <OsTypes.h>
+#include "OsTypes.h"
 
 #define RGB_LED_OK	0
 #define RGB_LED_ERR	-1

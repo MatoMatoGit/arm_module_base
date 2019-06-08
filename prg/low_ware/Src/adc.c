@@ -17,7 +17,7 @@ void AdcSensorInit(void)
 {
   ADC_ChannelConfTypeDef sConfig;
 
-    /**Common config 
+    /**Common config
     */
   hadc_sensor.Instance = ADC1;
   hadc_sensor.Init.ScanConvMode = ADC_SCAN_DISABLE;
@@ -31,7 +31,7 @@ void AdcSensorInit(void)
     ErrorHandler(__FILE__, __LINE__);
   }
 
-    /**Configure Regular Channel 
+    /**Configure Regular Channel
     */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
@@ -46,7 +46,6 @@ void AdcSensorInit(void)
 void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 {
 
-  GPIO_InitTypeDef GPIO_InitStruct;
   if(adcHandle->Instance==ADC1)
   {
   /* USER CODE BEGIN ADC1_MspInit 0 */
@@ -54,7 +53,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE END ADC1_MspInit 0 */
     /* ADC1 clock enable */
     __HAL_RCC_ADC1_CLK_ENABLE();
-  
+
     GpioSensorAdcInit();
   }
 }
@@ -69,7 +68,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
   /* USER CODE END ADC1_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_ADC1_CLK_DISABLE();
-  
+
     GpioSensorAdcDeinit();
   }
 }
@@ -78,7 +77,7 @@ uint32_t AdcMoistureSensorRead(void)
 {
 	if(HAL_ADC_Start(&hadc_sensor) == HAL_OK) {
 		if(HAL_ADC_PollForConversion(&hadc_sensor, ADC_MOISTURE_SENSOR_CONV_TIMEOUT_MS) == HAL_OK) {
-			return HAL_ADC_GetValue(*hadc_sensor);
+			return HAL_ADC_GetValue(&hadc_sensor);
 		}
 	}
 

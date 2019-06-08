@@ -47,6 +47,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
 
+#include <stdint.h>
+
 extern ADC_HandleTypeDef hadc_sensor;
 
 #define ADC_MOISTURE_SENSOR_CONV_TIMEOUT_MS 1e6
