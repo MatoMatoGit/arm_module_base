@@ -11,6 +11,8 @@
 
 #include "gpio.h"
 
+#include <stdlib.h>
+
 #define AsmDelayUs(us) do {\
 	asm volatile (	"MOV R0,%[loops]\n\t"\
 			"1: \n\t"\
