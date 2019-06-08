@@ -386,7 +386,8 @@ HD44780_Result hd44780_config(HD44780 *display)
     if (gpios->configure != NULL)
       HD44780_RETURN_IF_ERROR(gpios->configure(gpios, display->dp_first + i, HD44780_PINMODE_OUTPUT));
 
-    HD44780_RETURN_IF_ERROR(gpios->write_ctrl(gpios, display->dp_first + i, HD44780_PINSTATE_LOW));
+    //HD44780_RETURN_IF_ERROR(gpios->write_ctrl(gpios, display->dp_first + i, HD44780_PINSTATE_LOW));
+    HD44780_RETURN_IF_ERROR(gpios->write_data(gpios, 0x00));
   }
 
   /* SEE PAGE 45/46 FOR INITIALIZATION SPECIFICATION!

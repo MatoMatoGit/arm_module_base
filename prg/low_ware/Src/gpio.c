@@ -16,8 +16,8 @@
 #define MODE_SHIFTREG_SPI		GPIO_MODE_AF_PP
 #define MODE_SHIFTREG_SPI_NSS	GPIO_MODE_OUTPUT_PP
 #define PORT_SHIFTREG_SPI		GPIOA
-#define PIN_SHIFTREG_SPI_NSS		GPIO_PIN_4
-#define PIN_SHIFTREG_SPI_SCK		GPIO_PIN_5
+#define PIN_SHIFTREG_SPI_NSS	GPIO_PIN_4
+#define PIN_SHIFTREG_SPI_SCK	GPIO_PIN_5
 #define PIN_SHIFTREG_SPI_MOSI	GPIO_PIN_7
 
 /***** 7 Segment Display select GPIO. *****/
@@ -45,6 +45,13 @@
 #define PIN_LCD_CTRL_ENABLE	GPIO_PIN_8
 #define PIN_LCD_CTRL_BACKLIGHT GPIO_PIN_9
 
+#define CLOCK_ENABLE_LCD_DATA_GPIO	__HAL_RCC_GPIOA_CLK_ENABLE
+#define MODE_LCD_DATA		GPIO_MODE_OUTPUT_PP
+#define PORT_LCD_DATA		GPIOA
+#define PIN_LCD_DATA_4		GPIO_PIN_4
+#define PIN_LCD_DATA_5		GPIO_PIN_5
+#define PIN_LCD_DATA_6		GPIO_PIN_6
+#define PIN_LCD_DATA_7		GPIO_PIN_7
 
 /***** User Interface Button GPIO. *****/
 #define CLOCK_ENABLE_UI_BUTTON	__HAL_RCC_GPIOB_CLK_ENABLE
@@ -203,13 +210,13 @@ void GpioLcdCtrlInit(void)
 	GPIO_InitStruct.Pin =  PIN_LCD_CTRL_RS|PIN_LCD_CTRL_RW|PIN_LCD_CTRL_ENABLE|
 			PIN_LCD_CTRL_BACKLIGHT;
 	GPIO_InitStruct.Mode = MODE_LCD_CTRL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(PORT_LCD_CTRL, &GPIO_InitStruct);
 }
 
 void GpioLcdCtrlDeinit(void)
 {
-	HAL_GPIO_DeInit(MODE_LCD_CTRL, PIN_LCD_CTRL_RS|PIN_LCD_CTRL_RW|
+	HAL_GPIO_DeInit(PORT_LCD_CTRL, PIN_LCD_CTRL_RS|PIN_LCD_CTRL_RW|
 			PIN_LCD_CTRL_ENABLE|PIN_LCD_CTRL_BACKLIGHT);
 }
 
@@ -247,6 +254,38 @@ void GpioLcdCtrlBacklightStateSet(uint8_t state)
 	} else {
 		HAL_GPIO_WritePin(PORT_LCD_CTRL, PIN_LCD_CTRL_BACKLIGHT, GPIO_PIN_RESET);
 	}
+}
+
+void GpioLcdDataInit(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	CLOCK_ENABLE_LCD_DATA_GPIO();
+
+	HAL_GPIO_WritePin(PORT_LCD_DATA, PIN_LCD_DATA_4|PIN_LCD_DATA_5|
+			PIN_LCD_DATA_6|PIN_LCD_DATA_7, GPIO_PIN_RESET);
+
+	GPIO_InitStruct.Pin =  PIN_LCD_DATA_4|PIN_LCD_DATA_5|
+			PIN_LCD_DATA_6|PIN_LCD_DATA_7;
+	GPIO_InitStruct.Mode = MODE_LCD_DATA;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	HAL_GPIO_Init(PORT_LCD_DATA, &GPIO_InitStruct);
+}
+
+void GpioLcdDataWrite(uint8_t data)
+{
+	uint8_t mask = 0x01;
+
+	HAL_GPIO_WritePin(PORT_LCD_DATA, PIN_LCD_DATA_4, (data & mask));
+
+	mask = mask << 1;
+	HAL_GPIO_WritePin(PORT_LCD_DATA, PIN_LCD_DATA_5, (data & mask));
+
+	mask = mask << 1;
+	HAL_GPIO_WritePin(PORT_LCD_DATA, PIN_LCD_DATA_6, (data & mask));
+
+	mask = mask << 1;
+	HAL_GPIO_WritePin(PORT_LCD_DATA, PIN_LCD_DATA_7, (data & mask));
 }
 
 

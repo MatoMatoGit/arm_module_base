@@ -84,6 +84,9 @@ void GpioLcdCtrlRwStateSet(uint8_t state);
 void GpioLcdCtrlEnableStateSet(uint8_t state);
 void GpioLcdCtrlBacklightStateSet(uint8_t state);
 
+void GpioLcdDataInit(void);
+void GpioLcdDataWrite(uint8_t data);
+
 /***** User Interface Button GPIO. *****/
 void GpioUiButtonInit(void);
 void GpioUiButtonDeinit(void);
