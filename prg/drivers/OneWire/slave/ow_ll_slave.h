@@ -26,6 +26,4 @@ void ow_ll_slave_start(void);
 
 void ow_ll_slave_stop(void);
 
-void ow_ll_slave_int_handler(void);
-
 #endif /* ONEWIRE_LL_SLAVE_H_ */

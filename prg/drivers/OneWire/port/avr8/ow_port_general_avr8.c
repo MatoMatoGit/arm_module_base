@@ -22,9 +22,10 @@ ow_hal_general_t *ow_port_general_avr8_get(void)
 
 static void ow_port_general_wait_us(uint32_t us)
 {
-	while(us > 0) {
-		_delay_us(1);
-		us--;
+	uint32_t t = us / 50;
+	while(t > 0) {
+		_delay_us(50);
+		t--;
 	}
 	
 }

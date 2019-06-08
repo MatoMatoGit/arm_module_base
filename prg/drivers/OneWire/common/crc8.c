@@ -3,7 +3,7 @@
 #define CRC8INIT    0x00
 #define CRC8POLY    0x18              //0X18 = X^8+X^5+X^4+X^0
 
-uint8_t    crc8 ( uint8_t *data_in, uint16_t number_of_bytes_to_read )
+uint8_t    crc8 ( uint8_t *data_in, uint16_t len )
 {
     uint8_t     crc;
     uint16_t loop_count;
@@ -13,7 +13,7 @@ uint8_t    crc8 ( uint8_t *data_in, uint16_t number_of_bytes_to_read )
     
     crc = CRC8INIT;
 
-    for (loop_count = 0; loop_count != number_of_bytes_to_read; loop_count++)
+    for (loop_count = 0; loop_count != len; loop_count++)
     {
         data = data_in[loop_count];
         

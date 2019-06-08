@@ -9,10 +9,9 @@
 #include "ow_port_int_avr8.h"
 #include "ow_port_io_avr8.h"
 
+#include <stdlib.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-
-#include "ow_ll_slave.h"
 
 #define OW_PORT_INT_PCINT	PCINT0
 #define OW_PORT_INT_VECTOR 	PCINT0_vect
@@ -45,6 +44,10 @@ ow_hal_int_t *ow_port_int_avr8_get(void)
 void ow_port_int_init(void)
 {
 	hal_io = ow_port_io_avr8_get();
+	GIMSK |= (1 << PCIE);
+#ifdef OW_HAL_INT_AVR8_TEST
+	PORTB &= ~(1 << PINB2);
+#endif
 }
 
 void ow_port_int_enable(void)
@@ -73,17 +76,25 @@ void ow_port_int_set_falling(void)
 }
 
 ISR(OW_PORT_INT_VECTOR)
-{
-	static uint8_t prev_state = 0;
+{	
+	static uint8_t prev_state = 1;
 	uint8_t curr_state;
+	
+#ifdef OW_HAL_INT_AVR8_TEST	
+	PORTB ^= (1 << PINB2);
+#endif
 
-	curr_state = hal_io->read();
-
+	//curr_state = hal_io->read();
+	ow_hal_int_handler();
+/*
 	if(prev_state != curr_state) {
 		if(prev_state == 0 && edge == EDGE_RISING) {
-			ow_ll_slave_int_handler();
+			ow_hal_int_handler();
 		} else if(prev_state == 1 && edge == EDGE_FALLING) {
-			ow_ll_slave_int_handler();
+			ow_hal_int_handler();
 		}
+		prev_state = curr_state;
 	}
+	*/
+	
 }

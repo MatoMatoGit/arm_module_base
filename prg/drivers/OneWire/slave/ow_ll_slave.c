@@ -1,24 +1,14 @@
 
 #include "ow_ll_slave.h"
 #include "ow_hal_slave.h"
+#include "ow_port_macro.h" 
 
-typedef enum {
-	OW_SLAVE_STATE_WAIT_FALLING = 0,
-	OW_SLAVE_STATE_WAIT_RISING,
-} ow_slave_state_t;
-
-#define DELTA_RESET_MIN		480
-#define DELTA_RESET_MAX		520
-#define DELTA_RX_ONE_MAX	15
-#define DELTA_RX_ZERO_MIN	20
-#define DELTA_RX_ZERO_MAX	65
-#define DELAY_TX_ZERO		30
-#define DELTA_TX_PRESENCE	60
+#include <avr/io.h>
 
 static void ow_ll_slave_write_bit(uint8_t bit);
 
-ow_hal_slave_t *slave_hal = NULL;
-ow_ll_slave_cbs_t *slave_cbs = NULL;
+static ow_hal_slave_t *slave_hal = NULL;
+static ow_ll_slave_cbs_t *slave_cbs = NULL;
 
 uint8_t ow_ll_slave_init(ow_hal_slave_t *hal, ow_ll_slave_cbs_t *cbs)
 {
@@ -31,14 +21,13 @@ uint8_t ow_ll_slave_init(ow_hal_slave_t *hal, ow_ll_slave_cbs_t *cbs)
 
 	slave_hal->hal_io->input();
 	slave_hal->hal_int->int_init();
-	slave_hal->hal_tmr->tmr_init();
-	slave_hal->hal_int->int_enable();
 
 	return OW_OK;
 }
 
 void ow_ll_slave_start(void)
 {
+	slave_hal->hal_int->int_set_falling();
 	slave_hal->hal_int->int_enable();
 }
 
@@ -47,50 +36,70 @@ void ow_ll_slave_stop(void)
 	slave_hal->hal_int->int_disable();
 }
 
-void ow_ll_slave_int_handler(void)
+void ow_hal_int_handler(void)
 {
-	static ow_slave_state_t state = OW_SLAVE_STATE_WAIT_FALLING;
-	static uint32_t tp = 0;
-	uint32_t dt;
-	uint32_t tn;
+	uint8_t bit = 0;
+	PORTB |= (1 << PINB4);
+	slave_hal->hal_int->int_disable();
+	//PORTB |= (1 << PINB4);
+	//OW_PORT_WAIT_US(100);
+	//PORTB &= ~(1 << PINB4);
 
-	/* Get the current time in usec,
-	 * calculate the delta between now and
-	 * the time of the previous interrupt. */
-	tn = slave_hal->hal_tmr->tmr_get_us();
-	dt = tn - tp;
-	tp = tn; /* Previous time becomes current time. */
+	/* Wait for T One max. and check the 
+	 * IO state. If the bus has been pulled
+	 * up again the received bit is a 1. */
+	PORTB |= (1 << PINB2);
+	OW_PORT_WAIT_US(OW_TO_MAX);
+	bit = slave_hal->hal_io->read();
+	PORTB &= ~(1 << PINB2);
+	if(bit) {
+		bit = slave_cbs->receive_transmit_bit(1);
+		//PORTB |= (1 << PINB4);
+		//OW_PORT_WAIT_US(250);
+		PORTB &= ~(1 << PINB4);
+		//ow_ll_slave_write_bit(1);
+		/* Upon receiving a 1 the slave may transmit
+		 * a bit in response. */
+		ow_ll_slave_write_bit(bit);
 	
-	uint8_t tx_bit = 0;
-	
-	switch(state) {
-		case OW_SLAVE_STATE_WAIT_FALLING: {
-			slave_hal->hal_int->int_set_rising();
-			state = OW_SLAVE_STATE_WAIT_RISING;
-			break;
-		}
-		
-		case OW_SLAVE_STATE_WAIT_RISING: {
-			slave_hal->hal_int->int_disable();
-			
-			if(dt <= DELTA_RX_ONE_MAX) {
-				tx_bit = slave_cbs->receive_transmit_bit(1);
-				ow_ll_slave_write_bit(tx_bit);
-			} else if(dt >= DELTA_RX_ZERO_MIN && dt <= DELTA_RX_ZERO_MAX) {
-				slave_cbs->receive_transmit_bit(0);
-			} else if(dt >= DELTA_RESET_MIN && dt <= DELTA_RESET_MAX) {
-				ow_ll_slave_write_bit(0); /* Presence pulse ~60us. */
-				slave_cbs->reset();
-			} else {
-				slave_cbs->error();
-			}
-			
-			slave_hal->hal_int->int_set_falling();
-			slave_hal->hal_int->int_enable();
-			state = OW_SLAVE_STATE_WAIT_FALLING;
-			break;
-		}
+		goto exit_int;
 	}
+	
+	/* Wait for Delta-T One-Zero max. and check the 
+	 * IO state. If the bus has been pulled
+	 * up again the received bit is a 0. */	
+	PORTB |= (1 << PINB2);
+	OW_PORT_WAIT_US(OW_DTOZ_MAX);
+	bit = slave_hal->hal_io->read();
+	PORTB &= ~(1 << PINB2);
+	if(bit) {
+		slave_cbs->receive_transmit_bit(0);
+		//PORTB |= (1 << PINB4);
+		//OW_PORT_WAIT_US(100);
+		PORTB &= ~(1 << PINB4);
+		goto exit_int;
+	}
+	
+	/* Wait for Delta-T Zero-Reset max. and check the 
+	 * IO state. If the bus has been pulled
+	 * up again the received pulse is a reset. */
+	PORTB |= (1 << PINB2);
+	OW_PORT_WAIT_US(OW_DTZR_MAX);
+	bit = slave_hal->hal_io->read();
+	PORTB &= ~(1 << PINB2);
+	if(bit) {
+		//PORTB |= (1 << PINB4);
+		//OW_PORT_WAIT_US(100);
+		PORTB &= ~(1 << PINB4);
+		ow_ll_slave_write_bit(0); /* Presence pulse. */
+		slave_cbs->reset();
+		
+		goto exit_int;
+	}
+
+
+exit_int:
+	slave_hal->hal_int->int_enable();
 }
 
 static void ow_ll_slave_write_bit(uint8_t bit)
@@ -100,7 +109,7 @@ static void ow_ll_slave_write_bit(uint8_t bit)
 	if(bit == 0) {
 		slave_hal->hal_io->output();
 		slave_hal->hal_io->write(0);
-		slave_hal->hal_gen->wait_us(DELAY_TX_ZERO);
+		OW_PORT_WAIT_US(OW_TZ_MIN - OW_TS);
 		slave_hal->hal_io->input();
 	}
 }

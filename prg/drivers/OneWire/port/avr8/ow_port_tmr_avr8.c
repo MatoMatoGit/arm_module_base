@@ -11,9 +11,10 @@
 
 #include <stdint.h>
 
-#define TIMER_CALLBACK_INTERVAL_US 2500
+#define TIMER_CALLBACK_INTERVAL_US 1600
+#define TIMER_FREQ 125
 
-#define TIMER_TICKS_TO_US(us) (us / 1000)
+#define TIMER_TICKS_TO_US(ticks) ((ticks * 1000) / TIMER_FREQ)
 
 static void ow_port_tmr_init(void);
 static uint32_t ow_port_tmr_get_us(void);
@@ -24,7 +25,7 @@ static const ow_hal_tmr_t ow_port_tmr_avr8  = {
 	.tmr_get_us = ow_port_tmr_get_us,
 };
 
-static uint32_t total_us = 0;
+static volatile uint32_t total_us = 0;
 
 ow_hal_tmr_t *ow_port_tmr_avr8_get(void)
 {
@@ -38,7 +39,7 @@ static void ow_port_tmr_init(void)
 
 static uint32_t ow_port_tmr_get_us(void)
 {
-	return total_us + TIMER_TICKS_TO_US(OcTimerGet());
+	return total_us;//total_us + TIMER_TICKS_TO_US(OcTimerGet());
 }
 
 void ow_port_tmr_callback(void)

@@ -18,4 +18,6 @@ typedef struct {
 	ow_hal_fn_generic_t	int_set_rising;
 } ow_hal_int_t;
 
+extern void ow_hal_int_handler(void);
+
 #endif /* ONEWIRE_HAL_INT_H_ */

@@ -10,6 +10,8 @@
 
 #include "ow_hal_int.h"
 
+//#define OW_HAL_INT_AVR8_TEST
+
 ow_hal_int_t *ow_port_int_avr8_get(void);
 
 #endif /* ONEWIRE_PORT_INT_AVR8_H_ */

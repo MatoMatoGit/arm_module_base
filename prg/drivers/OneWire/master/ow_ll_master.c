@@ -6,6 +6,7 @@
 * @author Dorus van de Spijker 
 */
 #include "ow_ll_master.h"
+#include "ow_port_macro.h"
 #include "crc8.h"
 
 #include <string.h>
@@ -29,11 +30,11 @@ uint8_t ow_ll_master_reset(void) { // reset.  Should improve to act as a presenc
 
     master_hal->hal_io->output();
     master_hal->hal_io->write(0);     // bring low for 500 us
-    master_hal->hal_gen->wait_us(500);
+   OW_PORT_WAIT_US(OW_TR_MIN);
     master_hal->hal_io->input();
-    master_hal->hal_gen->wait_us(40);
+   OW_PORT_WAIT_US(OW_TP);
     err = master_hal->hal_io->read();
-    master_hal->hal_gen->wait_us(240);
+   OW_PORT_WAIT_US(OW_TP);
     if ( master_hal->hal_io->read() == 0 )    {    // short circuit
         err = OW_SHORT_CIRCUIT;
     }
@@ -44,15 +45,16 @@ uint8_t ow_ll_master_transmit_receive_bit( uint8_t bit ) {
 
     master_hal->hal_io->output(); // drive bus low
     master_hal->hal_io->write(0);
-    master_hal->hal_gen->wait_us(1); // Recovery-Time is 1
+   OW_PORT_WAIT_US(OW_TO_MIN); // Recovery-Time is 1
     
     if ( bit ) 
         master_hal->hal_io->input(); // if bit is 1 set bus high (by ext. pull-up)
     //  delay was 15uS-1 see comment above
-    master_hal->hal_gen->wait_us(15-1);
+    OW_PORT_WAIT_US(OW_TS);
     if ( master_hal->hal_io->read() == 0 ) bit = 0; // sample at end of read-timeslot
-    master_hal->hal_gen->wait_us(60-15);
+    OW_PORT_WAIT_US(OW_DTOZ_MIN);
     master_hal->hal_io->input();
+	OW_PORT_WAIT_US(OW_TRC);
     return bit;
 }
 

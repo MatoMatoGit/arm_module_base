@@ -13,6 +13,7 @@
 
 // rom-code size including CRC
 #define OW_ROMCODE_SIZE 8
+#define OW_CMD_SIZE		8
 
 #define OW_OK          0x00
 #define OW_ERROR       0x01
@@ -21,6 +22,20 @@
 #define OW_ERROR_BAD_ID 0x04
 #define OW_BUSY         0x05
 #define OW_INV_ARG		0x06
+
+#define OW_TR_MIN					1000	/* T Reset min. */
+#define OW_TR_MAX					1100	/* T Reset max. */
+#define OW_TP						200		/* T Presence */
+#define OW_TO_MIN					50		/* T One min. */
+#define OW_TO_MAX					70		/* T One max. */
+#define OW_TZ_MIN					250		/* T Zero min. */
+#define OW_TZ_MAX					300		/* T Zero max. */
+#define OW_TS						50		/* T Sample */
+#define OW_TRC						50		/* T Recover */
+#define OW_DTOZ_MIN					OW_TZ_MIN - OW_TO_MIN		/* Delta-T One-Zero min. */
+#define OW_DTOZ_MAX					OW_TZ_MAX - OW_TO_MAX		/* Delta-T One-Zero max. */
+#define OW_DTZR_MIN					OW_TR_MIN - OW_DTOZ_MIN		/* Delta-T Zero-Reset min. */		
+#define OW_DTZR_MAX					OW_TR_MAX - OW_DTOZ_MAX		/* Delta-T Zero-Reset max. */	
 
 #define OW_MATCH_ROM    0x55
 #define OW_SKIP_ROM     0xCC
