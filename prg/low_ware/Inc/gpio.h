@@ -119,6 +119,11 @@ void GpioLevelSensorInit(void);
 void GpioLevelSensorDeinit(void);
 uint8_t GpioLevelSensorStateGet(void);
 
+/***** OneWire GPIO *****/
+void GpioOneWireInit(void);
+uint8_t GpioOneWireRxStateGet(void);
+void GpioOneWireTxStateSet(uint8_t state);
+
 
 /* USER CODE BEGIN Prototypes */
 

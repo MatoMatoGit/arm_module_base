@@ -58,8 +58,8 @@
 #define IRQ_UI_BUTTON		EXTI9_5_IRQn
 #define MODE_UI_BUTTON		GPIO_MODE_IT_RISING_FALLING
 #define PORT_UI_BUTTON		GPIOB
-#define PIN_UI_BUTTON_INC	GPIO_PIN_5
-#define PIN_UI_BUTTON_DEC	GPIO_PIN_6
+#define PIN_UI_BUTTON_DEC	GPIO_PIN_5
+#define PIN_UI_BUTTON_INC	GPIO_PIN_6
 #define PIN_UI_BUTTON_SEL	GPIO_PIN_7
 
 static GpioIntCallback_t UiButtonIncCb = NULL;
@@ -97,8 +97,19 @@ static GpioIntCallback_t UiButtonSelCb = NULL;
 /***** Level Sensor GPIO. *****/
 #define CLOCK_ENABLE_LEVEL_SENSOR __HAL_RCC_GPIOB_CLK_ENABLE
 #define MODE_LEVEL_SENSOR GPIO_MODE_OUTPUT_PP
-#define PORT_LEVEL_SENSOR GPIOB
-#define PIN_LEVEL_SENSOR GPIO_PIN_1
+#define PORT_LEVEL_SENSOR GPIOC
+#define PIN_LEVEL_SENSOR GPIO_PIN_10
+
+/***** OneWire GPIO *****/
+#define CLOCK_ENABLE_OW_TX_GPIO	__HAL_RCC_GPIOA_CLK_ENABLE
+#define MODE_OW_TX_OUTPUT	GPIO_MODE_OUTPUT_PP
+#define MODE_OW_TX_INPUT	GPIO_MODE_INPUT
+#define PORT_OW_TX			GPIOA
+#define PIN_OW_TX			GPIO_PIN_8
+#define CLOCK_ENABLE_OW_RX_GPIO	__HAL_RCC_GPIOD_CLK_ENABLE
+#define MODE_OW_RX			GPIO_MODE_INPUT
+#define PORT_OW_RX			GPIOD
+#define PIN_OW_RX			GPIO_PIN_2
 
 /***** Shiftregister SPI GPIO. *****/
 
@@ -556,4 +567,35 @@ uint8_t GpioLevelSensorStateGet(void)
 	return HAL_GPIO_ReadPin(PORT_LEVEL_SENSOR, PIN_LEVEL_SENSOR);
 }
 
+void GpioOneWireInit(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	CLOCK_ENABLE_OW_RX_GPIO();
+	CLOCK_ENABLE_OW_TX_GPIO();
+
+	GPIO_InitStruct.Pin = PIN_OW_TX;
+	GPIO_InitStruct.Mode = MODE_OW_TX_OUTPUT;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	HAL_GPIO_Init(PORT_OW_TX, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = PIN_OW_RX;
+	GPIO_InitStruct.Mode = MODE_OW_RX;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(PORT_OW_RX, &GPIO_InitStruct);
+}
+
+uint8_t GpioOneWireRxStateGet(void)
+{
+	return HAL_GPIO_ReadPin(PORT_OW_RX, PIN_OW_RX);
+}
+
+void GpioOneWireTxStateSet(uint8_t state)
+{
+	if(state) {
+		HAL_GPIO_WritePin(PORT_OW_TX, PIN_OW_TX, GPIO_PIN_SET);
+	} else {
+		HAL_GPIO_WritePin(PORT_OW_TX, PIN_OW_TX, GPIO_PIN_RESET);
+	}
+}
 
