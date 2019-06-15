@@ -13,7 +13,7 @@
 
 #include <stdlib.h>
 
-#define AsmDelayUs(us) do {\
+#define DELAY_US(us) do {\
 	asm volatile (	"MOV R0,%[loops]\n\t"\
 			"1: \n\t"\
 			"SUB R0, #1\n\t"\
@@ -116,5 +116,5 @@ static HD44780_Result ILcdDisplayCtrlWrite(HD44780_GPIO_Interface *interface,
 
 static void DelayUs(uint16_t us)
 {
-	AsmDelayUs(us);
+	DELAY_US(us);
 }
