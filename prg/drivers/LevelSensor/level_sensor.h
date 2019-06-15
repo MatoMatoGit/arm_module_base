@@ -11,6 +11,8 @@
 
 #include "SystemResult.h"
 
+#define LEVEL_SENSOR_CONFIG_NUM_SAMPLES 5
+
 typedef enum {
 	LEVEL_SENSOR_STATE_CLOSED	= 0,
 	LEVEL_SENSOR_STATE_OPEN		= 1,
