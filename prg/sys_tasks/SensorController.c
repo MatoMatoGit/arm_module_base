@@ -37,7 +37,7 @@ SysResult_t SensorControllerInit(Id_t msg_queue)
 
 	MsgQueue = msg_queue;
 
-	TmrSensorPoll = TimerCreate(SENSOR_CONTROLLER_CONFIG_POLL_INTERVAL_MS,
+	TmrSensorPoll = TimerCreate(SENSOR_CONTROLLER_CONFIG_POLL_RESOLUTION_MS,
 			(TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON),
 			ICallbackSensorPoll, NULL);
 
