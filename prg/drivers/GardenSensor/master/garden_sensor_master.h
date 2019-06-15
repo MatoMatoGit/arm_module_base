@@ -3,6 +3,8 @@
 
 #include "garden_sensor_common.h"
 
+#include <stdint.h>
+
 SensorStatus_e GardenSensorStatusRead(void);
 
 uint16_t GardenSensorMoistureRead(void);

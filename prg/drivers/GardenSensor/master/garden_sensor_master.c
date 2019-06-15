@@ -8,8 +8,28 @@
 
 #include "garden_sensor_master.h"
 
+#include "crc8.h"
+#include "ow_hal_master.h"
+#include "ow_ll_master.h"
+#include "ow_port_master.h"
+
+#include <stdbool.h>
+
+
 static bool ReceiveAndVerify(uint8_t *data, uint16_t size);
 static uint16_t SensorRead(SensorType_e type);
+
+ow_hal_master_t *OwHal;
+
+SensorStatus_e GardenSensorInit(void)
+{
+	OwHal = ow_port_master_stm32_get();
+	if(ow_ll_master_init(OwHal) == OW_OK) {
+		return SENSOR_STATUS_OK;
+	}
+
+	return SENSOR_STATUS_ERROR;
+}
 
 SensorStatus_e GardenSensorStatusRead(void)
 {
@@ -21,11 +41,11 @@ SensorStatus_e GardenSensorStatusRead(void)
 	/* Read the status from the sensor. */
 	status = ow_ll_master_receive_byte();
 
-	if(ReceiveAndVerify(&status, sizeof(status)) {
-		return SENSOR_STATUS_ERROR;
-	} else {
-		return (SensorStatus_e) status;
+	if(ReceiveAndVerify(&status, sizeof(status))) {
+		return status;
 	}
+
+	return SENSOR_STATUS_ERROR;
 }
 
 
@@ -53,7 +73,7 @@ static bool ReceiveAndVerify(uint8_t *data, uint16_t size)
 	rx_crc = ow_ll_master_receive_byte();
 
 	/* Calculate the CRC over the data. */
-	crc = crc8(&status, sizeof(status));
+	crc = crc8(data, size);
 
 	if(crc != rx_crc) {
 		return false;
@@ -64,7 +84,8 @@ static bool ReceiveAndVerify(uint8_t *data, uint16_t size)
 
 static uint16_t SensorRead(SensorType_e type)
 {
-	uint8_t data = 0;
+	uint8_t byte = 0;
+	uint16_t value = 0;
 
 	if(ow_ll_master_reset() != 0) {
 		return 0;
@@ -77,12 +98,17 @@ static uint16_t SensorRead(SensorType_e type)
 	ow_ll_master_transmit_byte(type);
 
 	/* Read sensor value bytes. */
-	data = ow_ll_master_receive_byte();
+	byte = ow_ll_master_receive_byte();
+	value |= (byte << 8);
 
-	if(ReceiveAndVerify(&data, sizeof(data)) {
-		return 0;
-	} else {
-		return data;
+	/* Read sensor value bytes. */
+	byte = ow_ll_master_receive_byte();
+	value |= byte;
+
+	if(ReceiveAndVerify((uint8_t *)&value, sizeof(value))) {
+		return value;
 	}
+
+	return 0;
 }
 
