@@ -11,6 +11,7 @@
 typedef enum {
 	SENSOR_COMMAND_READ_STATUS	= 0x00,
 	SENSOR_COMMAND_READ_SENSOR	= 0x01,
+	SENSOR_COMMAND_INVALID		= 0xFF,
 } SensorCommand_e;
 
 typedef enum {
@@ -23,6 +24,7 @@ typedef enum {
 	SENSOR_TYPE_MOISTURE	= 0x00,
 	SENSOR_TYPE_LIGHT		= 0x01,
 	SENSOR_TYPE_TEMP		= 0x02,
+	SENSOR_TYPE_INVALID		= 0xFF,
 } SensorType_e;
 
 
