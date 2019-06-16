@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+SensorStatus_e GardenSensorInit(void);
+
 SensorStatus_e GardenSensorStatusRead(void);
 
 uint16_t GardenSensorMoistureRead(void);

@@ -19,7 +19,7 @@
 static bool ReceiveAndVerify(uint8_t *data, uint16_t size);
 static uint16_t SensorRead(SensorType_e type);
 
-ow_hal_master_t *OwHal;
+static ow_hal_master_t *OwHal;
 
 SensorStatus_e GardenSensorInit(void)
 {
@@ -97,13 +97,15 @@ static uint16_t SensorRead(SensorType_e type)
 	/* Send sensor type. */
 	ow_ll_master_transmit_byte(type);
 
-	/* Read sensor value bytes. */
+	/* Read sensor value LSB. */
+	byte = ow_ll_master_receive_byte();
+	value |= byte;
+
+	/* Read sensor value MSB. */
 	byte = ow_ll_master_receive_byte();
 	value |= (byte << 8);
 
-	/* Read sensor value bytes. */
-	byte = ow_ll_master_receive_byte();
-	value |= byte;
+
 
 	if(ReceiveAndVerify((uint8_t *)&value, sizeof(value))) {
 		return value;
