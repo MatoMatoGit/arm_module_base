@@ -10,12 +10,10 @@
 
 #include "ow_hal_io.h"
 #include "ow_hal_int.h"
-#include "ow_hal_tmr.h"
 #include "ow_hal_general.h"
 
 typedef struct {
 	ow_hal_int_t	*hal_int;
-	ow_hal_tmr_t	*hal_tmr;
 	ow_hal_io_t		*hal_io;
 } ow_hal_slave_t;
 
