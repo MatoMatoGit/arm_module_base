@@ -29,7 +29,7 @@ int8_t RgbLedInit(void)
 
 	CurrentColor = RGB_LED_COLOR_RED;
 	BlinkTmr = TimerCreate(1000, (TIMER_PARAMETER_AR | TIMER_PARAMETER_PERIODIC | TIMER_PARAMETER_ON), ITimerCallbackBlink, NULL);
-	if(BlinkTmr != OS_RES_INVALID_ID) {
+	if(BlinkTmr != ID_INVALID) {
 		GpioRgbLedInit();
 		RgbLedModeSet(RGB_LED_MODE_OFF);
 		res = RGB_LED_OK;

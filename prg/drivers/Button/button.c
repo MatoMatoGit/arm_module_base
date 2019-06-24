@@ -91,6 +91,8 @@ int ButtonTriggerHoldThresholdSet(Button_t button, uint32_t threshold_ms)
 
 void TimerCallbackHold(Id_t timer_id, void *context)
 {
+	OS_ARG_UNUSED(timer_id);
+
 	ButtonDesc_t *button_desc = (ButtonDesc_t *)context;
 
 	ITriggerCallback(button_desc, BUTTON_TRIGGER_HOLD);
