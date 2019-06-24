@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+#define GARDEN_SENSOR_CONFIG_NUM_RETRIES 15
+
 SensorStatus_e GardenSensorInit(void);
 
 SensorStatus_e GardenSensorStatusRead(void);

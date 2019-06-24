@@ -12,17 +12,21 @@
 #include "ow_hal_master.h"
 #include "ow_ll_master.h"
 #include "ow_port_master.h"
+#include "ow_port_macro.h"
+#include "gpio.h"
 
 #include <stdbool.h>
 
 
 static bool ReceiveAndVerify(uint8_t *data, uint16_t size);
-static uint16_t SensorRead(SensorType_e type);
+static bool SensorReadData(SensorType_e type, SensorCommand_e cmd, uint16_t len, uint8_t *data);
+static uint16_t SensorReadValue(SensorType_e type);
 
 static ow_hal_master_t *OwHal;
 
 SensorStatus_e GardenSensorInit(void)
 {
+	GpioOneWireInit();
 	OwHal = ow_port_master_stm32_get();
 	if(ow_ll_master_init(OwHal) == OW_OK) {
 		return SENSOR_STATUS_OK;
@@ -35,14 +39,9 @@ SensorStatus_e GardenSensorStatusRead(void)
 {
 	uint8_t status = 0;
 
-	/* Send the read status command. */
-	ow_ll_master_transmit_byte(SENSOR_COMMAND_READ_STATUS);
-
-	/* Read the status from the sensor. */
-	status = ow_ll_master_receive_byte();
-
-	if(ReceiveAndVerify(&status, sizeof(status))) {
-		return status;
+	if(SensorReadData(SENSOR_TYPE_NONE, SENSOR_COMMAND_READ_STATUS, sizeof(status),
+			&status) == true) {
+		return (SensorStatus_e)status;
 	}
 
 	return SENSOR_STATUS_ERROR;
@@ -51,18 +50,22 @@ SensorStatus_e GardenSensorStatusRead(void)
 
 uint16_t GardenSensorMoistureRead(void)
 {
-	return SensorRead(SENSOR_TYPE_MOISTURE);
+	return SensorReadValue(SENSOR_TYPE_MOISTURE);
+
 }
 
 uint16_t GardenSensorLightRead(void)
 {
-	return SensorRead(SENSOR_TYPE_LIGHT);
+	return SensorReadValue(SENSOR_TYPE_LIGHT);
 }
 
 uint16_t GardenSensorTempRead(void)
 {
-	return SensorRead(SENSOR_TYPE_TEMP);
+	return SensorReadValue(SENSOR_TYPE_TEMP);
 }
+
+
+/***** Internal functions *****/
 
 static bool ReceiveAndVerify(uint8_t *data, uint16_t size)
 {
@@ -82,35 +85,52 @@ static bool ReceiveAndVerify(uint8_t *data, uint16_t size)
 	}
 }
 
-static uint16_t SensorRead(SensorType_e type)
+static bool SensorReadData(SensorType_e type, SensorCommand_e cmd, uint16_t len, uint8_t *data)
 {
-	uint8_t byte = 0;
+	uint8_t n_retries = GARDEN_SENSOR_CONFIG_NUM_RETRIES;
+
+	do {
+		if(n_retries > 0) {
+			n_retries--;
+		}
+
+		if(ow_ll_master_reset() != 0) {
+			OW_PORT_WAIT_US(500);
+			continue;
+		}
+
+		/* Send the sensor command. */
+		ow_ll_master_transmit_byte(cmd);
+
+		if(type != SENSOR_TYPE_NONE) {
+			/* Send sensor type. */
+			ow_ll_master_transmit_byte(type);
+		}
+
+		for(uint16_t i = 0; i < len; i++) {
+			/* Read a byte from the sensor. */
+			data[i] = ow_ll_master_receive_byte();
+		}
+
+
+		if(ReceiveAndVerify(data, len)) {
+			return true;
+		}
+		OW_PORT_WAIT_US(500);
+
+	} while(n_retries);
+
+	return false;
+}
+
+static uint16_t SensorReadValue(SensorType_e type)
+{
 	uint16_t value = 0;
 
-	if(ow_ll_master_reset() != 0) {
-		return 0;
-	}
-
-	/* Send the read sensor command. */
-	ow_ll_master_transmit_byte(SENSOR_COMMAND_READ_SENSOR);
-
-	/* Send sensor type. */
-	ow_ll_master_transmit_byte(type);
-
-	/* Read sensor value LSB. */
-	byte = ow_ll_master_receive_byte();
-	value |= byte;
-
-	/* Read sensor value MSB. */
-	byte = ow_ll_master_receive_byte();
-	value |= (byte << 8);
-
-
-
-	if(ReceiveAndVerify((uint8_t *)&value, sizeof(value))) {
+	if(SensorReadData(type, SENSOR_COMMAND_READ_SENSOR, sizeof(value),
+			(uint8_t *)&value) == true) {
 		return value;
 	}
 
 	return 0;
 }
-
