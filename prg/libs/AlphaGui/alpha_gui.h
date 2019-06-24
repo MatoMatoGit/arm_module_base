@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define AGUI_CONFIG_MAX_FIELDS 4
+#define AGUI_CONFIG_MAX_FIELDS 7
 #define AGUI_CONFIG_DISPLAY_NUM_ROWS 2
 #define AGUI_CONFIG_DISPLAY_NUM_COLUMNS 20
 #define AGUI_CONFIG_NUM_STRINGS 2
@@ -19,11 +19,13 @@
 
 typedef struct AguiField AguiField_t;
 typedef struct AguiWindow AguiWindow_t;
+typedef enum FieldModification FieldModification_e;
+typedef enum SelectType SelectType_e;
 
 typedef void (*AguiCbFieldSelect_t)(AguiField_t *field);
-typedef void (*AguiCbFieldValueModify_t)(AguiField_t *field, int32_t *value);
+typedef void (*AguiCbFieldValueModify_t)(AguiField_t *field, FieldModification_e mod);
 typedef void (*AguiCbFieldValueLoad_t)(AguiField_t *field, int32_t **value);
-typedef void (*AguiFnTextDraw_t)(char *text, uint8_t row, uint8_t col);
+typedef void (*AguiFnTextDraw_t)(const char *text, uint8_t row, uint8_t col);
 typedef void (*AguiFnCursorDraw_t)(uint8_t row, uint8_t col, bool selected);
 typedef void (*AguiFnClear_t)(void);
 
@@ -32,17 +34,22 @@ typedef enum {
 	CURSOR_DIRECTION_DOWN,
 } CursorDirection_e;
 
-typedef enum {
+enum FieldModification {
 	FIELD_MOD_INC = 0,
 	FIELD_MOD_DEC,
-} FieldModification_e;
+};
+
+enum SelectType {
+	SELECT_TYPE_WINDOW = 0,
+	SELECT_TYPE_FIELD,
+};
 
 struct AguiField {
 	AguiCbFieldSelect_t cb_select;
 	AguiCbFieldValueModify_t cb_mod;
 	AguiCbFieldValueLoad_t cb_load;
 
-	char *strings[AGUI_CONFIG_NUM_STRINGS];
+	const char *strings[AGUI_CONFIG_NUM_STRINGS];
 	uint8_t col_strings[AGUI_CONFIG_NUM_STRINGS];
 	int32_t *values[AGUI_CONFIG_NUM_VALUES];
 	uint8_t col_values[AGUI_CONFIG_NUM_VALUES];
@@ -68,7 +75,7 @@ AguiWindow_t *AguiWindowPrevGet(void);
 void AguiWindowNextSet(AguiWindow_t *window);
 void AguiWindowPrev(void);
 AguiWindow_t *AguiWindowGet(void);
-void AguiSelect(void);
+SelectType_e AguiSelect(void);
 void AguiModify(FieldModification_e mod);
 
 void AguiCursorMove(CursorDirection_e dir);

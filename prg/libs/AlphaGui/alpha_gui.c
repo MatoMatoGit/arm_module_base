@@ -88,7 +88,7 @@ void AguiFieldDraw(AguiField_t *field, uint8_t row)
 	}
 }
 
-void AguiSelect(void)
+SelectType_e AguiSelect(void)
 {
 	if(Agui.cursor.select == false) {
 		Agui.cursor.select = true;
@@ -102,12 +102,17 @@ void AguiSelect(void)
 
 	if(Agui.cursor.field->link_window != NULL) {
 		IAguiWindowSet(Agui.cursor.field->link_window);
+		return SELECT_TYPE_WINDOW;
+	} else {
+		return SELECT_TYPE_FIELD;
 	}
 }
 
 void AguiModify(FieldModification_e mod)
 {
-
+	if(Agui.cursor.field->cb_mod != NULL) {
+		Agui.cursor.field->cb_mod(Agui.cursor.field, mod);
+	}
 }
 
 void AguiCursorVisible(bool visible);
