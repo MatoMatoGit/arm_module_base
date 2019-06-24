@@ -22,7 +22,7 @@ static const ow_hal_io_t ow_port_io_stm32 = {
 	.read = ow_port_io_read,
 };
 
-ow_hal_io_t *ow_port_io_avr8_get(void)
+ow_hal_io_t *ow_port_io_stm32_get(void)
 {
 	return (ow_hal_io_t *)&ow_port_io_stm32;
 }
@@ -34,15 +34,15 @@ static void ow_port_io_set_input(void)
 
 static void ow_port_io_set_output(void)
 {
-	GpioOneWireTxStateSet(1);
+
 }
 
 static void ow_port_io_write(uint8_t bit)
 {
 	if(bit) {
-		GpioOneWireTxStateSet(1);
-	} else {
 		GpioOneWireTxStateSet(0);
+	} else {
+		GpioOneWireTxStateSet(1);
 	}
 }
 static uint8_t ow_port_io_read(void)
