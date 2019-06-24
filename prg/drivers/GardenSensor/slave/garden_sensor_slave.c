@@ -59,7 +59,7 @@ static uint16_t OwCmdReceiveTransmit(uint8_t rx_data, uint8_t **tx_data)
 	if(Cmd == SENSOR_COMMAND_INVALID) {
 		Cmd = rx_data;
 	} else {
-		if(Type == SENSOR_TYPE_INVALID) {
+		if(Type == SENSOR_TYPE_NONE) {
 			Type = rx_data;
 		} else {
 			switch(Cmd) {
@@ -70,8 +70,8 @@ static uint16_t OwCmdReceiveTransmit(uint8_t rx_data, uint8_t **tx_data)
 
 			case SENSOR_COMMAND_READ_SENSOR:
 				sensor_value = CbRead(Type);
-				Data[0] = (uint8_t)(sensor_value & 0x00FF);
-				Data[1] = (uint8_t)((sensor_value  >> 8) & 0x00FF);
+				Data[0] = (uint8_t)((sensor_value  >> 8) & 0x00FF);
+				Data[1] = (uint8_t)(sensor_value & 0x00FF);
 				len = sizeof(Data);
 				break;
 			}
@@ -85,13 +85,13 @@ static uint16_t OwCmdReceiveTransmit(uint8_t rx_data, uint8_t **tx_data)
 static void OwError(void)
 {
 	Cmd = SENSOR_COMMAND_INVALID;
-	Type = SENSOR_TYPE_INVALID;
+	Type = SENSOR_TYPE_NONE;
 	memset(Data, 0, sizeof(Data));
 }
 
 static void OwReset(void)
 {
 	Cmd = SENSOR_COMMAND_INVALID;
-	Type = SENSOR_TYPE_INVALID;
+	Type = SENSOR_TYPE_NONE;
 	memset(Data, 0, sizeof(Data));
 }
