@@ -102,8 +102,7 @@ static GpioIntCallback_t UiButtonSelCb = NULL;
 
 /***** OneWire GPIO *****/
 #define CLOCK_ENABLE_OW_TX_GPIO	__HAL_RCC_GPIOA_CLK_ENABLE
-#define MODE_OW_TX_OUTPUT	GPIO_MODE_OUTPUT_PP
-#define MODE_OW_TX_INPUT	GPIO_MODE_INPUT
+#define MODE_OW_TX			GPIO_MODE_OUTPUT_PP
 #define PORT_OW_TX			GPIOA
 #define PIN_OW_TX			GPIO_PIN_8
 #define CLOCK_ENABLE_OW_RX_GPIO	__HAL_RCC_GPIOD_CLK_ENABLE
@@ -575,7 +574,7 @@ void GpioOneWireInit(void)
 	CLOCK_ENABLE_OW_TX_GPIO();
 
 	GPIO_InitStruct.Pin = PIN_OW_TX;
-	GPIO_InitStruct.Mode = MODE_OW_TX_OUTPUT;
+	GPIO_InitStruct.Mode = MODE_OW_TX;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(PORT_OW_TX, &GPIO_InitStruct);
 
